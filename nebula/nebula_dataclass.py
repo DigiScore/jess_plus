@@ -41,3 +41,9 @@ class NebulaDataClass:
 
     rhythm_rate: float = randrange(30, 100) / 100
     """Internal clock/ rhythm sub division"""
+
+    eeg: list = []
+    """Live data from brainbit"""
+
+    eda: int = 0
+    """Live data from Bitalino"""

@@ -4,13 +4,13 @@ import pyaudio
 import numpy as np
 import logging
 from serial.tools import list_ports
+from configparser import ConfigParser
 
 from digibot import Digibot
 from nebula.nebula import Nebula
 from nebula.nebula_dataclass import NebulaDataClass
 from brainbit import BrainbitReader
 from bitalino import BITalino
-
 
 class Main:
     """
@@ -31,20 +31,33 @@ class Main:
                  staves: int = 1,
                  pen: bool = True):
 
-        # config logging for all modules
+        # config & logging for all modules
         logging.basicConfig(level=logging.INFO)
 
-        # init brainbit reader
-        self.eeg = BrainbitReader()
-        self.eeg.start()
-        first_brain_data = self.eeg.read()
-        logging.debug(f'Data from brainbit = {first_brain_data}')
-
-        # init bitalino
-        self.eda = BITalino("98:D3:B1:FD:3D:1F")
-        self.eda.start(10, [0])
-        first_eda_data = self.eda.read(10)
-        logging.debug(f'Data from BITalino = {first_eda_data}')
+        config_object = ConfigParser()
+        config_object.read('config.ini')
+        #
+        # BITALINO_BAUDRATE = config_object['BITALINO'].getint('baudrate')
+        # BITALINO_ACQ_CHANNELS = config_object['BITALINO']['channels']
+        # BITALINO_MAC_ADDRESS = config_object['BITALINO']['mac_address']
+        #
+        # BITALINO_CONNECTED = config_object['HARDWARE']['bitalino']
+        # BRAINBIT_CONNECTED = config_object['HARDWARE']['brainbit']
+        DOBOT_CONNECTED = config_object['HARDWARE']['dobot']
+        #
+        # # init brainbit reader
+        # if BRAINBIT_CONNECTED:
+        #     self.eeg = BrainbitReader()
+        #     self.eeg.start()
+        #     first_brain_data = self.eeg.read()
+        #     logging.debug(f'Data from brainbit = {first_brain_data}')
+        #
+        # # init bitalino
+        # if BITALINO_CONNECTED:
+        #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
+        #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
+        #     first_eda_data = self.eda.read(10)
+        #     logging.debug(f'Data from BITalino = {first_eda_data}')
 
         # build initial dataclas
         # build the dataclass and fill with random number
@@ -57,7 +70,8 @@ class Main:
         port = available_ports[-1].device
 
         # start dobot communications
-        self.digibot = Digibot(port=port,
+        if DOBOT_CONNECTED:
+            self.digibot = Digibot(port=port,
                                datadict=self.datadict,
                                verbose=False,
                                duration_of_piece=duration_of_piece,
@@ -69,7 +83,7 @@ class Main:
 
         # start Nebula AI Factory
         self.nebula = Nebula(datadict=self.datadict,
-                             speed=speed
+                             speed=speed,
                              )
         self.nebula.main_loop()
 
@@ -105,6 +119,7 @@ class Main:
                 self.terminate()
                 self.running = False
                 break
+
             # get amplitude from mic input
             data = np.frombuffer(self.stream.read(
                 self.CHUNK,
@@ -123,6 +138,7 @@ class Main:
 
             # put normalised amplitude into Nebula's dictionary for use
             setattr(self.datadict, 'user_in', normalised_peak)
+
         logging.info('quitting listener thread')
 
     def terminate(self):
@@ -131,6 +147,8 @@ class Main:
         self.digibot.running = False
         self.digibot.home()
         self.digibot.close()
+        # self.eeg.terminate()
+        # self.eda.close()
 
 
 if __name__ == "__main__":

@@ -15,16 +15,16 @@ cvear@dmu.ac.uk
 Dedicated to Fabrizio Poltronieri
 """
 # import python modules
-from random import random, randrange
 from threading import Thread
 import logging
+from configparser import ConfigParser
 from time import sleep
-from queue import Queue
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-# from nebula.affect import Affect
 from nebula.nebula_dataclass import NebulaDataClass
+from brainbit import BrainbitReader
+from bitalino import BITalino
 
 class Nebula:
     """Nebula is the core "director" of an AI factory.
@@ -55,10 +55,10 @@ class Nebula:
         print('building engine server')
 
         # Set global vars
-        self.interrupt_bang = False
-        self.rnd_stream = 0
-        self.rhythm_rate = 1
-        self.affect_listen = 0
+        self.running = True
+        # self.rnd_stream = 0
+        # self.rhythm_rate = 1
+        # self.affect_listen = 0
 
         # build the dataclass and fill with random number
         self.datadict = datadict
@@ -67,42 +67,61 @@ class Nebula:
         # Build the AI factory and pass it the data dict
         self.AI_factory = AIFactory(self.datadict, speed)
 
+        # init the EEG and EDA percepts
+        config_object = ConfigParser()
+        config_object.read('config.ini')
+
+        BITALINO_BAUDRATE = config_object['BITALINO'].getint('baudrate')
+        BITALINO_ACQ_CHANNELS = config_object['BITALINO']['channels']
+        BITALINO_MAC_ADDRESS = config_object['BITALINO']['mac_address']
+
+        BITALINO_CONNECTED = config_object['HARDWARE']['bitalino']
+        BRAINBIT_CONNECTED = config_object['HARDWARE']['brainbit']
+
+        # init brainbit reader
+        if BRAINBIT_CONNECTED:
+            self.eeg = BrainbitReader()
+            self.eeg.start()
+            first_brain_data = self.eeg.read()
+            logging.debug(f'Data from brainbit = {first_brain_data}')
+
+        # init bitalino
+        if BITALINO_CONNECTED:
+            self.eda = BITalino(BITALINO_MAC_ADDRESS)
+            self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
+            first_eda_data = self.eda.read(10)
+            logging.debug(f'Data from BITalino = {first_eda_data}')
+
     def main_loop(self):
         """Starts the server/ AI threads
          and gets the data rolling."""
         print('Starting the Nebula Director')
         # declares all threads
         t1 = Thread(target=self.AI_factory.make_data)
+        t2 = Thread(target=self.jess_input)
 
         # start them all
         t1.start()
+        t2.start()
 
-    #################################
-    #
-    # High Level I/O for the client
-    # will generally be used in a server thread
-    #
-    #################################
-    #
-    # def user_emission_list(self):
-    #     """This list is highest level comms back to client """
-    #     return self.emission_list
+    def jess_input(self):
+        while self.running:
+            # read data from bitalino
+            eda_data = self.eda.read(10)
+            setattr(self.datadict, 'eda', eda_data)
 
-    # def user_live_emission_data(self):
-    #     """Returns the current value of the AI factory master output"""
-    #     return self.affect.live_emission_data
-    #     # return getattr(self.datadict, 'master_output')
+            # read data from brainbit
+            eeg_data = self.eeg.read()
+            setattr(self.datadict, 'eeg', eeg_data)
 
-    # def user_input(self, user_input_value: float):
-    #     """High-level input from client usually from
-    #     real-time percept.
-    #     Must be normalised 0.0-1.0"""
-    #     print('Nebula user input', user_input_value)
-    #     setattr(self.datadict, 'user_in', user_input_value)
+            sleep(0.01)
 
     def terminate(self):
         # self.affect.quit()
         self.AI_factory.quit()
+        self.eeg.terminate()
+        self.eda.close()
+        self.running = False
 
 if __name__ == '__main':
     logging.basicConfig(level=logging.INFO)
