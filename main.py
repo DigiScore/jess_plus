@@ -8,7 +8,7 @@ from configparser import ConfigParser
 
 from digibot import Digibot
 from nebula.nebula import Nebula
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import NebulaDataClass, Borg
 from brainbit import BrainbitReader
 from bitalino import BITalino
 
@@ -61,7 +61,8 @@ class Main:
 
         # build initial dataclas
         # build the dataclass and fill with random number
-        self.datadict = NebulaDataClass()
+        # self.datadict = NebulaDataClass()
+        self.datadict = Borg()
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # find available ports and locate Dobot (-1)

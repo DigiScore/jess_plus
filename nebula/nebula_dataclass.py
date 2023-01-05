@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from random import random, randrange
 
-# todo - dataclasses can be quite slow.
-#  Perhaps replace with record class, slots or other [HIGH]
 
+#Dataclass Pattern
 @dataclass
 class NebulaDataClass:
     """Dataclass containing all the data emissions
@@ -42,8 +41,59 @@ class NebulaDataClass:
     rhythm_rate: float = randrange(30, 100) / 100
     """Internal clock/ rhythm sub division"""
 
-    eeg: list = []
+    # eeg: list
     """Live data from brainbit"""
 
     eda: int = 0
     """Live data from Bitalino"""
+
+
+#Borg Pattern
+class Borg:
+
+    __monostate = None
+
+    def __init__(self):
+        if not Borg.__monostate:
+            Borg.__monostate = self.__dict__
+            self.move_rnn: float = random()
+            """Net 1 raw emission"""
+
+            self.affect_rnn: float = random()
+            """Net 2 raw emission"""
+
+            self.move_affect_conv2: float = random()
+            """Net 3 raw emission"""
+
+            self.affect_move_conv2: float = random()
+            """Net 4 raw emission"""
+
+            self.master_output: float = random()
+            """Master output from the affect process"""
+
+            self.user_in: float = random()
+            """Percept input stream from client e.g. live mic level"""
+
+            self.rnd_poetry: float = random()
+            """Random stream to spice things up"""
+
+            self.affect_net: float = random()
+            """Output from affect module"""
+
+            self.self_awareness: float = random()
+            """Net that has some self awareness - ???"""
+
+            self.affect_decision: str = " "
+            """Current stream chosen by affect process"""
+
+            self.rhythm_rate: float = randrange(30, 100) / 100
+            """Internal clock/ rhythm sub division"""
+
+            self.eeg: list = [0, 0, 0, 0]
+            """Live data from brainbit"""
+
+            self.eda: int = 0
+            """Live data from Bitalino"""
+
+        else:
+            self.__dict__ = Borg.__monostate
