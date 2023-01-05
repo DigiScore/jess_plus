@@ -43,7 +43,7 @@ class Main:
         # init bitalino
         self.eda = BITalino("98:D3:B1:FD:3D:1F")
         self.eda.start(10, [0])
-        first_eda_data = self.eda.read(1)
+        first_eda_data = self.eda.read(10)
         logging.debug(f'Data from BITalino = {first_eda_data}')
 
         # build initial dataclas
