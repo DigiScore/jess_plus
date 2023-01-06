@@ -25,6 +25,7 @@ from nebula.ai_factory import AIFactory
 from nebula.nebula_dataclass import NebulaDataClass
 from brainbit import BrainbitReader
 from bitalino import BITalino
+import config
 
 class Nebula:
     """Nebula is the core "director" of an AI factory.
@@ -71,27 +72,26 @@ class Nebula:
         config_object = ConfigParser()
         config_object.read('config.ini')
 
-        BITALINO_BAUDRATE = config_object['BITALINO'].getint('baudrate')
-        BITALINO_ACQ_CHANNELS = config_object['BITALINO']['channels']
-        BITALINO_MAC_ADDRESS = config_object['BITALINO']['mac_address']
+        BITALINO_BAUDRATE = config.bitalino
+        BITALINO_ACQ_CHANNELS = config.channels
+        BITALINO_MAC_ADDRESS = config.mac_address
 
-        BITALINO_CONNECTED = config_object['HARDWARE']['bitalino']
-        BRAINBIT_CONNECTED = config_object['HARDWARE']['brainbit']
-        print(f"BITALINO_CONNECTED = {BITALINO_CONNECTED}")
+        self.BITALINO_CONNECTED = config.bitalino
+        self.BRAINBIT_CONNECTED = config.brainbit
 
         # init brainbit reader
-        if BRAINBIT_CONNECTED:
+        if self.BRAINBIT_CONNECTED:
             self.eeg = BrainbitReader()
             self.eeg.start()
             first_brain_data = self.eeg.read()
-            logging.debug(f'Data from brainbit = {first_brain_data}')
+            logging.info(f'Data from brainbit = {first_brain_data}')
 
-        # init bitalino
-        if BITALINO_CONNECTED:
+        # # init bitalino
+        if self.BITALINO_CONNECTED:
             self.eda = BITalino(BITALINO_MAC_ADDRESS)
             self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
             first_eda_data = self.eda.read(10)
-            logging.debug(f'Data from BITalino = {first_eda_data}')
+            logging.info(f'Data from BITalino = {first_eda_data}')
 
     def main_loop(self):
         """Starts the server/ AI threads
@@ -108,14 +108,17 @@ class Nebula:
     def jess_input(self):
         while self.running:
             # read data from bitalino
-            eda_data = self.eda.read(10)
-            setattr(self.datadict, 'eda', eda_data)
+            if self.BITALINO_CONNECTED:
+                eda_data = self.eda.read()
+                setattr(self.datadict, 'eda', eda_data)
 
             # read data from brainbit
-            eeg_data = self.eeg.read()
-            setattr(self.datadict, 'eeg', eeg_data)
+            if self.BRAINBIT_CONNECTED:
+                eeg_data = self.eeg.read()
+                setattr(self.datadict, 'eeg', eeg_data)
+                print(eeg_data)
 
-            sleep(0.01)
+            sleep(0.1)
 
     def terminate(self):
         # self.affect.quit()
@@ -128,4 +131,3 @@ if __name__ == '__main':
     logging.basicConfig(level=logging.INFO)
     test = Nebula()
     test.director()
-

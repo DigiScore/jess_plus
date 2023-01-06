@@ -11,6 +11,7 @@ from nebula.nebula import Nebula
 from nebula.nebula_dataclass import NebulaDataClass, Borg
 from brainbit import BrainbitReader
 from bitalino import BITalino
+import config
 
 class Main:
     """
@@ -34,35 +35,14 @@ class Main:
         # config & logging for all modules
         logging.basicConfig(level=logging.INFO)
 
-        config_object = ConfigParser()
-        config_object.read('config.ini')
-        #
-        # BITALINO_BAUDRATE = config_object['BITALINO'].getint('baudrate')
-        # BITALINO_ACQ_CHANNELS = config_object['BITALINO']['channels']
-        # BITALINO_MAC_ADDRESS = config_object['BITALINO']['mac_address']
-        #
-        # BITALINO_CONNECTED = config_object['HARDWARE']['bitalino']
-        # BRAINBIT_CONNECTED = config_object['HARDWARE']['brainbit']
-        DOBOT_CONNECTED = config_object['HARDWARE']['dobot']
-        #
-        # # init brainbit reader
-        # if BRAINBIT_CONNECTED:
-        #     self.eeg = BrainbitReader()
-        #     self.eeg.start()
-        #     first_brain_data = self.eeg.read()
-        #     logging.debug(f'Data from brainbit = {first_brain_data}')
-        #
-        # # init bitalino
-        # if BITALINO_CONNECTED:
-        #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
-        #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
-        #     first_eda_data = self.eda.read(10)
-        #     logging.debug(f'Data from BITalino = {first_eda_data}')
 
         # build initial dataclas
         # build the dataclass and fill with random number
         self.datadict = NebulaDataClass()
         logging.debug(f'Data dict initial values are = {self.datadict}')
+        self.nebula = Nebula(datadict=self.datadict,
+                             speed=speed,
+                             )
 
         # find available ports and locate Dobot (-1)
         available_ports = list_ports.comports()
@@ -70,6 +50,7 @@ class Main:
         port = available_ports[-1].device
 
         # start dobot communications
+        DOBOT_CONNECTED = config.dobot
         if DOBOT_CONNECTED:
             self.digibot = Digibot(port=port,
                                datadict=self.datadict,
@@ -82,9 +63,6 @@ class Main:
                                )
 
         # start Nebula AI Factory
-        self.nebula = Nebula(datadict=self.datadict,
-                             speed=speed,
-                             )
         self.nebula.main_loop()
 
         # set up mic listening funcs

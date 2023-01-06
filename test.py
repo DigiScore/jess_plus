@@ -1,51 +1,51 @@
+import argparse
 import time
 
-from bitalino import BITalino
+from brainflow.board_shim import BoardShim, BrainFlowInputParams, LogLevels
+from brainflow.data_filter import DataFilter
+from brainflow.ml_model import MLModel, BrainFlowMetrics, BrainFlowClassifiers, BrainFlowModelParams
 
-# The macAddress variable on Windows can be "XX:XX:XX:XX:XX:XX" or "COMX"
-# while on Mac OS can be "/dev/tty.BITalino-XX-XX-DevB" for devices ending with the last 4 digits of the MAC address or "/dev/tty.BITalino-DevB" for the remaining
-macAddress = "/dev/cu.BITalino-3F-AE"
 
-# This example will collect data for 5 sec.
-running_time = 5
+def main():
+    BoardShim.enable_board_logger()
+    DataFilter.enable_data_logger()
+    MLModel.enable_ml_logger()
 
-batteryThreshold = 30
-acqChannels = [0, 1, 2, 3, 4, 5]
-samplingRate = 1000
-nSamples = 10
-digitalOutput_on = [1, 1]
-digitalOutput_off = [0, 0]
+    params = BrainFlowInputParams()
 
-# Connect to BITalino
-device = BITalino(macAddress)
+    board = BoardShim(7, params)
+    master_board_id = board.get_board_id()
+    sampling_rate = BoardShim.get_sampling_rate(master_board_id)
+    board.prepare_session()
+    board.start_stream(45000)
+    BoardShim.log_message(LogLevels.LEVEL_INFO.value, 'start sleeping in the main thread')
+    time.sleep(5)  # recommended window size for eeg metric calculation is at least 4 seconds, bigger is better
+    # data = board.get_board_data()
+    # board.stop_stream()
+    # board.release_session()
 
-# Set battery threshold
-device.battery(batteryThreshold)
+    while True:
+        data = board.get_board_data()
 
-# Read BITalino version
-print(device.version())
+        eeg_channels = BoardShim.get_eeg_channels(int(master_board_id))
+        bands = DataFilter.get_avg_band_powers(data, eeg_channels, sampling_rate, True)
+        feature_vector = bands[0]
+        print(feature_vector)
 
-# Start Acquisition
-device.start(samplingRate, acqChannels)
+        mindfulness_params = BrainFlowModelParams(BrainFlowMetrics.MINDFULNESS.value,
+                                                  BrainFlowClassifiers.DEFAULT_CLASSIFIER.value)
+        mindfulness = MLModel(mindfulness_params)
+        mindfulness.prepare()
+        print('Mindfulness: %s' % str(mindfulness.predict(feature_vector)))
+        mindfulness.release()
 
-start = time.time()
-end = time.time()
-while (end - start) < running_time:
-    # Read samples
-    print(device.read(nSamples))
-    end = time.time()
+        restfulness_params = BrainFlowModelParams(BrainFlowMetrics.RESTFULNESS.value,
+                                                  BrainFlowClassifiers.DEFAULT_CLASSIFIER.value)
+        restfulness = MLModel(restfulness_params)
+        restfulness.prepare()
+        print('Restfulness: %s' % str(restfulness.predict(feature_vector)))
+        restfulness.release()
+        time.sleep(2)
 
-# Turn BITalino led and buzzer on
-device.trigger(digitalOutput_on)
-
-# Script sleeps for n seconds
-time.sleep(running_time)
-
-# Turn BITalino led and buzzer off
-device.trigger(digitalOutput_off)
-
-# Stop acquisition
-device.stop()
-
-# Close connection
-device.close()
+if __name__ == "__main__":
+    main()
