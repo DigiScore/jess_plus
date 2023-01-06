@@ -77,6 +77,7 @@ class Nebula:
 
         BITALINO_CONNECTED = config_object['HARDWARE']['bitalino']
         BRAINBIT_CONNECTED = config_object['HARDWARE']['brainbit']
+        print(f"BITALINO_CONNECTED = {BITALINO_CONNECTED}")
 
         # init brainbit reader
         if BRAINBIT_CONNECTED:

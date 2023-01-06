@@ -61,8 +61,7 @@ class Main:
 
         # build initial dataclas
         # build the dataclass and fill with random number
-        # self.datadict = NebulaDataClass()
-        self.datadict = Borg()
+        self.datadict = NebulaDataClass()
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # find available ports and locate Dobot (-1)

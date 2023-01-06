@@ -2,9 +2,23 @@
 """
 .. module:: bitalino
    :synopsis: BITalino API
+
 *Created on Fri Jun 20 2014*
+
 *Last Modified on Thur Jun 25 2015*
 """
+__author__ = "Pedro Gonçalves & Carlos Azevedo"
+__credits__ = [
+    "Carlos Azevedo",
+    "Pedro Gonçalves",
+    "Hugo Silva",
+    "Takuma Hashimoto",
+    "Rui Freixo",
+    "Margarida Reis",
+]
+__license__ = "GPL"
+__version__ = "v3"
+__email__ = "bitalino@plux.info"
 
 
 import math
@@ -23,6 +37,7 @@ import serial
 def find():
     """
     :returns: list of (tuples) with name and MAC address of each device found
+
     Searches for bluetooth devices nearby.
     """
     if platform.system() == "Windows" or platform.system() == "Linux":
@@ -55,12 +70,17 @@ class BITalino(object):
     :type timeout: int, float or None
     :raises Exception: invalid MAC address or serial port
     :raises Exception: invalid timeout value
+
     Connects to the bluetooth device with the MAC address or serial port provided.
+
     Possible values for parameter *macAddress*:
+
     * MAC address: e.g. ``00:0a:95:9d:68:16``
     * Serial port - device name: depending on the operating system. e.g. ``COM3`` on Windows; ``/dev/tty.bitalino-DevB`` on Mac OS X; ``/dev/ttyUSB0`` on GNU/Linux.
     * IP address and port - server: e.g. ``192.168.4.1:8001``
+
     Possible values for *timeout*:
+
     ===============  ================================================================
     Value            Result
     ===============  ================================================================
@@ -125,20 +145,26 @@ class BITalino(object):
         :raises Exception: device already in acquisition (not IDLE)
         :raises Exception: sampling rate not valid
         :raises Exception: list of analog channels not valid
+
         Sets the sampling rate and starts acquisition in the analog channels set.
         Setting the sampling rate and starting the acquisition implies the use of the method :meth:`send`.
+
         Possible values for parameter *SamplingRate*:
+
         * 1
         * 10
         * 100
         * 1000
+
         Possible values, types, configurations and examples for parameter *analogChannels*:
+
         ===============  ====================================
         Values           0, 1, 2, 3, 4, 5
         Types            list ``[]``, tuple ``()``, array ``[[]]``
         Configurations   Any number of channels, identified by their value
         Examples         ``[0, 3, 4]``, ``(1, 2, 3, 5)``
         ===============  ====================================
+
         .. note:: To obtain the samples, use the method :meth:`read`.
         """
         if self.started is False:
@@ -189,6 +215,7 @@ class BITalino(object):
     def stop(self):
         """
         :raises Exception: device not in acquisition (IDLE)
+
         Stops the acquisition. Stoping the acquisition implies the use of the method :meth:`send`.
         """
         if self.started:
@@ -239,8 +266,11 @@ class BITalino(object):
         :type value: int
         :raises Exception: device in acquisition (not IDLE)
         :raises Exception: threshold value is invalid
+
         Sets the battery threshold for the BITalino device. Setting the battery threshold implies the use of the method :meth:`send`.
+
         Possible values for parameter *value*:
+
         ===============  =======  =====================
         Range            *value*  Corresponding threshold (Volts)
         ===============  =======  =====================
@@ -264,7 +294,9 @@ class BITalino(object):
         :type pwmOutput: int
         :raises Exception: invalid pwm output value
         :raises Exception: device is not a BITalino 2.0
+
         Sets the pwm output for the BITalino 2.0 device. Implies the use of the method :meth:`send`.
+
         Possible values for parameter *pwmOutput*: 0 - 255.
         """
         if self.isBitalino2:
@@ -282,8 +314,10 @@ class BITalino(object):
         :raises Exception: device is not a BITalino version 2.0
         :raises Exception: device in acquisition (not IDLE)
         :raises Exception: lost communication with the device when data is corrupted
+
         Returns the state of all analog and digital channels. Reading channel State from BITalino implies the use of the method :meth:`send` and :meth:`receive`.
         The returned dictionary structure contains the following key-value pairs:
+
         =================  ================================ ============== =====================
         Key                Value                            Type           Examples
         =================  ================================ ============== =====================
@@ -353,9 +387,12 @@ class BITalino(object):
         :type digitalArray: array, tuple or list of int
         :raises Exception: list of digital channel output is not valid
         :raises Exception: device not in acquisition (IDLE) (for BITalino 1.0)
+
         Acts on digital output channels of the BITalino device. Triggering these digital outputs implies the use of the method :meth:`send`.
         Digital Outputs can be set on IDLE or while in acquisition for BITalino 2.0.
+
         Each position of the array *digitalArray* corresponds to a digital output, in ascending order. Possible values, types, configurations and examples for parameter *digitalArray*:
+
         ===============  ============================================== ==============================================
         Meta             BITalino 1.0                                   BITalino 2.0
         ===============  ============================================== ==============================================
@@ -403,13 +440,19 @@ class BITalino(object):
         :returns: array with the acquired data
         :raises Exception: device not in acquisition (in IDLE)
         :raises Exception: lost communication with the device when data is corrupted
+
         Acquires `nSamples` from BITalino. Reading samples from BITalino implies the use of the method :meth:`receive`.
+
         Requiring a low number of samples (e.g. ``nSamples = 1``) may be computationally expensive; it is recommended to acquire batches of samples (e.g. ``nSamples = 100``).
+
         The data acquired is organized in a matrix whose lines correspond to samples and the columns are as follows:
+
         * Sequence Number
         * 4 Digital Channels (always present)
         * 1-6 Analog Channels (as defined in the :meth:`start` method)
+
         Example matrix for ``analogChannels = [0, 1, 3]`` used in :meth:`start` method:
+
         ==================  ========= ========= ========= ========= ======== ======== ========
         Sequence Number*    Digital 0 Digital 1 Digital 2 Digital 3 Analog 0 Analog 1 Analog 3
         ==================  ========= ========= ========= ========= ======== ======== ========
@@ -421,6 +464,7 @@ class BITalino(object):
         1
         (...)
         ==================  ========= ========= ========= ========= ======== ======== ========
+
         .. note:: *The sequence number overflows at 15
         """
         if self.started:
@@ -478,6 +522,7 @@ class BITalino(object):
         """
         :returns: str with the version of BITalino
         :raises Exception: device in acquisition (not IDLE)
+
         Retrieves the BITalino version. Retrieving the version implies the use of the methods :meth:`send` and :meth:`receive`.
         """
         if self.started is False:
@@ -501,6 +546,7 @@ class BITalino(object):
         :type nbytes: int
         :return: string packed binary data
         :raises Exception: lost communication with the device when timeout is reached
+
         Retrieves `nbytes` from the BITalino device and returns it as a string pack with length of `nbytes`. The timeout is defined on instantiation.
         """
         if self.isPython2:
