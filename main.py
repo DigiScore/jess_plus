@@ -35,14 +35,15 @@ class Main:
         # config & logging for all modules
         logging.basicConfig(level=logging.INFO)
 
+        # build initial dataclass as a Borg
+        # build the Borg and fill with random number
+        # self.datadict = NebulaDataClass()
+        self.datadict = Borg()
 
-        # build initial dataclas
-        # build the dataclass and fill with random number
-        self.datadict = NebulaDataClass()
         logging.debug(f'Data dict initial values are = {self.datadict}')
-        self.nebula = Nebula(datadict=self.datadict,
-                             speed=speed,
-                             )
+
+        # init the AI factory
+        self.nebula = Nebula(speed=speed)
 
         # find available ports and locate Dobot (-1)
         available_ports = list_ports.comports()
@@ -53,7 +54,6 @@ class Main:
         DOBOT_CONNECTED = config.dobot
         if DOBOT_CONNECTED:
             self.digibot = Digibot(port=port,
-                               datadict=self.datadict,
                                verbose=False,
                                duration_of_piece=duration_of_piece,
                                continuous_line=continuous_line,

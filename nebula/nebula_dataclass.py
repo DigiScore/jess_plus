@@ -95,5 +95,21 @@ class Borg:
             self.eda: int = 0
             """Live data from Bitalino"""
 
+            self.fields = ["move_rnn",
+                           "affect_rnn",
+                           "move_affect_conv2",
+                           "affect_move_conv2",
+                           "master_output",
+                           "user_in",
+                           "rnd_poetry",
+                           "affect_net",
+                           "self_awareness",
+                           "affect_decision",
+                           "rhythm_rate",
+                           "eeg",
+                           "eda"
+                           ]
+
         else:
             self.__dict__ = Borg.__monostate
+

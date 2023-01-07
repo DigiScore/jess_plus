@@ -22,7 +22,7 @@ from time import sleep
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import NebulaDataClass, Borg
 from brainbit import BrainbitReader
 from bitalino import BITalino
 import config
@@ -50,7 +50,6 @@ class Nebula:
         speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
 
     def __init__(self,
-                 datadict: NebulaDataClass,
                  speed=1,
                  ):
         print('building engine server')
@@ -62,15 +61,17 @@ class Nebula:
         # self.affect_listen = 0
 
         # build the dataclass and fill with random number
-        self.datadict = datadict
+        # self.datadict = datadict
+        self.datadict = Borg
+
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(self.datadict, speed)
+        self.AI_factory = AIFactory(speed)
 
         # init the EEG and EDA percepts
-        config_object = ConfigParser()
-        config_object.read('config.ini')
+        # config_object = ConfigParser()
+        # config_object.read('config.ini')
 
         BITALINO_BAUDRATE = config.bitalino
         BITALINO_ACQ_CHANNELS = config.channels
@@ -110,12 +111,14 @@ class Nebula:
             # read data from bitalino
             if self.BITALINO_CONNECTED:
                 eda_data = self.eda.read()
-                setattr(self.datadict, 'eda', eda_data)
+                # setattr(self.datadict, 'eda', eda_data)
+                self.datadict.eda = eda_data
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
                 eeg_data = self.eeg.read()
-                setattr(self.datadict, 'eeg', eeg_data)
+                # setattr(self.datadict, 'eeg', eeg_data)
+                self.datadict.eeg = eeg_data
                 print(eeg_data)
 
             sleep(0.1)

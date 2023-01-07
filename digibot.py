@@ -7,6 +7,7 @@ from serial.tools import list_ports
 from random import randrange, getrandbits, random
 import logging
 from dataclasses import fields
+from
 
 
 # install dobot modules
@@ -17,14 +18,13 @@ from pydobot.enums.ControlValues import ControlValues
 from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 # install Nebula modules
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import NebulaDataClass, Borg
 
 class Digibot(Dobot):
     """Controls movement and shapes drawn by Dobot.
     Inherets all the functions of Pydobot, and chances a few"""
 
     def __init__(self, port,
-                 datadict: NebulaDataClass,
                  verbose: bool = False,
                  duration_of_piece: int = 120,
                  continuous_line: bool = True,
@@ -38,7 +38,7 @@ class Digibot(Dobot):
         sys.path.insert(0, os.path.abspath('.'))
 
         # own the dataclass
-        self.datadict = datadict
+        self.datadict = Borg()
 
         # start operating vars
         self.duration_of_piece = duration_of_piece
@@ -125,13 +125,15 @@ class Digibot(Dobot):
                 self.move_y()
 
                 # calc rhythmic intensity based on self-awareness factor & global speed
-                intensity = getattr(self.datadict, 'self_awareness')
+                # intensity = getattr(self.datadict, 'self_awareness')
+                intensity = self.datadict.self_awareness
                 logging.debug(f'////////////////////////   intensity =  {intensity}')
 
                 rhythm_rate = (randrange(10,
                                          80) / 100) * self.global_speed
                 # self.datadict['rhythm_rate'] = rhythm_rate
-                setattr(self.datadict, 'rhythm_rate', rhythm_rate)
+                # setattr(self.datadict, 'rhythm_rate', rhythm_rate)
+                self.datadict.rhythm_rate = rhythm_rate
                 logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
 
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
@@ -140,7 +142,8 @@ class Digibot(Dobot):
                 # either user_in, random, net generation or self-awareness
                 rnd = randrange(4)
                 self.rnd_stream = self.affectnames[rnd]
-                setattr(self.datadict, 'affect_decision', self.rnd_stream)
+                # setattr(self.datadict, 'affect_decision', self.rnd_stream)
+                self.datadict.affect_decision = self.rnd_stream
                 logging.info(f'Random stream choice = {self.rnd_stream}')
 
                 # hold this stream for 1-4 secs, unless interrupt bang
@@ -153,11 +156,13 @@ class Digibot(Dobot):
 
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
-                    thought_train = getattr(self.datadict, self.rnd_stream)
+                    # thought_train = getattr(self.datadict, self.rnd_stream)
+                    thought_train = self.datadict.rnd_stream
                     logging.info(f'Affect stream current input value from {self.rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
-                    setattr(self.datadict, 'master_output', thought_train)
+                    # setattr(self.datadict, 'master_output', thought_train)
+                    self.datadict.master_output = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 
                     # # 3. emit to the client at various points in the affect cycle
@@ -171,7 +176,8 @@ class Digibot(Dobot):
                     ###############################################
 
                     # 1. get current mic level
-                    peak = getattr(self.datadict, "user_in")
+                    # peak = getattr(self.datadict, "user_in")
+                    peak = self.datadict.user_in
                     peak_int = int(peak * 10) + 1
                     logging.info(f'testing current mic level for affect = {peak}, rounded to {peak_int}')
 
@@ -286,10 +292,11 @@ class Digibot(Dobot):
     def random_dict_fill(self):
         """Fills the working dataclass with random values. Generally called when
         affect energy is highest"""
-        for field in fields(self.datadict):
+        for field in fields(self.datadict.fields):
             # print(field.name)
             rnd = random()
-            setattr(self.datadict, field.name, rnd)
+            # setattr(self.datadict, field.name, rnd)
+            self.datadict.field.name = rnd
         logging.debug(f'Data dict new random values are = {self.datadict}')
 
     def terminate(self):
