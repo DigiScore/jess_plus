@@ -1,7 +1,6 @@
 # [HARDWARE]
-brainbit = True
-bitalino = False
-dobot = True
+robot = False
+eeg = True
 
 # [BITALINO]
 baudrate = 100

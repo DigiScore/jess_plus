@@ -6,7 +6,7 @@ aims to be felt as co-creative. The response is a flow of
 neural network emissions data packaged as a dictionary,
 and is gestural over time. This, when plugged into a responding
 script (such as a sound generator, or QT graphics) gives
-the impression of the AI creating in-the-moment with the
+the feeling of the AI creating in-the-moment with the
 human in-the-loop.
 
 © Craig Vear 2022
@@ -23,8 +23,8 @@ from time import sleep
 # import Nebula modules
 from nebula.ai_factory import AIFactory
 from nebula.nebula_dataclass import NebulaDataClass, Borg
-from brainbit import BrainbitReader
-from bitalino import BITalino
+# from brainbit import BrainbitReader
+# from bitalino import BITalino
 import config
 
 class Nebula:
@@ -73,26 +73,21 @@ class Nebula:
         # config_object = ConfigParser()
         # config_object.read('config.ini')
 
-        BITALINO_BAUDRATE = config.bitalino
-        BITALINO_ACQ_CHANNELS = config.channels
-        BITALINO_MAC_ADDRESS = config.mac_address
-
-        self.BITALINO_CONNECTED = config.bitalino
-        self.BRAINBIT_CONNECTED = config.brainbit
-
-        # init brainbit reader
-        if self.BRAINBIT_CONNECTED:
-            self.eeg = BrainbitReader()
-            self.eeg.start()
-            first_brain_data = self.eeg.read()
-            logging.info(f'Data from brainbit = {first_brain_data}')
-
-        # # init bitalino
-        if self.BITALINO_CONNECTED:
-            self.eda = BITalino(BITALINO_MAC_ADDRESS)
-            self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
-            first_eda_data = self.eda.read(10)
-            logging.info(f'Data from BITalino = {first_eda_data}')
+        # self.BRAINBIT_CONNECTED = config.brainbit
+        #
+        # # init brainbit reader
+        # if self.BRAINBIT_CONNECTED:
+        #     self.eeg = BrainbitReader()
+        #     self.eeg.start()
+        #     first_brain_data = self.eeg.read()
+        #     logging.info(f'Data from brainbit = {first_brain_data}')
+        #
+        # # # init bitalino
+        # if self.BITALINO_CONNECTED:
+        #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
+        #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
+        #     first_eda_data = self.eda.read(10)
+        #     logging.info(f'Data from BITalino = {first_eda_data}')
 
     def main_loop(self):
         """Starts the server/ AI threads
@@ -100,34 +95,34 @@ class Nebula:
         print('Starting the Nebula Director')
         # declares all threads
         t1 = Thread(target=self.AI_factory.make_data)
-        t2 = Thread(target=self.jess_input)
+        # t2 = Thread(target=self.jess_input)
 
         # start them all
         t1.start()
-        t2.start()
+        # t2.start()
 
-    def jess_input(self):
-        while self.running:
-            # read data from bitalino
-            if self.BITALINO_CONNECTED:
-                eda_data = self.eda.read()
-                # setattr(self.datadict, 'eda', eda_data)
-                self.datadict.eda = eda_data
-
-            # read data from brainbit
-            if self.BRAINBIT_CONNECTED:
-                eeg_data = self.eeg.read()
-                # setattr(self.datadict, 'eeg', eeg_data)
-                self.datadict.eeg = eeg_data
-                print(eeg_data)
-
-            sleep(0.1)
+    # def jess_input(self):
+    #     while self.running:
+    #         # read data from bitalino
+    #         if self.BITALINO_CONNECTED:
+    #             eda_data = self.eda.read()
+    #             # setattr(self.datadict, 'eda', eda_data)
+    #             self.datadict.eda = eda_data
+    #
+    #         # read data from brainbit
+    #         if self.BRAINBIT_CONNECTED:
+    #             eeg_data = self.eeg.read()
+    #             # setattr(self.datadict, 'eeg', eeg_data)
+    #             self.datadict.eeg = eeg_data
+    #             print(eeg_data)
+    #
+    #         sleep(0.1)
 
     def terminate(self):
         # self.affect.quit()
         self.AI_factory.quit()
-        self.eeg.terminate()
-        self.eda.close()
+        # self.eeg.terminate()
+        # self.eda.close()
         self.running = False
 
 if __name__ == '__main':

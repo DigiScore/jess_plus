@@ -7,7 +7,7 @@ from serial.tools import list_ports
 from random import randrange, getrandbits, random
 import logging
 from dataclasses import fields
-from
+
 
 
 # install dobot modules

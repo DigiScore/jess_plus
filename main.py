@@ -10,8 +10,15 @@ from digibot import Digibot
 from nebula.nebula import Nebula
 from nebula.nebula_dataclass import NebulaDataClass, Borg
 from brainbit import BrainbitReader
-from bitalino import BITalino
+# from bitalino import BITalino
 import config
+
+import pyqtgraph as pg
+from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
+from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
+from pyqtgraph.Qt import QtGui, QtCore
+
+
 
 class Main:
     """
@@ -34,6 +41,20 @@ class Main:
 
         # config & logging for all modules
         logging.basicConfig(level=logging.INFO)
+        ROBOT_CONNECTED = config.robot
+        EEG_CONNECTED = config.eeg
+
+        ############################
+        # Brainbit & Ai Factory
+        ############################
+
+        if EEG_CONNECTED:
+            logging.info("Starting EEG connection")
+            self.eeg = BrainbitReader()
+            self.eeg.start()
+            # first_brain_data = self.eeg.read()
+            # logging.info(f'Data from brainbit = {first_brain_data}')
+
 
         # build initial dataclass as a Borg
         # build the Borg and fill with random number
@@ -45,14 +66,17 @@ class Main:
         # init the AI factory
         self.nebula = Nebula(speed=speed)
 
-        # find available ports and locate Dobot (-1)
-        available_ports = list_ports.comports()
-        print(f'available ports: {[x.device for x in available_ports]}')
-        port = available_ports[-1].device
+        ############################
+        # Robot
+        ############################
 
         # start dobot communications
-        DOBOT_CONNECTED = config.dobot
-        if DOBOT_CONNECTED:
+        if ROBOT_CONNECTED:
+            # find available ports and locate Dobot (-1)
+            available_ports = list_ports.comports()
+            print(f'available ports: {[x.device for x in available_ports]}')
+            port = available_ports[-1].device
+
             self.digibot = Digibot(port=port,
                                verbose=False,
                                duration_of_piece=duration_of_piece,
@@ -61,9 +85,15 @@ class Main:
                                staves=staves,
                                pen=pen
                                )
+            dobot_thread = Thread(target=self.digibot.drawbot_control)
+            dobot_thread.start()
 
         # start Nebula AI Factory
         self.nebula.main_loop()
+
+        ############################
+        # Mic listener
+        ############################
 
         # set up mic listening funcs
         self.CHUNK = 2 ** 11
@@ -82,10 +112,46 @@ class Main:
 
         # start the bot listening and drawing threads
         listener_thread = Thread(target=self.listener)
-        dobot_thread = Thread(target=self.digibot.drawbot_control)
-
         listener_thread.start()
-        dobot_thread.start()
+
+        ############################
+        # UI
+        ############################
+        if EEG_CONNECTED:
+
+        # BoardShim.enable_dev_board_logger()
+        # params = BrainFlowInputParams()
+
+            try:
+            #     board_shim = BoardShim(7, params)
+            #     board_shim.prepare_session()
+            #     board_shim.start_stream(450000)
+                Graph(self.eeg)
+            except BaseException:
+                logging.warning('Exception', exc_info=True)
+            finally:
+                logging.info('End')
+        # if self.eeg.is_prepared():
+        #         logging.info('Releasing session')
+        #         board_shim.release_session()
+
+        # self.board_id = self.eeg.get_board_id()
+        # # self.board_shim = board_shim
+        # self.exg_channels = BoardShim.get_exg_channels(self.board_id)
+        # self.sampling_rate = BoardShim.get_sampling_rate(self.board_id)
+        # self.update_speed_ms = 50
+        # self.window_size = 4
+        # self.num_points = self.window_size * self.sampling_rate
+        #
+        # self.app = QtGui.QApplication([])
+        # self.win = pg.GraphicsWindow(title='BrainFlow Plot', size=(800, 600))
+        #
+        # self._init_timeseries()
+        #
+        # timer = QtCore.QTimer()
+        # timer.timeout.connect(self.update)
+        # timer.start(self.update_speed_ms)
+        # QtGui.QApplication.instance().exec_()
 
     def listener(self):
         """Loop thread that listens to live sound and analyses amplitude.
@@ -128,6 +194,58 @@ class Main:
         # self.eeg.terminate()
         # self.eda.close()
 
+class Graph:
+    def __init__(self, eeg_board):
+        self.eeg_board = eeg_board
+        self.board_id = eeg_board.board.get_board_id()
+        self.eeg_board_shim = eeg_board.board
+        self.exg_channels = eeg_board.board.get_exg_channels(self.board_id)
+        self.sampling_rate = eeg_board.board.get_sampling_rate(self.board_id)
+        self.update_speed_ms = 50
+        self.window_size = 4
+        self.num_points = self.window_size * self.sampling_rate
+
+        self.app = QtGui.QApplication([])
+        self.win = pg.GraphicsWindow(title='BrainFlow Plot', size=(800, 600))
+
+        self._init_timeseries()
+
+        timer = QtCore.QTimer()
+        timer.timeout.connect(self.update)
+        timer.start(self.update_speed_ms)
+        QtGui.QApplication.instance().exec_()
+
+    def _init_timeseries(self):
+        self.plots = list()
+        self.curves = list()
+        for i in range(len(self.exg_channels)):
+            p = self.win.addPlot(row=i, col=0)
+            p.showAxis('left', False)
+            p.setMenuEnabled('left', False)
+            p.showAxis('bottom', False)
+            p.setMenuEnabled('bottom', False)
+            if i == 0:
+                p.setTitle('TimeSeries Plot')
+            self.plots.append(p)
+            curve = p.plot()
+            self.curves.append(curve)
+
+    def update(self):
+        # data = self.eeg_board_shim.get_current_board_data(self.num_points)
+        data = self.eeg_board.read(self.num_points)
+        for count, channel in enumerate(self.exg_channels):
+            # plot timeseries
+            DataFilter.detrend(data[channel], DetrendOperations.CONSTANT.value)
+            DataFilter.perform_bandpass(data[channel], self.sampling_rate, 3.0, 45.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 48.0, 52.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 58.0, 62.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            self.curves[count].setData(data[channel].tolist())
+
+        self.app.processEvents()
+
 
 if __name__ == "__main__":
     Main(duration_of_piece=200,
@@ -135,4 +253,3 @@ if __name__ == "__main__":
          speed=10,
          staves=0,
          pen=True)
-
