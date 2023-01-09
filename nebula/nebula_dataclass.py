@@ -51,65 +51,103 @@ class NebulaDataClass:
 #Borg Pattern
 class Borg:
 
-    __monostate = None
+    __shared_state = {"move_rnn": random(),
+                              "affect_rnn": random(),
+                              "move_affect_conv2": random(),
+                              "affect_move_conv2": random(),
+                              "master_output": random(),
+                              "user_in": random(),
+                              "rnd_poetry": random(),
+                              "affect_net": random(),
+                              "self_awareness": random(),
+                              "affect_decision": "",
+                              "rhythm_rate": randrange(30, 100) / 100,
+                              "rnd_stream": "",
+                              "eeg": [0, 0, 0, 0],
+                              }
 
     def __init__(self):
-        if not Borg.__monostate:
-            Borg.__monostate = self.__dict__
-            self.move_rnn: float = random()
-            """Net 1 raw emission"""
+        self.__dict__ = self.__shared_state
 
-            self.affect_rnn: float = random()
-            """Net 2 raw emission"""
 
-            self.move_affect_conv2: float = random()
-            """Net 3 raw emission"""
 
-            self.affect_move_conv2: float = random()
-            """Net 4 raw emission"""
+        # if not Borg.__monostate:
+        #     Borg.__monostate = self.__dict__
+            # self.borg_dict = {"move_rnn": random(),
+            #                   "affect_rnn": random(),
+            #                   "move_affect_conv2": random(),
+            #                   "affect_move_conv2": random(),
+            #                   "master_output": random(),
+            #                   "user_in": random(),
+            #                   "rnd_poetry": random(),
+            #                   "affect_net": random(),
+            #                   "self_awareness": random(),
+            #                   "affect_decision": "",
+            #                   "rhythm_rate": randrange(30, 100) / 100,
+            #                   "rnd_stream": "",
+            #                   "eeg": [0, 0, 0, 0],
+            #                   }
 
-            self.master_output: float = random()
-            """Master output from the affect process"""
 
-            self.user_in: float = random()
-            """Percept input stream from client e.g. live mic level"""
 
-            self.rnd_poetry: float = random()
-            """Random stream to spice things up"""
 
-            self.affect_net: float = random()
-            """Output from affect module"""
 
-            self.self_awareness: float = random()
-            """Net that has some self awareness - ???"""
-
-            self.affect_decision: str = " "
-            """Current stream chosen by affect process"""
-
-            self.rhythm_rate: float = randrange(30, 100) / 100
-            """Internal clock/ rhythm sub division"""
-
-            self.eeg: list = [0, 0, 0, 0]
-            """Live data from brainbit"""
-
-            self.eda: int = 0
-            """Live data from Bitalino"""
-
-            self.fields = ["move_rnn",
-                           "affect_rnn",
-                           "move_affect_conv2",
-                           "affect_move_conv2",
-                           "master_output",
-                           "user_in",
-                           "rnd_poetry",
-                           "affect_net",
-                           "self_awareness",
-                           "affect_decision",
-                           "rhythm_rate",
-                           "eeg",
-                           "eda"
-                           ]
-
-        else:
-            self.__dict__ = Borg.__monostate
-
+            # self.move_rnn: float = random()
+            # """Net 1 raw emission"""
+            #
+            # self.affect_rnn: float = random()
+            # """Net 2 raw emission"""
+            #
+            # self.move_affect_conv2: float = random()
+            # """Net 3 raw emission"""
+            #
+            # self.affect_move_conv2: float = random()
+            # """Net 4 raw emission"""
+            #
+            # self.master_output: float = random()
+            # """Master output from the affect process"""
+            #
+            # self.user_in: float = random()
+            # """Percept input stream from client e.g. live mic level"""
+            #
+            # self.rnd_poetry: float = random()
+            # """Random stream to spice things up"""
+            #
+            # self.affect_net: float = random()
+            # """Output from affect module"""
+            #
+            # self.self_awareness: float = random()
+            # """Net that has some self awareness - ???"""
+            #
+            # self.affect_decision: str = " "
+            # """Current stream chosen by affect process"""
+            #
+            # self.rhythm_rate: float = randrange(30, 100) / 100
+            # """Internal clock/ rhythm sub division"""
+            #
+            # self.rnd_stream: str = ""
+            # """Stream name currently used for active data"""
+            #
+            # self.eeg: list = [0, 0, 0, 0]
+            # """Live data from brainbit"""
+            #
+            # self.eda: int = 0
+            # """Live data from Bitalino"""
+            #
+            # self.fields = [self.move_rnn,
+            #                self.affect_rnn,
+            #                self.move_affect_conv2,
+            #                self.affect_move_conv2,
+            #                self.master_output,
+            #                self.user_in,
+            #                self.rnd_poetry,
+            #                self.affect_net,
+            #                self.self_awareness,
+            #                self.affect_decision,
+            #                self.rhythm_rate,
+            #                self.eeg
+            #                ]
+        #
+        # else:
+        #     self.__dict__ = Borg.__monostate
+        #

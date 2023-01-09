@@ -292,11 +292,14 @@ class Digibot(Dobot):
     def random_dict_fill(self):
         """Fills the working dataclass with random values. Generally called when
         affect energy is highest"""
-        for field in fields(self.datadict.fields):
-            # print(field.name)
+        print(self.datadict.__dict__)
+        for key, value in self.datadict.__dict__.items():
+            # print("old field", field)
             rnd = random()
-            # setattr(self.datadict, field.name, rnd)
-            self.datadict.field.name = rnd
+            setattr(self.datadict, key, rnd)
+            # field = rnd
+            # print("new field", field)
+
         logging.debug(f'Data dict new random values are = {self.datadict}')
 
     def terminate(self):

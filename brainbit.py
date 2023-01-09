@@ -24,8 +24,9 @@ class BrainbitReader:
     def start(self):
         # instantiate the board reading
         try:
-            self.board = BoardShim(self.params.board_id,
+            self.board = BoardShim(7,
                                    self.params)
+            self.board_id = self.board.get_board_id()
 
             self.board.prepare_session()
 
@@ -37,9 +38,9 @@ class BrainbitReader:
             print("BrainBit ALT started")
 
     def read(self, num_points):
+        graph_data = self.board.get_current_board_data(num_points)
         if self.brain_bit:
-            graph_data = self.board.get_current_board_data(num_points)
-            raw_data = self.board.get_board_data()[1:5]
+            raw_data = graph_data[1:5]
             parse_data = raw_data.tolist()
 
             if len(parse_data[0][0:1]) > 0:
@@ -61,25 +62,8 @@ class BrainbitReader:
                          random(),
                          random()
                          ]
-        self.datadict.eda = self.data
+        self.datadict.eeg = self.data
         return graph_data
-
-    # def main_loop(self):
-    #     while self.running:
-    #         # # read data from bitalino
-    #         # if self.BITALINO_CONNECTED:
-    #         #     eda_data = self.eda.read()
-    #         #     # setattr(self.datadict, 'eda', eda_data)
-    #         #     self.datadict.eda = eda_data
-    #
-    #         # read data from brainbit
-    #         # if self.BRAINBIT_CONNECTED:
-    #         eeg_data = self.read()
-    #         # setattr(self.datadict, 'eeg', eeg_data)
-    #         self.datadict.eeg = eeg_data
-    #         print(eeg_data)
-    #
-    #         sleep(0.1)
 
     def terminate(self):
         self.board.stop_stream()

@@ -64,7 +64,6 @@ class AIFactory:
             # rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
             rhythm_rate = self.datadict.rhythm_rate
 
-
             # PATCH BOARD - CROSS PLUGS NET OUTPUTS TO INPUTS
             # get input vars from dict (NB not always self)
             in_val1 = self.get_in_val(0)  # move RNN as input

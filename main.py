@@ -118,40 +118,13 @@ class Main:
         # UI
         ############################
         if EEG_CONNECTED:
-
-        # BoardShim.enable_dev_board_logger()
-        # params = BrainFlowInputParams()
-
             try:
-            #     board_shim = BoardShim(7, params)
-            #     board_shim.prepare_session()
-            #     board_shim.start_stream(450000)
+                print("trying UI")
                 Graph(self.eeg)
             except BaseException:
                 logging.warning('Exception', exc_info=True)
             finally:
                 logging.info('End')
-        # if self.eeg.is_prepared():
-        #         logging.info('Releasing session')
-        #         board_shim.release_session()
-
-        # self.board_id = self.eeg.get_board_id()
-        # # self.board_shim = board_shim
-        # self.exg_channels = BoardShim.get_exg_channels(self.board_id)
-        # self.sampling_rate = BoardShim.get_sampling_rate(self.board_id)
-        # self.update_speed_ms = 50
-        # self.window_size = 4
-        # self.num_points = self.window_size * self.sampling_rate
-        #
-        # self.app = QtGui.QApplication([])
-        # self.win = pg.GraphicsWindow(title='BrainFlow Plot', size=(800, 600))
-        #
-        # self._init_timeseries()
-        #
-        # timer = QtCore.QTimer()
-        # timer.timeout.connect(self.update)
-        # timer.start(self.update_speed_ms)
-        # QtGui.QApplication.instance().exec_()
 
     def listener(self):
         """Loop thread that listens to live sound and analyses amplitude.
@@ -182,6 +155,7 @@ class Main:
 
             # put normalised amplitude into Nebula's dictionary for use
             setattr(self.datadict, 'user_in', normalised_peak)
+            # self.datadict['user in'] = normalised_peak
 
         logging.info('quitting listener thread')
 
@@ -197,16 +171,16 @@ class Main:
 class Graph:
     def __init__(self, eeg_board):
         self.eeg_board = eeg_board
-        self.board_id = eeg_board.board.get_board_id()
         self.eeg_board_shim = eeg_board.board
-        self.exg_channels = eeg_board.board.get_exg_channels(self.board_id)
-        self.sampling_rate = eeg_board.board.get_sampling_rate(self.board_id)
+        # self.board_id = self.eeg_board_shim.get_board_id()
+        self.exg_channels = self.eeg_board_shim.get_exg_channels(self.eeg_board_shim .board_id)
+        self.sampling_rate = self.eeg_board_shim.get_sampling_rate(self.eeg_board_shim .board_id)
         self.update_speed_ms = 50
         self.window_size = 4
         self.num_points = self.window_size * self.sampling_rate
 
         self.app = QtGui.QApplication([])
-        self.win = pg.GraphicsWindow(title='BrainFlow Plot', size=(800, 600))
+        self.win = pg.GraphicsLayoutWidget(title='BrainFlow Plot', size=(800, 600))
 
         self._init_timeseries()
 
@@ -231,7 +205,7 @@ class Graph:
             self.curves.append(curve)
 
     def update(self):
-        # data = self.eeg_board_shim.get_current_board_data(self.num_points)
+        # read brainbit and populate Borg
         data = self.eeg_board.read(self.num_points)
         for count, channel in enumerate(self.exg_channels):
             # plot timeseries
