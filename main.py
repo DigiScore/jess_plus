@@ -8,7 +8,7 @@ from configparser import ConfigParser
 
 from digibot import Digibot
 from nebula.nebula import Nebula
-from nebula.nebula_dataclass import NebulaDataClass, Borg
+from nebula.nebula_dataclass import DataBorg
 from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -56,10 +56,10 @@ class Main:
             # logging.info(f'Data from brainbit = {first_brain_data}')
 
 
-        # build initial dataclass as a Borg
-        # build the Borg and fill with random number
+        # build initial dataclass as a DataBorg
+        # build the DataBorg and fill with random number
         # self.datadict = NebulaDataClass()
-        self.datadict = Borg()
+        self.datadict = DataBorg()
 
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
@@ -118,13 +118,18 @@ class Main:
         # UI
         ############################
         if EEG_CONNECTED:
-            try:
-                print("trying UI")
-                Graph(self.eeg)
-            except BaseException:
-                logging.warning('Exception', exc_info=True)
-            finally:
-                logging.info('End')
+            # try:
+            print("building UI")
+            Graph(self.eeg)
+            # except BaseException:
+            #     logging.warning('Exception', exc_info=True)
+            # finally:
+            #     logging.info('End')
+
+        # graph.threader()
+        # graph.timer.timeout.connect(self.graph.update)
+        # graph.timer.start(self.graph.update_speed_ms)
+        # QtGui.QApplication.instance().exec_()
 
     def listener(self):
         """Loop thread that listens to live sound and analyses amplitude.
@@ -170,6 +175,7 @@ class Main:
 
 class Graph:
     def __init__(self, eeg_board):
+        print("Initialising EEG graph")
         self.eeg_board = eeg_board
         self.eeg_board_shim = eeg_board.board
         # self.board_id = self.eeg_board_shim.get_board_id()
@@ -183,6 +189,7 @@ class Graph:
         self.win = pg.GraphicsLayoutWidget(title='BrainFlow Plot', size=(800, 600))
 
         self._init_timeseries()
+        print("here")
 
         timer = QtCore.QTimer()
         timer.timeout.connect(self.update)
@@ -205,7 +212,7 @@ class Graph:
             self.curves.append(curve)
 
     def update(self):
-        # read brainbit and populate Borg
+        # read brainbit and populate DataBorg
         data = self.eeg_board.read(self.num_points)
         for count, channel in enumerate(self.exg_channels):
             # plot timeseries

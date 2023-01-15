@@ -6,7 +6,7 @@ import numpy as np
 from time import sleep
 
 # install Nebula modules
-from nebula.nebula_dataclass import NebulaDataClass, Borg
+from nebula.nebula_dataclass import DataBorg
 
 
 class AIFactory:
@@ -23,7 +23,7 @@ class AIFactory:
         NB - the list of netnames will also need updating"""
 
         self.net_logging = False
-        self.datadict = Borg()
+        self.datadict = DataBorg()
         self.global_speed = speed
         self.running = True
 
@@ -104,6 +104,8 @@ class AIFactory:
     def get_in_val(self, which_dict):
         # get the current value and reshape ready for input for prediction
         input_val = getattr(self.datadict, self.netnames[which_dict])
+        # dict_name = self.netnames[which_dict]
+        # input_val = self.datadict.dict_name
         # print("input val", input_val)
         input_val = np.reshape(input_val, (1, 1, 1))
         input_val = tf.convert_to_tensor(input_val, np.float32)

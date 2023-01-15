@@ -18,7 +18,7 @@ from pydobot.enums.ControlValues import ControlValues
 from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 # install Nebula modules
-from nebula.nebula_dataclass import NebulaDataClass, Borg
+from nebula.nebula_dataclass import DataBorg
 
 class Digibot(Dobot):
     """Controls movement and shapes drawn by Dobot.
@@ -38,7 +38,7 @@ class Digibot(Dobot):
         sys.path.insert(0, os.path.abspath('.'))
 
         # own the dataclass
-        self.datadict = Borg()
+        self.datadict = DataBorg()
 
         # start operating vars
         self.duration_of_piece = duration_of_piece
@@ -292,14 +292,14 @@ class Digibot(Dobot):
     def random_dict_fill(self):
         """Fills the working dataclass with random values. Generally called when
         affect energy is highest"""
-        print(self.datadict.__dict__)
-        for key, value in self.datadict.__dict__.items():
-            # print("old field", field)
-            rnd = random()
-            setattr(self.datadict, key, rnd)
-            # field = rnd
-            # print("new field", field)
-
+        # print(self.datadict.__dict__)
+        # for key, value in self.datadict.__dict__.items():
+        #     # print("old field", field)
+        #     rnd = random()
+        #     setattr(self.datadict, key, rnd)
+        #     # field = rnd
+        #     # print("new field", field)
+        self.datadict.randomiser()
         logging.debug(f'Data dict new random values are = {self.datadict}')
 
     def terminate(self):

@@ -22,7 +22,7 @@ from time import sleep
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-from nebula.nebula_dataclass import NebulaDataClass, Borg
+from nebula.nebula_dataclass import DataBorg
 # from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -62,7 +62,7 @@ class Nebula:
 
         # build the dataclass and fill with random number
         # self.datadict = datadict
-        self.datadict = Borg
+        self.datadict = DataBorg
 
         logging.debug(f'Data dict initial values are = {self.datadict}')
 

@@ -1,7 +1,7 @@
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from time import sleep
 from random import random
-from nebula.nebula_dataclass import Borg
+from nebula.nebula_dataclass import DataBorg
 
 
 class BrainbitReader:
@@ -18,7 +18,7 @@ class BrainbitReader:
         self.brain_bit = False
 
         # get dataclass
-        self.datadict = Borg()
+        self.datadict = DataBorg()
         self.running = True
 
     def start(self):
