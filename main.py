@@ -5,6 +5,7 @@ import numpy as np
 import logging
 from serial.tools import list_ports
 from configparser import ConfigParser
+import threading
 
 from digibot import Digibot
 from nebula.nebula import Nebula
@@ -191,9 +192,14 @@ class Graph:
         self._init_timeseries()
         print("here")
 
-        timer = QtCore.QTimer()
-        timer.timeout.connect(self.update)
-        timer.start(self.update_speed_ms)
+        # timer = QtCore.QTimer()
+        # timer.timeout.connect(self.update)
+        # timer.start(self.update_speed_ms)
+
+        # self.app.update()
+        self.gui_thread = threading.Timer(self.update_speed_ms, self.update_gui)
+        self.gui_thread.start()
+
         QtGui.QApplication.instance().exec_()
 
     def _init_timeseries(self):
@@ -211,8 +217,9 @@ class Graph:
             curve = p.plot()
             self.curves.append(curve)
 
-    def update(self):
+    def update_gui(self):
         # read brainbit and populate DataBorg
+
         data = self.eeg_board.read(self.num_points)
         for count, channel in enumerate(self.exg_channels):
             # plot timeseries
@@ -226,6 +233,7 @@ class Graph:
             self.curves[count].setData(data[channel].tolist())
 
         self.app.processEvents()
+        # self.app.update()
 
 
 if __name__ == "__main__":
