@@ -32,7 +32,7 @@ class BrainbitReader:
             self.board.prepare_session()
 
             # board.start_stream () # use this for default options
-            self.board.start_stream(48000) # removed 2
+            self.board.start_stream(450000) # removed 2
             print('BrainBit stream started')
             self.brain_bit = True
         except:

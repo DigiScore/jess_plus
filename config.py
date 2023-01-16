@@ -1,6 +1,7 @@
 # [HARDWARE]
 robot = True
 eeg = True
+eeg_graph = False
 
 # [BITALINO]
 baudrate = 100
