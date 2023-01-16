@@ -118,6 +118,7 @@ class Main:
             first_brain_data = self.eeg_board.read(255)
             logging.info(f'Data from brainbit = {first_brain_data}')
 
+            # todo - graph widget doesnt show. need different solution.
             # try:
             if GRAPH:
                 print("building UI")
