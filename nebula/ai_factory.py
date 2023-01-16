@@ -6,14 +6,15 @@ import numpy as np
 from time import sleep
 
 # install Nebula modules
-from nebula.nebula_dataclass import DataBorg
+from nebula.nebula_dataclass import NebulaDataClass
 
 
 class AIFactory:
     """Builds a factory of neural networks and manages the data flows."""
 
     def __init__(self,
-                 speed: float = 1
+                 speed: float = 1,
+                 datadict=NebulaDataClass
                  ):
         print('Building the AI Factory')
         # todo - build as a class where user only inputs the list of nets required
@@ -23,7 +24,7 @@ class AIFactory:
         NB - the list of netnames will also need updating"""
 
         self.net_logging = False
-        self.datadict = DataBorg()
+        self.datadict = datadict
         self.global_speed = speed
         self.running = True
 
@@ -61,8 +62,8 @@ class AIFactory:
         # now spin the plate and do its own ting
         while self.running:
             # get the first rhythm rate from the datadict
-            # rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
-            rhythm_rate = self.datadict.rhythm_rate
+            rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
+            # rhythm_rate = self.datadict.rhythm_rate
 
             # PATCH BOARD - CROSS PLUGS NET OUTPUTS TO INPUTS
             # get input vars from dict (NB not always self)
@@ -82,8 +83,8 @@ class AIFactory:
             self_aware_pred = self.affect_perception.predict(self_aware_input, verbose=0)
 
             # emits a stream of random poetry
-            # setattr(self.datadict, 'rnd_poetry', random())
-            self.datadict.rnd_poetry = random()
+            setattr(self.datadict, 'rnd_poetry', random())
+            # self.datadict.rnd_poetry = random()
 
             logging.debug(f"  'move_rnn' in: {in_val1} predicted {pred1}")
             logging.debug(f"  'affect_rnn' in: {in_val2} predicted {pred2}")
@@ -120,9 +121,9 @@ class AIFactory:
 
         # get random variable and save to data dict
         individual_val = out_pred_val[randrange(4)]
-        # setattr(self.datadict, self.netnames[which_dict], individual_val)
-        this_dict = self.netnames[which_dict]
-        self.datadict.this_dict = individual_val
+        setattr(self.datadict, self.netnames[which_dict], individual_val)
+        # this_dict = self.netnames[which_dict]
+        # self.datadict.this_dict = individual_val
 
     def quit(self):
         self.running = False

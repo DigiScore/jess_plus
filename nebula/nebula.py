@@ -22,7 +22,7 @@ from time import sleep
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-from nebula.nebula_dataclass import DataBorg
+from nebula.nebula_dataclass import NebulaDataClass
 # from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -51,6 +51,7 @@ class Nebula:
 
     def __init__(self,
                  speed=1,
+                 datadict=NebulaDataClass
                  ):
         print('building engine server')
 
@@ -62,12 +63,12 @@ class Nebula:
 
         # build the dataclass and fill with random number
         # self.datadict = datadict
-        self.datadict = DataBorg
+        self.datadict = datadict
 
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(speed)
+        self.AI_factory = AIFactory(speed, datadict)
 
         # init the EEG and EDA percepts
         # config_object = ConfigParser()
@@ -77,9 +78,9 @@ class Nebula:
         #
         # # init brainbit reader
         # if self.BRAINBIT_CONNECTED:
-        #     self.eeg = BrainbitReader()
-        #     self.eeg.start()
-        #     first_brain_data = self.eeg.read()
+        #     self.eeg_board = BrainbitReader()
+        #     self.eeg_board.start()
+        #     first_brain_data = self.eeg_board.read()
         #     logging.info(f'Data from brainbit = {first_brain_data}')
         #
         # # # init bitalino
@@ -111,9 +112,9 @@ class Nebula:
     #
     #         # read data from brainbit
     #         if self.BRAINBIT_CONNECTED:
-    #             eeg_data = self.eeg.read()
-    #             # setattr(self.datadict, 'eeg', eeg_data)
-    #             self.datadict.eeg = eeg_data
+    #             eeg_data = self.eeg_board.read()
+    #             # setattr(self.datadict, 'eeg_board', eeg_data)
+    #             self.datadict.eeg_board = eeg_data
     #             print(eeg_data)
     #
     #         sleep(0.1)
@@ -121,7 +122,7 @@ class Nebula:
     def terminate(self):
         # self.affect.quit()
         self.AI_factory.quit()
-        # self.eeg.terminate()
+        # self.eeg_board.terminate()
         # self.eda.close()
         self.running = False
 

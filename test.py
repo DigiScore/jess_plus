@@ -12,7 +12,7 @@ self.borg_dict = {"move_rnn": random(),
                   "affect_decision": "",
                   "rhythm_rate": randrange(30, 100) / 100,
                   "rnd_stream": "",
-                  "eeg": [0, 0, 0, 0],
+                  "eeg_board": [0, 0, 0, 0],
                   }
 
 
@@ -117,7 +117,7 @@ self.borg_dict = {"move_rnn": random(),
 # #     board.prepare_session()
 # #     board.start_stream(45000)
 # #     BoardShim.log_message(LogLevels.LEVEL_INFO.value, 'start sleeping in the main thread')
-# #     time.sleep(5)  # recommended window size for eeg metric calculation is at least 4 seconds, bigger is better
+# #     time.sleep(5)  # recommended window size for eeg_board metric calculation is at least 4 seconds, bigger is better
 # #     # data = board.get_board_data()
 # #     # board.stop_stream()
 # #     # board.release_session()

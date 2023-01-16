@@ -1,5 +1,5 @@
 # [HARDWARE]
-robot = False
+robot = True
 eeg = True
 
 # [BITALINO]

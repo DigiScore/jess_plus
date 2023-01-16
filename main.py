@@ -9,7 +9,7 @@ import threading
 
 from digibot import Digibot
 from nebula.nebula import Nebula
-from nebula.nebula_dataclass import DataBorg
+from nebula.nebula_dataclass import NebulaDataClass
 from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -45,27 +45,28 @@ class Main:
         ROBOT_CONNECTED = config.robot
         EEG_CONNECTED = config.eeg
 
+        # build initial dataclass as a DataBorg
+        # build the DataBorg and fill with random number
+        # self.datadict = NebulaDataClass()
+        self.datadict = NebulaDataClass()
+
         ############################
         # Brainbit & Ai Factory
         ############################
 
         if EEG_CONNECTED:
             logging.info("Starting EEG connection")
-            self.eeg = BrainbitReader()
-            self.eeg.start()
-            # first_brain_data = self.eeg.read()
+            self.eeg_board = BrainbitReader(self.datadict)
+            self.eeg_board.start()
+            # first_brain_data = self.eeg_board.read()
             # logging.info(f'Data from brainbit = {first_brain_data}')
 
-
-        # build initial dataclass as a DataBorg
-        # build the DataBorg and fill with random number
-        # self.datadict = NebulaDataClass()
-        self.datadict = DataBorg()
 
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # init the AI factory
-        self.nebula = Nebula(speed=speed)
+        self.nebula = Nebula(speed=speed,
+                             datadict=self.datadict)
 
         ############################
         # Robot
@@ -79,13 +80,14 @@ class Main:
             port = available_ports[-1].device
 
             self.digibot = Digibot(port=port,
-                               verbose=False,
-                               duration_of_piece=duration_of_piece,
-                               continuous_line=continuous_line,
-                               speed=speed,
-                               staves=staves,
-                               pen=pen
-                               )
+                                   verbose=False,
+                                   duration_of_piece=duration_of_piece,
+                                   continuous_line=continuous_line,
+                                   speed=speed,
+                                   staves=staves,
+                                   pen=pen,
+                                   datadict=self.datadict
+                                   )
             dobot_thread = Thread(target=self.digibot.drawbot_control)
             dobot_thread.start()
 
@@ -121,16 +123,63 @@ class Main:
         if EEG_CONNECTED:
             # try:
             print("building UI")
-            Graph(self.eeg)
-            # except BaseException:
-            #     logging.warning('Exception', exc_info=True)
-            # finally:
-            #     logging.info('End')
+            # Graph(self.eeg_board)
+            self.eeg_board_shim = self.eeg_board.board
+            # self.board_id = self.eeg_board_shim.get_board_id()
+            self.exg_channels = self.eeg_board_shim.get_exg_channels(self.eeg_board_shim.board_id)
+            self.sampling_rate = self.eeg_board_shim.get_sampling_rate(self.eeg_board_shim.board_id)
+            self.update_speed_ms = 50
+            self.window_size = 4
+            self.num_points = self.window_size * self.sampling_rate
 
-        # graph.threader()
-        # graph.timer.timeout.connect(self.graph.update)
-        # graph.timer.start(self.graph.update_speed_ms)
-        # QtGui.QApplication.instance().exec_()
+            self.app = QtGui.QApplication([])
+            self.win = pg.GraphicsLayoutWidget(title='BrainFlow Plot', size=(800, 600))
+
+            self._init_timeseries()
+            print("here")
+
+            # timer = QtCore.QTimer()
+            # timer.timeout.connect(self.update_gui)
+            # timer.start(self.update_speed_ms)
+
+            self.win.update()
+            self.gui_thread = threading.Timer(self.update_speed_ms, self.update_gui)
+            self.gui_thread.start()
+
+            QtGui.QApplication.instance().exec_()
+
+        print("here 2")
+    def _init_timeseries(self):
+        self.plots = list()
+        self.curves = list()
+        for i in range(len(self.exg_channels)):
+            p = self.win.addPlot(row=i, col=0)
+            p.showAxis('left', False)
+            p.setMenuEnabled('left', False)
+            p.showAxis('bottom', False)
+            p.setMenuEnabled('bottom', False)
+            if i == 0:
+                p.setTitle('TimeSeries Plot')
+            self.plots.append(p)
+            curve = p.plot()
+            self.curves.append(curve)
+
+    def update_gui(self):
+        # read brainbit and populate DataBorg
+        data = self.eeg_board.read(self.num_points)
+        for count, channel in enumerate(self.exg_channels):
+            # plot timeseries
+            DataFilter.detrend(data[channel], DetrendOperations.CONSTANT.value)
+            DataFilter.perform_bandpass(data[channel], self.sampling_rate, 3.0, 45.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 48.0, 52.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 58.0, 62.0, 2,
+                                        FilterTypes.BUTTERWORTH.value, 0)
+            self.curves[count].setData(data[channel].tolist())
+
+        self.app.processEvents()
+        self.win.update()
 
     def listener(self):
         """Loop thread that listens to live sound and analyses amplitude.
@@ -171,69 +220,69 @@ class Main:
         self.digibot.running = False
         self.digibot.home()
         self.digibot.close()
-        # self.eeg.terminate()
+        # self.eeg_board.terminate()
         # self.eda.close()
 
-class Graph:
-    def __init__(self, eeg_board):
-        print("Initialising EEG graph")
-        self.eeg_board = eeg_board
-        self.eeg_board_shim = eeg_board.board
-        # self.board_id = self.eeg_board_shim.get_board_id()
-        self.exg_channels = self.eeg_board_shim.get_exg_channels(self.eeg_board_shim .board_id)
-        self.sampling_rate = self.eeg_board_shim.get_sampling_rate(self.eeg_board_shim .board_id)
-        self.update_speed_ms = 50
-        self.window_size = 4
-        self.num_points = self.window_size * self.sampling_rate
-
-        self.app = QtGui.QApplication([])
-        self.win = pg.GraphicsLayoutWidget(title='BrainFlow Plot', size=(800, 600))
-
-        self._init_timeseries()
-        print("here")
-
-        # timer = QtCore.QTimer()
-        # timer.timeout.connect(self.update)
-        # timer.start(self.update_speed_ms)
-
-        # self.app.update()
-        self.gui_thread = threading.Timer(self.update_speed_ms, self.update_gui)
-        self.gui_thread.start()
-
-        QtGui.QApplication.instance().exec_()
-
-    def _init_timeseries(self):
-        self.plots = list()
-        self.curves = list()
-        for i in range(len(self.exg_channels)):
-            p = self.win.addPlot(row=i, col=0)
-            p.showAxis('left', False)
-            p.setMenuEnabled('left', False)
-            p.showAxis('bottom', False)
-            p.setMenuEnabled('bottom', False)
-            if i == 0:
-                p.setTitle('TimeSeries Plot')
-            self.plots.append(p)
-            curve = p.plot()
-            self.curves.append(curve)
-
-    def update_gui(self):
-        # read brainbit and populate DataBorg
-
-        data = self.eeg_board.read(self.num_points)
-        for count, channel in enumerate(self.exg_channels):
-            # plot timeseries
-            DataFilter.detrend(data[channel], DetrendOperations.CONSTANT.value)
-            DataFilter.perform_bandpass(data[channel], self.sampling_rate, 3.0, 45.0, 2,
-                                        FilterTypes.BUTTERWORTH.value, 0)
-            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 48.0, 52.0, 2,
-                                        FilterTypes.BUTTERWORTH.value, 0)
-            DataFilter.perform_bandstop(data[channel], self.sampling_rate, 58.0, 62.0, 2,
-                                        FilterTypes.BUTTERWORTH.value, 0)
-            self.curves[count].setData(data[channel].tolist())
-
-        self.app.processEvents()
-        # self.app.update()
+# class Graph:
+#     def __init__(self, eeg_board):
+#         print("Initialising EEG graph")
+#         self.eeg_board = eeg_board
+#         self.eeg_board_shim = eeg_board.board
+#         # self.board_id = self.eeg_board_shim.get_board_id()
+#         self.exg_channels = self.eeg_board_shim.get_exg_channels(self.eeg_board_shim .board_id)
+#         self.sampling_rate = self.eeg_board_shim.get_sampling_rate(self.eeg_board_shim .board_id)
+#         self.update_speed_ms = 50
+#         self.window_size = 4
+#         self.num_points = self.window_size * self.sampling_rate
+#
+#         self.app = QtGui.QApplication([])
+#         self.win = pg.GraphicsLayoutWidget(title='BrainFlow Plot', size=(800, 600))
+#
+#         self._init_timeseries()
+#         print("here")
+#
+#         # timer = QtCore.QTimer()
+#         # timer.timeout.connect(self.update)
+#         # timer.start(self.update_speed_ms)
+#
+#         # self.app.update()
+#         self.gui_thread = threading.Timer(self.update_speed_ms, self.update_gui)
+#         self.gui_thread.start()
+#
+#         QtGui.QApplication.instance().exec_()
+#
+#     def _init_timeseries(self):
+#         self.plots = list()
+#         self.curves = list()
+#         for i in range(len(self.exg_channels)):
+#             p = self.win.addPlot(row=i, col=0)
+#             p.showAxis('left', False)
+#             p.setMenuEnabled('left', False)
+#             p.showAxis('bottom', False)
+#             p.setMenuEnabled('bottom', False)
+#             if i == 0:
+#                 p.setTitle('TimeSeries Plot')
+#             self.plots.append(p)
+#             curve = p.plot()
+#             self.curves.append(curve)
+#
+#     def update_gui(self):
+#         # read brainbit and populate DataBorg
+#
+#         data = self.eeg_board.read(self.num_points)
+#         for count, channel in enumerate(self.exg_channels):
+#             # plot timeseries
+#             DataFilter.detrend(data[channel], DetrendOperations.CONSTANT.value)
+#             DataFilter.perform_bandpass(data[channel], self.sampling_rate, 3.0, 45.0, 2,
+#                                         FilterTypes.BUTTERWORTH.value, 0)
+#             DataFilter.perform_bandstop(data[channel], self.sampling_rate, 48.0, 52.0, 2,
+#                                         FilterTypes.BUTTERWORTH.value, 0)
+#             DataFilter.perform_bandstop(data[channel], self.sampling_rate, 58.0, 62.0, 2,
+#                                         FilterTypes.BUTTERWORTH.value, 0)
+#             self.curves[count].setData(data[channel].tolist())
+#
+#         self.app.processEvents()
+#         # self.app.update()
 
 
 if __name__ == "__main__":
