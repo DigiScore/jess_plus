@@ -211,6 +211,7 @@ class Graph:
             self.curves.append(curve)
 
     def update(self):
+        # todo - this isnt showing as a screen.
         # read brainbit and populate DataBorg
         data = self.eeg_board.read(self.num_points)
         # print("updating")
@@ -231,7 +232,7 @@ class Graph:
 
 if __name__ == "__main__":
     Main(duration_of_piece=200,
-         continuous_line=True,
+         continuous_line=False,
          speed=10,
          staves=0,
          pen=True)

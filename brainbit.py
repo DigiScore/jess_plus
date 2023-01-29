@@ -64,6 +64,7 @@ class BrainbitReader:
                          random()
                          ]
         # self.datadict.eeg = self.data
+        print(f"BrainBit data = {self.data}")
         setattr(self.datadict, 'eeg', self.data)
         return graph_data
 
