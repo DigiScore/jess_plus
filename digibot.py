@@ -8,8 +8,6 @@ from random import randrange, getrandbits, random
 import logging
 from dataclasses import fields
 
-
-
 # install dobot modules
 from pydobot import Dobot
 from pydobot.enums import PTPMode
@@ -19,6 +17,12 @@ from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 # install Nebula modules
 from nebula.nebula_dataclass import NebulaDataClass
+
+
+
+
+# todo - this needs to be split into Affect/ gesture module AND drawbot control.
+
 
 class Digibot(Dobot):
     """Controls movement and shapes drawn by Dobot.
