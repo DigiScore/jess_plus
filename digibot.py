@@ -24,7 +24,7 @@ from drawbot import Drawbot
 
 class Digibot:
     """Controls movement and shapes drawn by Dobot.
-    Inherets all the functions of Pydobot, and chances a few"""
+    """
 
     def __init__(self, port,
                  verbose: bool = False,
@@ -239,7 +239,7 @@ class Digibot:
 
         # 0= line to somewhere
         if randchoice == 0:
-            self.drawbot.move_to(x + self.rnd(peak),
+            self.drawbot.bot_move_to(x + self.rnd(peak),
                                  y + self.rnd(peak),
                                  z, 0,
                                  False)
@@ -259,7 +259,7 @@ class Digibot:
         # 2 = dot & line
         elif randchoice == 2:
             self.drawbot.dot()
-            self.drawbot.move_to(x + self.rnd(peak),
+            self.drawbot.bot_move_to(x + self.rnd(peak),
                                  y + self.rnd(peak),
                                  z, 0,
                                  False)
@@ -276,7 +276,7 @@ class Digibot:
         elif randchoice == 4:
             note_size = randrange(1, 10)
             self.drawbot.note_head(size=note_size)
-            self.drawbot.move_to(x + self.rnd(peak),
+            self.drawbot.bot_move_to(x + self.rnd(peak),
                                  y + self.rnd(peak),
                                  z, 0,
                                  False)
@@ -290,7 +290,7 @@ class Digibot:
 
     def high_energy_response(self):
         """move to a random x, y position"""
-        self.drawbot._set_queued_cmd_clear()
+        self.drawbot.clear_commands()
         self.drawbot.move_y_random()
 
     def random_dict_fill(self):

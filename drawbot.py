@@ -16,6 +16,10 @@ from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 ######################
 
 class Drawbot(Dobot):
+    """Translation class for digibot arm control
+    and primitive commands of robot arm.
+    If using a different robot arm, this class will need to
+    be updated. All others classes should remain the same"""
 
     def __init__(self,
                  port,
@@ -68,7 +72,7 @@ class Drawbot(Dobot):
 
         # which mode
         if self.continuous_line:
-            self.move_to(x, newy, z, r, True)
+            self.bot_move_to(x, newy, z, r, True)
         else:
             self.jump_to(x, newy, z, r, True)
 
@@ -92,7 +96,7 @@ class Drawbot(Dobot):
 
         # which mode
         if self.continuous_line:
-            self.move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
 
@@ -170,14 +174,14 @@ class Drawbot(Dobot):
         r = 0
 
         # goto start position for line draw, without pen
-        self.move_to(x, y_start, z, r)
+        self.bot_move_to(x, y_start, z, r)
         input('insert pen, then press enter')
 
         if staves >= 1:
             # draw a line/ stave
             for stave in range(staves):
                 print(f'drawing stave {stave + 1} out of {staves}')
-                self.move_to(x, y_end, z, r)
+                self.bot_move_to(x, y_end, z, r)
 
                 if staves > 1:
                     # reset to RH and draw the rest
@@ -223,7 +227,7 @@ class Drawbot(Dobot):
 
     def follow_path(self, path):
         for point in path:
-            queue_index = self.move_to(point[0], point[1], point[2], 0)
+            queue_index = self.bot_move_to(point[0], point[1], point[2], 0)
 
     def continuous_trajectory(self, x, y, z, velocity = 50, wait = True):
         msg = Message()
@@ -241,17 +245,17 @@ class Drawbot(Dobot):
     def go_position_ready(self):
         """moves directly to pre-defined position 'Ready Position'"""
         x, y, z, r = self.ready_position[:4]
-        self.move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_draw(self):
         """moves directly to pre-defined position 'Ready Position'"""
         x, y, z, r = self.draw_position[:4]
-        self.move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_end(self):
         """moves directly to pre-defined position 'end position'"""
         x, y, z, r = self.end_position[:4]
-        self.move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=True)
 
     def jump_to(self, x, y, z, r, wait=True):
         """Lifts pen up, and moves directly to defined coordinates (x, y, z, r)"""
@@ -295,7 +299,11 @@ class Drawbot(Dobot):
         (x, y, z, r, j1, j2, j3, j4) = self.pose()
         self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
 
+    def bot_move_to(self, x, y, z, r, wait=False):
+        self.move_to(x, y, z, r, wait)
 
+    def clear_commands(self):
+        self._set_queued_cmd_clear()
 
 #
 # def dobot_control(self):
