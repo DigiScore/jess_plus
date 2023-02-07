@@ -221,6 +221,7 @@ class Digibot:
 
                     # LOW
                     # nothing happens here
+                    # todo - this is why its not doing anythong BROOKS !!!
                     elif peak <= 0.1:
                         logging.info('interrupt LOW ----------- move Y')
 
