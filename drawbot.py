@@ -11,6 +11,9 @@ from pydobot.enums.ControlValues import ControlValues
 from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 
+# todo ADAMS script
+
+
 ######################
 # DRAWBOT CONTROLS
 ######################

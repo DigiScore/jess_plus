@@ -27,6 +27,8 @@ from nebula.nebula_dataclass import NebulaDataClass
 # from bitalino import BITalino
 import config
 
+# todo JOHANNS script
+
 class Nebula:
     """Nebula is the core "director" of an AI factory.
      It generates data in response to incoming percpts
@@ -127,6 +129,6 @@ class Nebula:
         self.running = False
 
 if __name__ == '__main':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     test = Nebula()
-    test.director()
+    test.main_loop()

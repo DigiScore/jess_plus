@@ -22,6 +22,8 @@ from nebula.nebula_dataclass import NebulaDataClass
 from drawbot import Drawbot
 
 
+# todo - CRAIGS script
+
 class Digibot:
     """Controls movement and shapes drawn by Dobot.
     """
@@ -137,6 +139,7 @@ class Digibot:
                 intensity = getattr(self.datadict, 'self_awareness')
                 logging.debug(f'////////////////////////   intensity =  {intensity}')
 
+                # todo - CRAIG sort this out.!!
                 rhythm_rate = (randrange(10,
                                          80) / 100) * self.global_speed
                 setattr(self.datadict, 'rhythm_rate', rhythm_rate)
@@ -146,6 +149,7 @@ class Digibot:
 
                 # randomly pick an input stream for this cycle
                 # either user_in, random, net generation or self-awareness
+                # todo - ALL how many streams?
                 rnd = randrange(4)
                 self.rnd_stream = self.affectnames[rnd]
                 setattr(self.datadict, 'affect_decision', self.rnd_stream)

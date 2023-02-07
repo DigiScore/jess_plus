@@ -9,6 +9,8 @@ from time import sleep
 from nebula.nebula_dataclass import NebulaDataClass
 
 
+# todo JOHANN's script
+
 class AIFactory:
     """Builds a factory of neural networks and manages the data flows."""
 
