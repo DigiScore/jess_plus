@@ -41,7 +41,7 @@ class Main:
                  pen: bool = True):
 
         # config & logging for all modules
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.DEBUG)
         ROBOT_CONNECTED = config.robot
         EEG_CONNECTED = config.eeg
         GRAPH = config.eeg_graph
