@@ -80,6 +80,7 @@ class Digibot:
         self.drawbot.home()
         input('remove pen, then press enter')
 
+        # todo - this should be decided in line with self.awareness
         arm_speed = (((speed - 1) * (300 - 50)) / (10 - 1)) + 50
         self.drawbot.speed(velocity=arm_speed,
                    acceleration=arm_speed)
@@ -187,6 +188,7 @@ class Digibot:
                     # self.datadict.master_output = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
                     # todo - CRAIG is this doing anything? shouldn't "peak" be the output from the thought train
+                    # todo - CRAIG split this function ... mic listener CAN infuence looping behaviour, BUT "peak" should be thought streams
 
 
                     # # 3. emit to the client at various points in the affect cycle
