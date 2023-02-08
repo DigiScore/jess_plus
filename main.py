@@ -153,7 +153,7 @@ class Main:
                 normalised_peak = 1.0
 
             # put normalised amplitude into Nebula's dictionary for use
-            setattr(self.datadict, 'user_in', normalised_peak)
+            setattr(self.datadict, 'mic_in', normalised_peak)
             # self.datadict['user in'] = normalised_peak
 
         logging.info('quitting listener thread')

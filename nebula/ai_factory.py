@@ -19,7 +19,6 @@ class AIFactory:
                  datadict=NebulaDataClass
                  ):
         print('Building the AI Factory')
-        # todo - build as a class where user only inputs the list of nets required
 
         """Builds the individual neural nets that constitute the AI factory.
         This will need modifying if and when a new AI factory design is implemented.
@@ -44,6 +43,7 @@ class AIFactory:
 
         tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
+        # todo is this needed if we migrate all patching to the datadict/ borg
         # name list for nets that align to factory above
         self.netnames = ['move_rnn',
                          'affect_rnn',
@@ -64,9 +64,11 @@ class AIFactory:
         # now spin the plate and do its own ting
         while self.running:
             # get the first rhythm rate from the datadict
+            # todo CRAIG - need to sort our global speed/ stretch
             rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
             # rhythm_rate = self.datadict.rhythm_rate
 
+            # todo - Johann/ Craig - this should be made into a dictionary inside the datadict/ borg
             # PATCH BOARD - CROSS PLUGS NET OUTPUTS TO INPUTS
             # get input vars from dict (NB not always self)
             in_val1 = self.get_in_val(0)  # move RNN as input
@@ -94,6 +96,7 @@ class AIFactory:
             logging.debug(f"  'affect_move_conv2' in: {in_val4} predicted {pred4}")
             logging.debug(f"  'self_awareness' in: {self_aware_input} predicted {self_aware_pred}")
 
+            # todo - Johann/ Craig - this should be made into a dictionary inside the datadict/ borg
             # put predictions back into the dicts and master
             self.put_pred(0, pred1)
             self.put_pred(1, pred2)

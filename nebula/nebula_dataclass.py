@@ -23,7 +23,7 @@ class NebulaDataClass:
     master_output: float = random()
     """Master output from the affect process"""
 
-    user_in: float = random()
+    mic_in: float = random()
     """Percept input stream from client e.g. live mic level"""
 
     rnd_poetry: float = random()
@@ -49,54 +49,59 @@ class NebulaDataClass:
 
 
 #DataBorg Pattern
+# https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s23.html
+# https://stackoverflow.com/questions/1318406/why-is-the-borg-pattern-better-than-the-singleton-pattern-in-python
 class DataBorg:
-
-    __shared_state = {}
+    __hivemind = None
 
     def __init__(self):
-        self.__dict__ = self.__shared_state
+        if not DataBorg.__hivemind:
+            DataBorg.__hivemind = self.__dict__
+            self.x = 1
+            self.move_rnn: float = random()
+            """Net 1 raw emission"""
 
-        self.move_rnn: float = random()
-        """Net 1 raw emission"""
+            self.affect_rnn: float = random()
+            """Net 2 raw emission"""
 
-        self.affect_rnn: float = random()
-        """Net 2 raw emission"""
+            self.move_affect_conv2: float = random()
+            """Net 3 raw emission"""
 
-        self.move_affect_conv2: float = random()
-        """Net 3 raw emission"""
+            self.affect_move_conv2: float = random()
+            """Net 4 raw emission"""
 
-        self.affect_move_conv2: float = random()
-        """Net 4 raw emission"""
+            self.master_output: float = random()
+            """Master output from the affect process"""
 
-        self.master_output: float = random()
-        """Master output from the affect process"""
+            self.mic_in: float = random()
+            """Percept input stream from client e.g. live mic level"""
 
-        self.user_in: float = random()
-        """Percept input stream from client e.g. live mic level"""
+            self.rnd_poetry: float = random()
+            """Random stream to spice things up"""
 
-        self.rnd_poetry: float = random()
-        """Random stream to spice things up"""
+            self.affect_net: float = random()
+            """Output from affect module"""
 
-        self.affect_net: float = random()
-        """Output from affect module"""
+            self.self_awareness: float = random()
+            """Net that has some self awareness - ???"""
 
-        self.self_awareness: float = random()
-        """Net that has some self awareness - ???"""
+            self.affect_decision: str = " "
+            """Current stream chosen by affect process"""
 
-        self.affect_decision: str = " "
-        """Current stream chosen by affect process"""
+            self.rhythm_rate: float = randrange(30, 100) / 100
+            """Internal clock/ rhythm sub division"""
 
-        self.rhythm_rate: float = randrange(30, 100) / 100
-        """Internal clock/ rhythm sub division"""
+            self.rnd_stream: str = ""
+            """Stream name currently used for active data"""
 
-        self.rnd_stream: str = ""
-        """Stream name currently used for active data"""
+            self.eeg: list = [0, 0, 0, 0]
+            """Live data from brainbit"""
 
-        self.eeg: list = [0, 0, 0, 0]
-        """Live data from brainbit"""
+            self.eda: int = 0
+            """Live data from Bitalino"""
+        else:
+            self.__dict__ = DataBorg.__hivemind
 
-        self.eda: int = 0
-        """Live data from Bitalino"""
 
     def randomiser(self):
         """ Blitz's the DataBorg dict with random numbers"""
