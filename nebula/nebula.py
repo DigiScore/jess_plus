@@ -22,7 +22,7 @@ from time import sleep
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import DataBorg # NebulaDataClass
 # from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -53,7 +53,7 @@ class Nebula:
 
     def __init__(self,
                  speed=1,
-                 datadict=NebulaDataClass
+                 # datadict=NebulaDataClass
                  ):
         print('building engine server')
 
@@ -65,12 +65,12 @@ class Nebula:
 
         # build the dataclass and fill with random number
         # self.datadict = datadict
-        self.datadict = datadict
+        self.datadict = DataBorg()
 
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(speed, datadict)
+        self.AI_factory = AIFactory(speed) #, datadict)
 
         # init the EEG and EDA percepts
         # config_object = ConfigParser()

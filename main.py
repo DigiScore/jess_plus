@@ -9,7 +9,7 @@ import threading
 
 from digibot import Digibot
 from nebula.nebula import Nebula
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import DataBorg #NebulaDataClass
 from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -48,7 +48,7 @@ class Main:
 
         # build initial dataclass fill with random numbers
         # self.datadict = NebulaDataClass()
-        self.datadict = NebulaDataClass()
+        self.datadict = DataBorg()
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
         ############################
@@ -56,8 +56,8 @@ class Main:
         ############################
 
         # init the AI factory
-        self.nebula = Nebula(speed=speed,
-                             datadict=self.datadict)
+        self.nebula = Nebula(speed=speed)
+                             # datadict=self.datadict)
 
         ############################
         # Robot
@@ -77,7 +77,7 @@ class Main:
                                    speed=speed,
                                    staves=staves,
                                    pen=pen,
-                                   datadict=self.datadict
+                                   # datadict=self.datadict
                                    )
             dobot_thread = Thread(target=self.digibot.drawbot_control)
             dobot_thread.start()
@@ -153,8 +153,8 @@ class Main:
                 normalised_peak = 1.0
 
             # put normalised amplitude into Nebula's dictionary for use
-            setattr(self.datadict, 'mic_in', normalised_peak)
-            # self.datadict['user in'] = normalised_peak
+            # setattr(self.datadict, 'mic_in', normalised_peak)
+            self.datadict.mic_in = normalised_peak
 
         logging.info('quitting listener thread')
 

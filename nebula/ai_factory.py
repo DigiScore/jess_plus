@@ -6,7 +6,7 @@ import numpy as np
 from time import sleep
 
 # install Nebula modules
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import DataBorg #NebulaDataClass
 
 
 # todo JOHANN's script
@@ -16,7 +16,7 @@ class AIFactory:
 
     def __init__(self,
                  speed: float = 1,
-                 datadict=NebulaDataClass
+                 # datadict=NebulaDataClass
                  ):
         print('Building the AI Factory')
 
@@ -25,7 +25,7 @@ class AIFactory:
         NB - the list of netnames will also need updating"""
 
         self.net_logging = False
-        self.datadict = datadict
+        self.datadict = DataBorg()
         self.global_speed = speed
         self.running = True
 
@@ -65,8 +65,8 @@ class AIFactory:
         while self.running:
             # get the first rhythm rate from the datadict
             # todo CRAIG - need to sort our global speed/ stretch
-            rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
-            # rhythm_rate = self.datadict.rhythm_rate
+            # rhythm_rate = getattr(self.datadict, 'rhythm_rate') # + self.global_speed
+            rhythm_rate = self.datadict.rhythm_rate
 
             # todo - Johann/ Craig - this should be made into a dictionary inside the datadict/ borg
             # PATCH BOARD - CROSS PLUGS NET OUTPUTS TO INPUTS
@@ -87,8 +87,8 @@ class AIFactory:
             self_aware_pred = self.affect_perception.predict(self_aware_input, verbose=0)
 
             # emits a stream of random poetry
-            setattr(self.datadict, 'rnd_poetry', random())
-            # self.datadict.rnd_poetry = random()
+            # setattr(self.datadict, 'rnd_poetry', random())
+            self.datadict.rnd_poetry = random()
 
             logging.debug(f"  'move_rnn' in: {in_val1} predicted {pred1}")
             logging.debug(f"  'affect_rnn' in: {in_val2} predicted {pred2}")
