@@ -153,7 +153,7 @@ class Affect:
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
                     # thought_train = self.hivemind.rnd_stream
-                    logging.info(f'Affect stream current input value from {rnd_stream} == {thought_train}')
+                    logging.info(f'######################           Affect stream output {rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
                     # setattr(self.hivemind, 'master_stream', thought_train)

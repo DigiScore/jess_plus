@@ -130,11 +130,10 @@ class AIFactory:
                         net.make_prediction(in_val)
 
             # creates a stream of random poetry
-            self.hivemind.rnd_poetry = random()
-            # todo CRAIG - still need to really check if this is working
-            logging.info(f"Current_stream = {current_stream}, hivemind outputs are:"
-                         f" {self.hivemind.move_rnn, self.hivemind.affect_rnn, self.hivemind.move_affect_conv2, self.hivemind.affect_move_conv2}")
-            sleep(rhythm_rate)
+            rnd = random()
+            self.hivemind.rnd_poetry = rnd
+
+            sleep(rhythm_rate/ 10)
 
     def get_seed(self, net_name):
         """gets the seed data for a given NNet"""
