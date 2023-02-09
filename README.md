@@ -1,3 +1,15 @@
+# Contributing as co-developers
+
+clone this repo using git
+
+make a branch and work on a task (one at a time)
+
+pull regularly!!
+
+Once tested open a Pull Request, and I will look through it, then merge
+
+
+
 # digiscoreDobot
 Digital Score experimental with Dobot Magician Lite
 
