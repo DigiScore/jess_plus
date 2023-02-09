@@ -7,7 +7,7 @@ from serial.tools import list_ports
 from configparser import ConfigParser
 import threading
 
-from digibot import Affect
+from  affect import Affect
 from nebula.nebula import Nebula
 from nebula.nebula_dataclass import DataBorg #NebulaDataClass
 from brainbit import BrainbitReader
@@ -47,7 +47,7 @@ class Main:
         GRAPH = config.eeg_graph
 
         # build initial dataclass fill with random numbers
-        # self.datadict = NebulaDataClass()
+        # self.hivemind = NebulaDataClass()
         self.datadict = DataBorg()
         logging.debug(f'Data dict initial values are = {self.datadict}')
 
@@ -57,7 +57,7 @@ class Main:
 
         # init the AI factory
         self.nebula = Nebula(speed=speed)
-                             # datadict=self.datadict)
+                             # hivemind=self.hivemind)
 
         ############################
         # Robot
@@ -70,17 +70,16 @@ class Main:
             print(f'available ports: {[x.device for x in available_ports]}')
             port = available_ports[-1].device
 
-            self.digibot = Affect(port=port,
+            self.in_the_groove = Affect(port=port,
                                   verbose=False,
                                   duration_of_piece=duration_of_piece,
                                   continuous_line=continuous_line,
                                   speed=speed,
                                   staves=staves,
                                   pen=pen,
-                                  # datadict=self.datadict
                                   )
-            dobot_thread = Thread(target=self.digibot.drawbot_control)
-            dobot_thread.start()
+            gesture_thread = Thread(target=self.in_the_groove.gesture_manager)
+            gesture_thread.start()
 
         # start Nebula AI Factory
         self.nebula.main_loop()
@@ -153,7 +152,7 @@ class Main:
                 normalised_peak = 1.0
 
             # put normalised amplitude into Nebula's dictionary for use
-            # setattr(self.datadict, 'mic_in', normalised_peak)
+            # setattr(self.hivemind, 'mic_in', normalised_peak)
             self.datadict.mic_in = normalised_peak
 
         logging.info('quitting listener thread')

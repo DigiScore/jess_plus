@@ -15,11 +15,10 @@ from pydobot.message import Message
 from pydobot.enums.ControlValues import ControlValues
 from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
-# import Nebula modules
-from nebula.nebula_dataclass import NebulaDataClass
-
-# import drawbot controller
+# import project modules
+from nebula.nebula_dataclass import DataBorg #NebulaDataClass
 from drawbot import Drawbot
+import config
 
 
 # todo - CRAIGS script
@@ -35,7 +34,6 @@ class Affect:
                  speed: int = 5,
                  staves: int = 1,
                  pen: bool = True,
-                 datadict=NebulaDataClass
                  ):
         # super().__init__(port, verbose)
 
@@ -48,7 +46,7 @@ class Affect:
         sys.path.insert(0, os.path.abspath('.'))
 
         # own the dataclass
-        self.datadict = datadict
+        self.hivemind = DataBorg()
 
         # start operating vars
         self.duration_of_piece = duration_of_piece
@@ -94,7 +92,7 @@ class Affect:
     """Mid level functions for operating the drawing and moving 
     functions of the Dobot"""
 
-    def drawbot_control(self):
+    def gesture_manager(self):
         """Listens to the realtime incoming signal that is stored in the dataclass ("mic_in")
         and calculates an affectual response based on general boundaries:
             HIGH - if input stream is LOUD (0.8+) then emit, smash a random fill and break out to Daddy cycle...
@@ -106,48 +104,50 @@ class Affect:
         self.drawbot.go_position_draw()
 
         # names for affect listening
-        self.affectnames = ['mic_in',
-                            'rnd_poetry',
-                            'affect_net',
-                            'self_awareness']
+        stream_list = config.stream_list
+        stream_list_len = len(stream_list)
 
-        # 1. daddy cycle: top level cycle lasting 6-26 seconds
         while self.running:
-            # flag for breaking on big affect signal
+            # flag for breaking a phrase from big affect signal
             self.interrupt_bang = True
 
-            # Top level calc master cycle before a change
-            # master_cycle = (randrange(600, 2600) / 100) # + self.global_speed
-            master_cycle = (randrange(300, 800) / 100) # + self.global_speed
+            #############################
+            # Phrase-level gesture gate: 3 - 8 seconds
+            #############################
+            # todo - calls the robot arm to do different modes
+            # todo - global speed and self-awareness stretch
+            # calc rhythmic intensity based on self-awareness factor & global speed
+            intensity = getattr(self.hivemind, 'self_awareness')
+            logging.debug(f'////////////////////////   intensity =  {intensity}')
 
-            loop_end = time() + master_cycle
+            phrase_length = (randrange(300, 800) / 100) # + self.global_speed
+            phrase_loop_end = time() + phrase_length
 
             logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
-            logging.debug(f"                 interrupt_listener: started! Duration =  {master_cycle} seconds")
+            logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
 
-            # 2. child cycle: waiting for interrupt  from master clock
-            while time() < loop_end:
+            while time() < phrase_loop_end:
+                print('================')
+
                 # if a major break out then go to Daddy cycle and restart
                 if not self.interrupt_bang:
                     break
 
-                print('================')
+                # todo add global time stretch here (from self awareness)
+                # hold this stream for 0.5-2 (or 1-4) secs, unless interrupt bang
+                end_time = time() + (randrange(500, 2000) / 1000)
+                logging.debug(f'end time = {end_time}')
 
                 # 1. clear the alarms
                 self.drawbot.clear_alarms()
                 if self.continuous_line:
                     self.drawbot.move_y()
 
-                # calc rhythmic intensity based on self-awareness factor & global speed
-                intensity = getattr(self.datadict, 'self_awareness')
-                logging.debug(f'////////////////////////   intensity =  {intensity}')
-
                 # todo - CRAIG sort this out.!!
+                # generate rhythm rate here
                 rhythm_rate = (randrange(10,
                                          80) / 100) * self.global_speed
-
-
-                setattr(self.datadict, 'rhythm_rate', rhythm_rate)
+                self.hivemin.rhythm_rate = rhythm_rate
                 logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
 
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
@@ -159,19 +159,18 @@ class Affect:
 
                 # randomly pick an input stream for this cycle
                 # either mic_in, random, net generation or self-awareness
-                # todo - ALL how many streams?
-                rnd = randrange(4)
-                self.rnd_stream = self.affectnames[rnd]
-                setattr(self.datadict, 'affect_decision', self.rnd_stream)
-                # self.datadict.affect_decision = self.rnd_stream
+                rnd = randrange(stream_list_len)
+                rnd_stream = stream_list[rnd]
+                # setattr(self.hivemind, 'affect_decision', self.rnd_stream)
+                self.hivemind.affect_decision = self.rnd_stream
                 logging.info(f'Random stream choice = {self.rnd_stream}')
 
-                # hold this stream for 0.5-2 (or 1-4) secs, unless interrupt bang
-                # end_time = time() + (randrange(1000, 4000) / 1000)
-                # todo add global time stretch here (from self awareness)
-                end_time = time() + (randrange(500, 2000) / 1000)
+                #todo - conduct the NNets prediction here to avoid clogging up the CPU
 
-                logging.debug(f'end time = {end_time}')
+                #############################
+                # Rhythm-level gesture gate: 3 - 8 seconds
+                # THis streams the chosen data
+                #############################
 
                 # 3. baby cycle - own time loops
                 while time() < end_time:
@@ -179,13 +178,13 @@ class Affect:
 
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
-                    thought_train = getattr(self.datadict, self.rnd_stream)
-                    # thought_train = self.datadict.rnd_stream
+                    thought_train = getattr(self.hivemind, self.rnd_stream)
+                    # thought_train = self.hivemind.rnd_stream
                     logging.info(f'Affect stream current input value from {self.rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
-                    setattr(self.datadict, 'master_output', thought_train)
-                    # self.datadict.master_output = thought_train
+                    setattr(self.hivemind, 'master_output', thought_train)
+                    # self.hivemind.master_output = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
                     # todo - CRAIG is this doing anything? shouldn't "peak" be the output from the thought train
                     # todo - CRAIG split this function ... mic listener CAN infuence looping behaviour, BUT "peak" should be thought streams
@@ -202,8 +201,8 @@ class Affect:
                     ###############################################
 
                     # 1. get current mic level
-                    peak = getattr(self.datadict, "mic_in")
-                    # peak = self.datadict.mic_in
+                    peak = getattr(self.hivemind, "mic_in")
+                    # peak = self.hivemind.mic_in
                     peak_int = int(peak * 10) + 1
                     logging.info(f'testing current mic level for affect = {peak}, rounded to {peak_int}')
 
@@ -317,15 +316,15 @@ class Affect:
     def random_dict_fill(self):
         """Fills the working dataclass with random values. Generally called when
         affect energy is highest"""
-        # print(self.datadict.__dict__)
-        for key, value in self.datadict.__dict__.items():
+        # print(self.hivemind.__dict__)
+        for key, value in self.hivemind.__dict__.items():
             # print("old field", field)
             rnd = random()
-            setattr(self.datadict, key, rnd)
+            setattr(self.hivemind, key, rnd)
             # field = rnd
             # print("new field", field)
-        # self.datadict.randomiser()
-        logging.debug(f'Data dict new random values are = {self.datadict}')
+        # self.hivemind.randomiser()
+        logging.debug(f'Data dict new random values are = {self.hivemind}')
 
     def terminate(self):
         """Smart collapse of all threads and comms"""

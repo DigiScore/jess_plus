@@ -17,60 +17,44 @@ Dedicated to Fabrizio Poltronieri
 # import python modules
 from threading import Thread
 import logging
-from configparser import ConfigParser
-from time import sleep
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
-from nebula.nebula_dataclass import DataBorg # NebulaDataClass
-# from brainbit import BrainbitReader
-# from bitalino import BITalino
-import config
 
-# todo JOHANNS script
+# todo JOHANNS/ CRAIG script (this might control EDA and EEG too!!)
 
 class Nebula:
-    """Nebula is the core "director" of an AI factory.
-     It generates data in response to incoming percpts
-    from human-in-the-loop interactions, and responds
-    in-the-moment to the gestural input of live data.
-    There are 4 components:
-        Nebula: as "director" it coordinates the overall
-            operations of the AI Factory
-        AIFactory: builds the neural nets that form the
-            factory, coordinates data exchange,
-            and liases with the common data dict
-        NebulaDataClass: is the central dataclass that
-            holds and shares all the  data exchanges
-            in the AI factory
-        Affect: receives the live percept input from
-            the client and produces an affectual response
-            to it's energy input, which in turn interferes
-            with the data generation.
-
-    Args:
-        speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
-
     def __init__(self,
                  speed=1,
-                 # datadict=NebulaDataClass
                  ):
+        """Nebula is the core "director" of an AI factory.
+           It generates data in response to incoming percpts
+          from human-in-the-loop interactions, and responds
+          in-the-moment to the gestural input of live data.
+          There are 4 components:
+              Nebula: as "director" it coordinates the overall
+                  operations of the AI Factory
+              AIFactory: builds the neural nets that form the
+                  factory, coordinates data exchange,
+                  and liases with the common data dict
+              NebulaDataClass: is the central dataclass that
+                  holds and shares all the  data exchanges
+                  in the AI factory
+              Affect: receives the live percept input from
+                  the client and produces an affectual response
+                  to it's energy input, which in turn interferes
+                  with the data generation.
+
+          Args:
+              speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
+
         print('building engine server')
 
         # Set global vars
         self.running = True
-        # self.rnd_stream = 0
-        # self.rhythm_rate = 1
-        # self.affect_listen = 0
-
-        # build the dataclass and fill with random number
-        # self.datadict = datadict
-        self.datadict = DataBorg()
-
-        logging.debug(f'Data dict initial values are = {self.datadict}')
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(speed) #, datadict)
+        self.AI_factory = AIFactory(speed) #, hivemind)
 
         # init the EEG and EDA percepts
         # config_object = ConfigParser()
@@ -109,14 +93,14 @@ class Nebula:
     #         # read data from bitalino
     #         if self.BITALINO_CONNECTED:
     #             eda_data = self.eda.read()
-    #             # setattr(self.datadict, 'eda', eda_data)
-    #             self.datadict.eda = eda_data
+    #             # setattr(self.hivemind, 'eda', eda_data)
+    #             self.hivemind.eda = eda_data
     #
     #         # read data from brainbit
     #         if self.BRAINBIT_CONNECTED:
     #             eeg_data = self.eeg_board.read()
-    #             # setattr(self.datadict, 'eeg_board', eeg_data)
-    #             self.datadict.eeg_board = eeg_data
+    #             # setattr(self.hivemind, 'eeg_board', eeg_data)
+    #             self.hivemind.eeg_board = eeg_data
     #             print(eeg_data)
     #
     #         sleep(0.1)
