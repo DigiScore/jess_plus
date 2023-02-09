@@ -128,12 +128,13 @@ class AIFactory:
                     if net.name == current_stream:
                         in_val = self.get_seed(net)
                         net.make_prediction(in_val)
+                        break
 
             # creates a stream of random poetry
             rnd = random()
             self.hivemind.rnd_poetry = rnd
 
-            sleep(rhythm_rate/ 10)
+            sleep(rhythm_rate / 10)
 
     def get_seed(self, net_name):
         """gets the seed data for a given NNet"""

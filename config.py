@@ -21,4 +21,4 @@ stream_list = ['mic_in',
                'affect_rnn',
                'self_awareness']
 
-all_nets_predicting = False
+all_nets_predicting = True
