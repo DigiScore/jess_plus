@@ -121,6 +121,7 @@ class AIFactory:
                     in_val = self.get_seed(net)
                     net.make_prediction(in_val)
 
+            # todo - CRAIG if this is false then the "feeding" NNets need to be operting too
             # or just the current one
             else:
                 current_stream = self.hivemind.thought_train_stream

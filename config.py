@@ -21,4 +21,5 @@ stream_list = ['mic_in',
                'affect_rnn',
                'self_awareness']
 
+# todo - CRAIG if this is false then the "feeding" NNets need to be operting too
 all_nets_predicting = True
