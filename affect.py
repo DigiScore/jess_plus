@@ -24,7 +24,7 @@ from drawbot import Drawbot
 
 # todo - CRAIGS script
 
-class Digibot:
+class Affect:
     """Controls movement and shapes drawn by Dobot.
     """
 

@@ -7,7 +7,7 @@ from serial.tools import list_ports
 from configparser import ConfigParser
 import threading
 
-from digibot import Digibot
+from digibot import Affect
 from nebula.nebula import Nebula
 from nebula.nebula_dataclass import DataBorg #NebulaDataClass
 from brainbit import BrainbitReader
@@ -24,7 +24,7 @@ from pyqtgraph.Qt import QtGui, QtCore
 class Main:
     """
     The main script to start the robot arm drawing digital score work.
-    Digibot calls the local interpreter for project specific functions.
+    Affect calls the local interpreter for project specific functions.
     This communicates directly to the pydobot library.
     Nebula kick-starts the AI Factory for generating NNet data and affect flows.
     This script also controls the live mic audio analyser.
@@ -70,15 +70,15 @@ class Main:
             print(f'available ports: {[x.device for x in available_ports]}')
             port = available_ports[-1].device
 
-            self.digibot = Digibot(port=port,
-                                   verbose=False,
-                                   duration_of_piece=duration_of_piece,
-                                   continuous_line=continuous_line,
-                                   speed=speed,
-                                   staves=staves,
-                                   pen=pen,
-                                   # datadict=self.datadict
-                                   )
+            self.digibot = Affect(port=port,
+                                  verbose=False,
+                                  duration_of_piece=duration_of_piece,
+                                  continuous_line=continuous_line,
+                                  speed=speed,
+                                  staves=staves,
+                                  pen=pen,
+                                  # datadict=self.datadict
+                                  )
             dobot_thread = Thread(target=self.digibot.drawbot_control)
             dobot_thread.start()
 
