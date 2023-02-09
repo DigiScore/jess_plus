@@ -27,7 +27,11 @@ b4.randomiser()
 
 print(b1.move_rnn, b2.move_rnn, b3.move_rnn)
 
+netlist = [b1, b2, b3, b4]
 
+for i, net in enumerate(netlist):
+    net.move_rnn = i
+    print(b1.move_rnn, b2.move_rnn, b3.move_rnn, b4.move_rnn)
 
 
 

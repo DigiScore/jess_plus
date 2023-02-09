@@ -13,3 +13,12 @@ mac_address = "/dev/cu.BITalino-3F-AE"
 
 # [STAFF]
 staff_width = 20
+
+# [STREAMING]
+stream_list = ['mic_in',
+               'rnd_poetry',
+               'move_rnn',
+               'affect_rnn',
+               'self_awareness']
+
+all_nets_predicting = False
