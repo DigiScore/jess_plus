@@ -15,21 +15,21 @@
 #     human-in-the-loop e.g. live audio analysis,
 #     skeletal tracking, joystick control.
 #     By analysing the energy of input this class will
-#     define which feed of the datadict
+#     define which feed of the hivemind
 #     (produced by the AI factory) to emit back to the client.
 #     Like a thought train it is affected by the energy of a
 #     percept, and duration of such listening."""
 #
 #     def __init__(self,
 #                  dobot_commands_queue,
-#                  datadict: NebulaDataClass,
+#                  hivemind: NebulaDataClass,
 #                  speed: int = 1
 #                  ):
 #
 #         print('Starting the Affect module')
 #
 #         # names for affect listening
-#         self.affectnames = ['user_in',
+#         self.stream_list = ['user_in',
 #                             'rnd_poetry',
 #                             'affect_net',
 #                             'self_awareness']
@@ -40,7 +40,7 @@
 #         self.global_speed = speed
 #
 #         # own the dataclass
-#         self.datadict = datadict
+#         self.hivemind = hivemind
 #
 #         # Emission list is the highest level comms back to client
 #         self.dobot_commands_queue = dobot_commands_queue
@@ -71,13 +71,13 @@
 #             # 2. child cycle: waiting for interrupt  from master clock
 #             while time() < loop_end:
 #                 # calc rhythmic intensity based on self-awareness factor & global speed
-#                 intensity = getattr(self.datadict, 'self_awareness')
+#                 intensity = getattr(self.hivemind, 'self_awareness')
 #                 logging.debug(f'////////////////////////   intensity =  {intensity}')
 #
 #                 rhythm_rate = (randrange(10,
 #                                         80) / 100) # / self.global_speed  # round(((rhythm_rate / intensity) * self.global_speed), 2) # / 10  # rhythm_rate * self.global_speed
-#                 # self.datadict['rhythm_rate'] = rhythm_rate
-#                 setattr(self.datadict, 'rhythm_rate', rhythm_rate)
+#                 # self.hivemind['rhythm_rate'] = rhythm_rate
+#                 setattr(self.hivemind, 'rhythm_rate', rhythm_rate)
 #                 logging.debug(f'////////////////////////   rhythm rate = {rhythm_rate}')
 #
 #                 # if a major break out then go to Daddy cycle and restart
@@ -89,8 +89,8 @@
 #                 # randomly pick an input stream for this cycle
 #                 # either user_in, random, net generation or self-awareness
 #                 rnd = randrange(4)
-#                 self.rnd_stream = self.affectnames[rnd]
-#                 setattr(self.datadict, 'affect_decision', self.rnd_stream)
+#                 self.rnd_stream = self.stream_list[rnd]
+#                 setattr(self.hivemind, 'affect_decision', self.rnd_stream)
 #                 logging.debug(f'Random stream choice = {self.rnd_stream}')
 #
 #                 # hold this stream for 1-4 secs, unless interrupt bang
@@ -104,11 +104,11 @@
 #
 #                     # make the master output the current value of the affect stream
 #                     # 1. go get the current value from dict
-#                     thought_train = getattr(self.datadict, self.rnd_stream)
+#                     thought_train = getattr(self.hivemind, self.rnd_stream)
 #                     logging.info(f'Affect stream current input value from {self.rnd_stream} == {thought_train}')
 #
 #                     # 2. send to Master Output
-#                     setattr(self.datadict, 'master_output', thought_train)
+#                     setattr(self.hivemind, 'master_output', thought_train)
 #                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 #
 #                     # 3. emit to the client at various points in the affect cycle
@@ -122,7 +122,7 @@
 #                     ###############################################
 #
 #                     # 1. get current mic level
-#                     peak = getattr(self.datadict, "user_in")
+#                     peak = getattr(self.hivemind, "user_in")
 #                     logging.debug(f'testing current mic level for affect = {peak}')
 #
 #                     # 2. calc affect on behaviour
@@ -157,8 +157,8 @@
 #                     elif peak <= 0.3:
 #                         logging.debug('interrupt LOW ----------- no action')
 #
-#                     # # get current rhythm_rate from datadict
-#                     # rhythm_rate = getattr(self.datadict, 'rhythm_rate')
+#                     # # get current rhythm_rate from hivemind
+#                     # rhythm_rate = getattr(self.hivemind, 'rhythm_rate')
 #
 #                     # and wait for a cycle
 #                     sleep(rhythm_rate)
@@ -181,11 +181,11 @@
 #     def random_dict_fill(self):
 #         """Fills the working dataclass with random values. Generally called when
 #         affect energy is highest"""
-#         for field in fields(self.datadict):
+#         for field in fields(self.hivemind):
 #             # print(field.name)
 #             rnd = random()
-#             setattr(self.datadict, field.name, rnd)
-#         logging.debug(f'Data dict new random values are = {self.datadict}')
+#             setattr(self.hivemind, field.name, rnd)
+#         logging.debug(f'Data dict new random values are = {self.hivemind}')
 #
 #     def quit(self):
 #         self.running = False
