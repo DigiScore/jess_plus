@@ -20,3 +20,5 @@ stream_list = ['mic_in',
                'move_rnn',
                'affect_rnn',
                'self_awareness']
+
+all_nets_predicting = False

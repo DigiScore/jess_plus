@@ -5,8 +5,9 @@ import tensorflow as tf
 import numpy as np
 from time import sleep
 
-# install Nebula modules
+# install local modules
 from nebula.nebula_dataclass import DataBorg
+import config
 
 # todo JOHANN's script
 
@@ -115,22 +116,36 @@ class AIFactory:
             rhythm_rate = self.hivemind.rhythm_rate
 
             # make a prediction for each of the NNets in the factory
-            # todo - this is really slow: might need to just pick the NNet that is streaming
-            for net in self.netlist:
-                which_feed = net.which_feed
-                if which_feed == "net":
-                    seed_source = net.nnet_feed
-                    seed = getattr(self.hivemind, seed_source)
-                else:
-                    seed_source = net.live_feed
-                    seed = getattr(self.hivemind, seed_source)
-                in_val = self.get_in_val(seed)
-                net.make_prediction(in_val)
+            if config.all_nets_predicting:
+                for net in self.netlist:
+                    in_val = self.get_seed(net)
+                    net.make_prediction(in_val)
+
+            # or just the current one
+            else:
+                current_stream = self.hivemind.thought_train_stream
+                for net in self.netlist:
+                    if net.name == current_stream:
+                        in_val = self.get_seed(net)
+                        net.make_prediction(in_val)
 
             # creates a stream of random poetry
             self.hivemind.rnd_poetry = random()
-            logging.info(f"hivemind outputs are: {self.hivemind.move_rnn, self.hivemind.affect_rnn, self.hivemind.move_affect_conv2, self.hivemind.affect_move_conv2}")
+            # todo CRAIG - still need to really check if this is working
+            logging.info(f"Current_stream = {current_stream}, hivemind outputs are:"
+                         f" {self.hivemind.move_rnn, self.hivemind.affect_rnn, self.hivemind.move_affect_conv2, self.hivemind.affect_move_conv2}")
             sleep(rhythm_rate)
+
+    def get_seed(self, net_name):
+        """gets the seed data for a given NNet"""
+        which_feed = net_name.which_feed
+        if which_feed == "net":
+            seed_source = net_name.nnet_feed
+            seed = getattr(self.hivemind, seed_source)
+        else:
+            seed_source = net_name.live_feed
+            seed = getattr(self.hivemind, seed_source)
+        return self.get_in_val(seed)
 
     def get_in_val(self, input_val):
         """get the current value and reshape ready for input for prediction"""

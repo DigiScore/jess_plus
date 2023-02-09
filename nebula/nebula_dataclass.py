@@ -55,7 +55,7 @@ class DataBorg:
             # self.affect_net: float = random()
             # """Output from affect module"""
 
-            self.affect_decision: str = " "
+            self.thought_train_stream: str = " "
             """Current stream chosen by affect process"""
 
             self.rhythm_rate: float = randrange(30, 100) / 100
@@ -64,6 +64,11 @@ class DataBorg:
             # self.rnd_stream: str = ""
             # """Stream name currently used for active data"""
 
+            ######################
+            # Additional vars
+            ######################
+
+            self.interrupt_bang = True
 
         else:
             self.__dict__ = DataBorg.__hivemind

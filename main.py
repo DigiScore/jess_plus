@@ -3,6 +3,7 @@ from threading import Thread
 import pyaudio
 import numpy as np
 import logging
+from random import random
 from serial.tools import list_ports
 from configparser import ConfigParser
 import threading
@@ -18,6 +19,7 @@ import pyqtgraph as pg
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
 from pyqtgraph.Qt import QtGui, QtCore
+from drawbot import Drawbot
 
 
 
@@ -48,8 +50,8 @@ class Main:
 
         # build initial dataclass fill with random numbers
         # self.hivemind = NebulaDataClass()
-        self.datadict = DataBorg()
-        logging.debug(f'Data dict initial values are = {self.datadict}')
+        self.hivemind = DataBorg()
+        logging.debug(f'Data dict initial values are = {self.hivemind}')
 
         ############################
         # Ai Factory
@@ -57,7 +59,6 @@ class Main:
 
         # init the AI factory
         self.nebula = Nebula(speed=speed)
-                             # hivemind=self.hivemind)
 
         ############################
         # Robot
@@ -70,18 +71,30 @@ class Main:
             print(f'available ports: {[x.device for x in available_ports]}')
             port = available_ports[-1].device
 
-            self.in_the_groove = Affect(port=port,
-                                  verbose=False,
-                                  duration_of_piece=duration_of_piece,
-                                  continuous_line=continuous_line,
-                                  speed=speed,
-                                  staves=staves,
-                                  pen=pen,
-                                  )
-            gesture_thread = Thread(target=self.in_the_groove.gesture_manager)
-            gesture_thread.start()
+            drawbot = Drawbot(port=port,
+                                   verbose=True,
+                                   duration_of_piece=duration_of_piece,
+                                   continuous_line=continuous_line
+                                   )
+        else:
+            drawbot = None
 
-        # start Nebula AI Factory
+        ############################
+        # Affect & Gesture management
+        ############################
+
+        self.affect = Affect(duration_of_piece=duration_of_piece,
+                             continuous_line=continuous_line,
+                             speed=speed,
+                             staves=staves,
+                             pen=pen,
+                             drawbot=drawbot
+                             )
+
+        gesture_thread = Thread(target=self.affect.gesture_manager)
+        gesture_thread.start()
+
+        # start Nebula AI Factory here after affect starts data moving
         self.nebula.main_loop()
 
         ############################
@@ -110,14 +123,15 @@ class Main:
         ############################
         # BrainBit & UI
         ############################
+        # todo CRAIG get these working
         if EEG_CONNECTED:
             logging.info("Starting EEG connection")
-            self.eeg_board = BrainbitReader(self.datadict)
+            self.eeg_board = BrainbitReader()
             self.eeg_board.start()
             first_brain_data = self.eeg_board.read(255)
             logging.info(f'Data from brainbit = {first_brain_data}')
 
-            # todo - graph widget doesnt show. need different solution.
+            # todo CRAIG graph widget doesnt show. need different solution.
             # try:
             if GRAPH:
                 print("building UI")
@@ -152,8 +166,15 @@ class Main:
                 normalised_peak = 1.0
 
             # put normalised amplitude into Nebula's dictionary for use
-            # setattr(self.hivemind, 'mic_in', normalised_peak)
-            self.datadict.mic_in = normalised_peak
+            self.hivemind.mic_in = normalised_peak
+
+            # if loud sound then 63% affect gesture manager
+            if normalised_peak > 0.8:
+                if random() > 0.63:
+                    self.hivemind.interrupt_bang = False
+                    self.hivemind.randomiser()
+                    print("-----------------------------INTERRUPT----------------------------")
+
 
         logging.info('quitting listener thread')
 

@@ -1,12 +1,11 @@
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from time import sleep
 from random import random
-from nebula.nebula_dataclass import NebulaDataClass
+from nebula.nebula_dataclass import DataBorg
 
 
 class BrainbitReader:
-    def __init__(self,
-                 datadict=NebulaDataClass):
+    def __init__(self):
         # Establish all parameters for Brainflow
         self.params = BrainFlowInputParams()
 
@@ -19,7 +18,7 @@ class BrainbitReader:
         self.brain_bit = False
 
         # get dataclass
-        self.datadict = datadict
+        self.hivemind = DataBorg()
         self.running = True
 
     def start(self):
@@ -65,7 +64,7 @@ class BrainbitReader:
                          ]
         # self.hivemind.eeg = self.data
         print(f"BrainBit data = {self.data}")
-        setattr(self.datadict, 'eeg', self.data)
+        self.hivemind.eeg = self.data
         return graph_data
 
     def terminate(self):

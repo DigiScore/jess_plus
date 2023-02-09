@@ -56,6 +56,7 @@ class Nebula:
         # Build the AI factory and pass it the data dict
         self.AI_factory = AIFactory(speed) #, hivemind)
 
+        # todo CRAIG - get these working
         # init the EEG and EDA percepts
         # config_object = ConfigParser()
         # config_object.read('config.ini')
