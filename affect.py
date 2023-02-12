@@ -10,7 +10,6 @@ from nebula.nebula_dataclass import DataBorg
 from drawbot import Drawbot
 import config
 
-
 # todo - CRAIGS script
 
 class Affect:
@@ -54,10 +53,10 @@ class Affect:
             self.drawbot.home()
             input('remove pen, then press enter')
 
-            # todo CRAIG this should be decided in line with self.awareness
-            arm_speed = (((speed - 1) * (300 - 50)) / (10 - 1)) + 50
-            self.drawbot.speed(velocity=arm_speed,
-                       acceleration=arm_speed)
+            # # todo CRAIG this should be decided in line with self.awareness
+            # arm_speed = (((speed - 1) * (300 - 50)) / (10 - 1)) + 50
+            # self.drawbot.speed(velocity=arm_speed,
+            #            acceleration=arm_speed)
             self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
@@ -93,12 +92,15 @@ class Affect:
             #############################
             # todo CRAIG calls the robot arm to do different modes
             # todo CRAIG global speed and self-awareness stretch
-            # calc rhythmic intensity based on self-awareness factor & global speed
-            intensity = getattr(self.hivemind, 'self_awareness')
-            logging.debug(f'////////////////////////   intensity =  {intensity}')
+            # # calc rhythmic intensity based on self-awareness factor & global speed
+            # intensity = getattr(self.hivemind, 'self_awareness')
+            # logging.debug(f'////////////////////////   intensity =  {intensity}')
 
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
             phrase_loop_end = time() + phrase_length
+
+            # define robot mode
+            self.hivemind.robot_mode = randrange(5)
 
             logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
             logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
@@ -159,6 +161,23 @@ class Affect:
                     # setattr(self.hivemind, 'master_stream', thought_train)
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
+
+                    # 3. modify speed and accel through self awareness
+                    # # todo CRAIG this should be decided in line with self.awareness
+                    # calc rhythmic intensity based on self-awareness factor & global speed
+                    self_awareness = getattr(self.hivemind, 'self_awareness')
+                    logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
+                    arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
+                    self.drawbot.speed(velocity=arm_speed,
+                               acceleration=arm_speed)
+
+                    ######################################
+                    #
+                    # Makes a response to chosen thought stream
+                    #
+                    ######################################
+
+                    # todo - sort out robot mode here
 
                     if thought_train > 0.7:
                         logging.info('interrupt > HIGH !!!!!!!!!')

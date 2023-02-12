@@ -52,9 +52,6 @@ class DataBorg:
             self.rnd_poetry: float = random()
             """Random stream to spice things up"""
 
-            # self.affect_net: float = random()
-            # """Output from affect module"""
-
             self.thought_train_stream: str = " "
             """Current stream chosen by affect process"""
 
@@ -67,6 +64,8 @@ class DataBorg:
             ######################
             # Additional vars
             ######################
+
+            self.robot_mode = 0
 
             self.interrupt_bang = True
 
