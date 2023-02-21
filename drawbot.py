@@ -124,7 +124,7 @@ class Drawbot(Dobot):
 
         # goto start position for line draw, without pen
         self.bot_move_to(x, y_start, z, r)
-        input('insert pen, then press enter')
+        input('place pen on paper, then press enter')
 
         if staves >= 1:
             # draw a line/ stave
@@ -218,6 +218,12 @@ class Drawbot(Dobot):
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """moves specific joints direct to new angles."""
         self.joint_move_to(j1, j2, j3, j4, wait)
+
+    def joint_move_by(self, j1, j2, j3, j4, wait=True):
+        """moves specific joints by an amount."""
+        pose = self.pose()
+        self.move_to(pose.x, pose.y, pose.z, pose.r, pose.j1 + j1, pose.j2 + j2, pose.j3 + j3, pose.j4 + j4)
+
 
     def home(self):
         """Go directly to the home position 0, 0, 0, 0"""

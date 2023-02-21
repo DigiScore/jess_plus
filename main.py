@@ -15,10 +15,10 @@ from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
 
-import pyqtgraph as pg
+#import pyqtgraph as pg
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
-from pyqtgraph.Qt import QtGui, QtCore
+#from pyqtgraph.Qt import QtGui, QtCore
 from drawbot import Drawbot
 
 
@@ -69,7 +69,7 @@ class Main:
             # find available ports and locate Dobot (-1)
             available_ports = list_ports.comports()
             print(f'available ports: {[x.device for x in available_ports]}')
-            port = available_ports[-1].device
+            port = available_ports[0].device
 
             drawbot = Drawbot(port=port,
                                    verbose=True,

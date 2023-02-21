@@ -1,5 +1,5 @@
 # [HARDWARE]
-robot = False
+robot = True
 eeg = False
 eeg_graph = False
 
