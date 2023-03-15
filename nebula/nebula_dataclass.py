@@ -98,4 +98,3 @@ class DataBorg:
                     random(),
                     random(),
                     random()]
-
