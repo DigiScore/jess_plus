@@ -112,14 +112,14 @@ class Affect:
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
             phrase_loop_end = time() + phrase_length
 
-            # define robot mode
-            robot_mode = RobotMode(randrange(5))
-
             logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
             logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
 
             while time() < phrase_loop_end:
                 print('================')
+
+                # define robot mode
+                robot_mode = RobotMode(randrange(5))
 
                 # if a major break out then go to Daddy cycle and restart
                 if not self.hivemind.interrupt_bang:
@@ -190,11 +190,37 @@ class Affect:
                     # Makes a response to chosen thought stream
                     #
                     ######################################
+                    if thought_train > 0.8:
+                        logging.info('interrupt > HIGH !!!!!!!!!')
 
+                        # A - refill dict with random
+                        self.hivemind.randomiser()
+
+                        # B - jumps out of this loop into daddy
+                        self.hivemind.interrupt_bang = False
+
+                        # C - respond
+                        if self.drawbot:
+                            self.high_energy_response()
+
+                        # D- break out of this loop, and next (cos of flag)
+                        break
+
+                        # LOW
+                        # nothing happens here
+                    elif thought_train <= 0.1:
+                        logging.info('interrupt LOW ----------- move Y')
+
+                        if self.drawbot:
+                            if self.continuous_line:
+                                self.drawbot.move_y()
+
+                    # MID response
                     match robot_mode:
                         case RobotMode.Continuous:
                         # move continuously using data streams from EMD, borg
 
+                        # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
                             inc = joint_inc * current_phrase_num
 
                             self.drawbot.position_move_by(uniform(-inc, inc),
@@ -229,59 +255,28 @@ class Affect:
                                                        uniform(-joint_inc, joint_inc), wait=False)
 
                         case RobotMode.Repetition:
-                        # large, repetitive movements
-                        # print("Repetition Mode")
-
-                            draw_square(random.uniform(10, 40))  # draw a square of random size
-                            rand_xfactor = random.randrange(-3, 3)
-                            rand_yfactor = random.randrange(-3, 3)
-                            position_move_by(5 * rand_xfactor, 5 * rand_yfactor, 0,
-                                             wait=True)  # either move in positive, negative or no movement, then loop
-
-                    if thought_train > 0.7:
-                        logging.info('interrupt > HIGH !!!!!!!!!')
-
-                        # A - refill dict with random
-                        self.hivemind.randomiser()
-
-                        # B - jumps out of this loop into daddy
-                        self.hivemind.interrupt_bang = False
-
-                        # C - respond
-                        if self.drawbot:
-                            self.high_energy_response()
-
-                        # D- break out of this loop, and next (cos of flag)
-                        break
-
-                    # MEDIUM
-                    # if middle loud fill dict with random, all processes norm
-                    elif 0.1 < thought_train < 0.7:
-                        logging.info('interrupt MIDDLE -----------')
-
-                        if self.drawbot:
-                            self.mid_energy_response(thought_train)
-
-                        # A. jumps out of current local loop, but not main one
-                        # break
-
-                    # LOW
-                    # nothing happens here
-                    elif thought_train <= 0.1:
-                        logging.info('interrupt LOW ----------- move Y')
-
-                        if self.drawbot:
-                            if self.continuous_line:
-                                self.drawbot.move_y()
+                            # large, repetitive movements
+                            # print("Repetition Mode")
+                            #
+                            #     draw_square(random.uniform(10, 40))  # draw a square of random size
+                            #     rand_xfactor = random.randrange(-3, 3)
+                            #     rand_yfactor = random.randrange(-3, 3)
+                            #     position_move_by(5 * rand_xfactor, 5 * rand_yfactor, 0,
+                            #                      wait=True)  # either move in positive, negative or no movement, then loop
+                            pass
+                            # todo - Adam to sort as discussed
 
                     # and wait for a cycle
-                    sleep(rhythm_rate)
+                sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
 
     def wolff_inspiration(self, peak):
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+
+        # jump to a random location
+        self.drawbot.go_random_draw_up()
 
         """between 2 and 8 make shapes in situ"""
         # randomly choose from the following c hoices
@@ -298,13 +293,7 @@ class Affect:
 
         # 1 = messy squiggles
         if randchoice == 1:
-            squiggle_list = []
-            for n in range(randrange(2, 4)):
-                squiggle_list.append((randrange(-5, 5) / 5,
-                                      randrange(-5, 5) / 5,
-                                      randrange(-5, 5) / 5)
-                                     )
-            self.drawbot.squiggle(squiggle_list)
+            self.drawbot.draw_random_char(peak * randrange(10, 20))
             logging.info('Emission 3-8: small squiggle')
 
         # 2 = dot & line
@@ -338,8 +327,6 @@ class Affect:
             self.drawbot.dot()
             # self.move_y_random()
             logging.info('Emission 3-8: dot and line')
-
-
 
     def cardew_inspiration(self, peak):
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
@@ -350,18 +337,19 @@ class Affect:
         randchoice = randrange(6)
         logging.debug(f'randchoice == {randchoice}')
 
-        # 0= line to somewhere
+        # 0= arc to somewhere
         if randchoice == 0:
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: draw line')
+            self.drawbot.arc2D(x + randrange(-10, 10),
+                               y + randrange(-10, 10),
+                               x + randrange(-10, 10),
+                               y + randrange(-10, 10),
+                               )
+            logging.info('Emission: draw arc')
 
         # 1 = messy squiggles
         if randchoice == 1:
             squiggle_list = []
-            for n in range(randrange(2, 4)):
+            for n in range(randrange(3, 6)):
                 squiggle_list.append((randrange(-5, 5) / 5,
                                       randrange(-5, 5) / 5,
                                       randrange(-5, 5) / 5)
@@ -369,9 +357,9 @@ class Affect:
             self.drawbot.squiggle(squiggle_list)
             logging.info('Emission 3-8: small squiggle')
 
-        # 2 = dot & line
+        # 2 = irregular shape
         elif randchoice == 2:
-            self.drawbot.dot()
+            self.drawbot.draw_irregular_shape(int(peak * 10))
             self.drawbot.bot_move_to(x + self.rnd(peak),
                                  y + self.rnd(peak),
                                  z, 0,
@@ -380,28 +368,27 @@ class Affect:
 
         # 3 = note head
         elif randchoice == 3:
-            note_size = randrange(5)
-            # note_shape = randrange(20)
-            self.drawbot.note_head(size=note_size)
+            # note_size = randrange(5)
+            # # note_shape = randrange(20)
+            # self.drawbot.note_head(size=note_size)
+            # todo - Adam - new func
+            # self.drawbot.return_to_random()
             logging.info('Emission 3-8: note head')
 
-        # 4 = note head and line
+        # 4 = line
         elif randchoice == 4:
-            note_size = randrange(1, 10)
-            self.drawbot.note_head(size=note_size)
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: note head and line')
+            self.drawbot.go_draw(x + self.rnd(peak * 10),
+                                 y + self.rnd(peak * 10))
+            logging.info('Emission 3-8: line')
 
-        # 5 = dot
+        # 5 = Z dance
         elif randchoice == 5:
-            self.drawbot.dot()
+            # self.drawbot.dot()
             # self.move_y_random()
-            logging.info('Emission 3-8: dot and line')
-
-
+            self.drawbot.position_move_by(self.rnd(peak * 10),
+                                          self.rnd(peak * 10),
+                                          randrange(peak) * 10)
+            logging.info('Emission 3-8:z dance')
 
     def high_energy_response(self):
         """move to a random x, y position"""
