@@ -65,7 +65,7 @@ class DataBorg:
             # Additional vars
             ######################
 
-            self.robot_mode = 0
+            # self.robot_mode = 0
 
             self.interrupt_bang = True
 

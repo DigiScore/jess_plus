@@ -2,8 +2,9 @@
 import sys
 import os
 from time import time, sleep
-from random import randrange, getrandbits, random
+from random import randrange, getrandbits, random, uniform
 import logging
+from enum import Enum
 
 # import project modules
 from nebula.nebula_dataclass import DataBorg
@@ -11,6 +12,15 @@ from drawbot import Drawbot
 import config
 
 # todo - CRAIGS script
+
+
+class RobotMode(Enum):
+    Continuous = 0
+    Modification = 1
+    Inspiration = 2
+    Repetition = 3
+    OffPage = 4
+
 
 class Affect:
     """Controls movement and shapes drawn by Dobot.
@@ -82,6 +92,9 @@ class Affect:
         # names for affect listening
         stream_list = config.stream_list
         stream_list_len = len(stream_list)
+        current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
+        joint_inc = 10
+
 
         while self.running:
             # flag for breaking a phrase from big affect signal
@@ -100,7 +113,7 @@ class Affect:
             phrase_loop_end = time() + phrase_length
 
             # define robot mode
-            self.hivemind.robot_mode = randrange(5)
+            robot_mode = RobotMode(randrange(5))
 
             logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
             logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
@@ -178,7 +191,52 @@ class Affect:
                     #
                     ######################################
 
-                    # todo - sort out robot mode here
+                    match robot_mode:
+                        case RobotMode.Continuous:
+                        # move continuously using data streams from EMD, borg
+
+                            inc = joint_inc * current_phrase_num
+
+                            self.drawbot.position_move_by(uniform(-inc, inc),
+                                                          uniform(-inc, inc),
+                                                          self.drawbot.draw_position[2],
+                                             wait=False)
+
+                        case RobotMode.Inspiration:
+                            # random shapes inspired by Wolffs "1,2,3 players"
+                            # go_random_draw_up()
+                            # self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
+                            #                               uniform(-joint_inc, joint_inc),
+                            #                               uniform(-joint_inc, joint_inc), wait=False)
+                            self.wolff_inspiration(thought_train)
+
+                        case RobotMode.Modification:
+                        # random shapes inspired by Cardews "Treatise"
+                        # go_random_draw_up()
+                        # draw_sunburst(random.uniform(20, 40), True)
+                        #
+                        # if (random.randrange(0, 1) == 1):
+                        #     return_to_sunburst()
+
+                            self.cardew_inspiration(thought_train)
+
+                        case RobotMode.OffPage:
+                        # random movements off the page, balletic movements above the page
+                        # print("OffPage Mode")
+
+                            self.drawbot.joint_move_by(uniform(-joint_inc, joint_inc),
+                                                       uniform(-joint_inc, joint_inc),
+                                                       uniform(-joint_inc, joint_inc), wait=False)
+
+                        case RobotMode.Repetition:
+                        # large, repetitive movements
+                        # print("Repetition Mode")
+
+                            draw_square(random.uniform(10, 40))  # draw a square of random size
+                            rand_xfactor = random.randrange(-3, 3)
+                            rand_yfactor = random.randrange(-3, 3)
+                            position_move_by(5 * rand_xfactor, 5 * rand_yfactor, 0,
+                                             wait=True)  # either move in positive, negative or no movement, then loop
 
                     if thought_train > 0.7:
                         logging.info('interrupt > HIGH !!!!!!!!!')
@@ -221,7 +279,7 @@ class Affect:
 
         logging.info('quitting dobot director thread')
 
-    def mid_energy_response(self, peak):
+    def wolff_inspiration(self, peak):
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
@@ -280,6 +338,70 @@ class Affect:
             self.drawbot.dot()
             # self.move_y_random()
             logging.info('Emission 3-8: dot and line')
+
+
+
+    def cardew_inspiration(self, peak):
+        (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
+        logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+
+        """between 2 and 8 make shapes in situ"""
+        # randomly choose from the following c hoices
+        randchoice = randrange(6)
+        logging.debug(f'randchoice == {randchoice}')
+
+        # 0= line to somewhere
+        if randchoice == 0:
+            self.drawbot.bot_move_to(x + self.rnd(peak),
+                                 y + self.rnd(peak),
+                                 z, 0,
+                                 False)
+            logging.info('Emission 3-8: draw line')
+
+        # 1 = messy squiggles
+        if randchoice == 1:
+            squiggle_list = []
+            for n in range(randrange(2, 4)):
+                squiggle_list.append((randrange(-5, 5) / 5,
+                                      randrange(-5, 5) / 5,
+                                      randrange(-5, 5) / 5)
+                                     )
+            self.drawbot.squiggle(squiggle_list)
+            logging.info('Emission 3-8: small squiggle')
+
+        # 2 = dot & line
+        elif randchoice == 2:
+            self.drawbot.dot()
+            self.drawbot.bot_move_to(x + self.rnd(peak),
+                                 y + self.rnd(peak),
+                                 z, 0,
+                                 False)
+            logging.info('Emission 3-8: dot')
+
+        # 3 = note head
+        elif randchoice == 3:
+            note_size = randrange(5)
+            # note_shape = randrange(20)
+            self.drawbot.note_head(size=note_size)
+            logging.info('Emission 3-8: note head')
+
+        # 4 = note head and line
+        elif randchoice == 4:
+            note_size = randrange(1, 10)
+            self.drawbot.note_head(size=note_size)
+            self.drawbot.bot_move_to(x + self.rnd(peak),
+                                 y + self.rnd(peak),
+                                 z, 0,
+                                 False)
+            logging.info('Emission 3-8: note head and line')
+
+        # 5 = dot
+        elif randchoice == 5:
+            self.drawbot.dot()
+            # self.move_y_random()
+            logging.info('Emission 3-8: dot and line')
+
+
 
     def high_energy_response(self):
         """move to a random x, y position"""
