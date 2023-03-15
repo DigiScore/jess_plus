@@ -23,3 +23,9 @@ stream_list = ['mic_in',
 
 # todo - CRAIG if this is false then the "feeding" NNets need to be operting too
 all_nets_predicting = True
+
+
+# [DEV PARAMETERS]
+temperature = 0
+
+speed = 1

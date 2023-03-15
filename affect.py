@@ -168,7 +168,8 @@ class Affect:
                     self_awareness = getattr(self.hivemind, 'self_awareness')
                     logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
                     arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
-                    self.drawbot.speed(velocity=arm_speed,
+                    if self.drawbot:
+                        self.drawbot.speed(velocity=arm_speed,
                                acceleration=arm_speed)
 
                     ######################################
