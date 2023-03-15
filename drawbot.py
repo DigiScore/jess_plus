@@ -1,5 +1,6 @@
 from random import getrandbits, randrange, uniform
 from time import time, sleep
+from enum import Enum
 import logging
 import struct
 import math
@@ -14,6 +15,13 @@ from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 # todo ADAMS script
 
+class Shapes(Enum):
+    Square: 0
+    Triangle: 1
+    Sunburst: 2
+    Irregular: 3
+    Circle: 4
+    Line: 5
 
 ######################
 # DRAWBOT CONTROLS
@@ -52,6 +60,11 @@ class Drawbot(Dobot):
         self.triangles = []
         self.chars = []
 
+        self.shape_groups = []  # list of shape groups [shape type, size, pos]
+        self.coords = []        # list of coordinates drawn
+
+        self.last_shape_group = None
+
         self.duration_of_piece = duration_of_piece
         self.start_time = time()
 
@@ -72,7 +85,7 @@ class Drawbot(Dobot):
         elapsed = time() - self.start_time
 
         # get current y-value
-        (x, y, z, r, j1, j2, j3, j4) = self.pose()
+        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
         logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
@@ -95,14 +108,13 @@ class Drawbot(Dobot):
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
-
     def move_y_random(self):
         """Moves x and y pen position to nearly the true Y point."""
         # How far into the piece
         elapsed = time() - self.start_time
 
         # get current y-value
-        (x, y, z, r, j1, j2, j3, j4) = self.pose()
+        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
         logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
@@ -116,7 +128,6 @@ class Drawbot(Dobot):
             self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-
 
     ######################
     # DIGIBOT FUNCTIONS
@@ -162,7 +173,7 @@ class Drawbot(Dobot):
             circumference point: size of arc in pixels across x axis
             end point x, end point y: distance from last/ previous position
              """
-        [x, y, z, r] = self.pose()[0:4]
+        [x, y, z, r] = self.get_pose()[0:4]
         for arc in arc_list:
             circumference, dx, dy = arc[0], arc[1], arc[2]
             self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
@@ -191,7 +202,7 @@ class Drawbot(Dobot):
     def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
         """Simplified arc function for drawing 2D arcs on the xy axis. apex_x and y determine 
         the coordinates of the apex of the curve. target_x and y determine the end point of the curve"""
-        pos = self.pose()
+        pos = self.get_pose()
 
         msg = Message()
         msg.id = 101
@@ -254,7 +265,7 @@ class Drawbot(Dobot):
 
     def joint_move_by(self, j1, j2, j3, j4, wait=True):
         """moves specific joints by an amount."""
-        pose = self.pose()
+        pose = self.get_pose()
         self.move_to(pose.x, pose.y, pose.z, pose.r, pose.j1 + j1, pose.j2 + j2, pose.j3 + j3, pose.j4 + j4)
         self._set_ptp_cmd(j1, j2, j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
@@ -284,7 +295,7 @@ class Drawbot(Dobot):
             drawing: True = pen on paper
             wait: True = wait till sequence finished"""
 
-        (x, y, z, r, j1, j2, j3, j4) = self.pose()
+        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
         self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
 
     def bot_move_to(self, x, y, z, r, wait=False):
@@ -293,18 +304,24 @@ class Drawbot(Dobot):
     def clear_commands(self):
         self._set_queued_cmd_clear()
 
+    def get_pose(self):
+        return self.pose()
+
     #----- NEW FUNCTIONS -----#
     #-- go to position functions --#
     def go(self, x, y, z, wait=True):
         """Go to an x, y, z position"""
+        self.coords.append(x, y)
         self._set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
+        self.coords.append(x, y)
         self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
+        self.coords.append(x, y)
         self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     #-- creative go to position functions --#
@@ -314,6 +331,8 @@ class Drawbot(Dobot):
         y = uniform(self.y_extents[0], self.y_extents[1])
         z = self.draw_position[2]
         r = 0
+
+        self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2)," y:", round(y,2))
         self._set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
 
@@ -324,18 +343,15 @@ class Drawbot(Dobot):
         z = self.draw_position[2]
         r = 0
 
+        self.coords.append((x, y))
         print("Random draw pos above page x:",x," y:",y)
-
-        #device.move_to(pose[0], pose[1], ready_position[2], pose[3], wait=True)    # lift pen up
-        #device.move_to(x, y, ready_position[2], 0, wait=True)           # go to random pos above page
-        #device.move_to(x, y, draw_position[2], 0, wait=True)            # move pen down to page
         self._set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=True)
 
     #-- move by functions --#
     def position_move_by(self, x, y, z, wait=True):
         """Increment the robot cartesian position by x, y, z. Check that the arm isn't going out of x, y, z extents."""
 
-        pose = self.pose()[:3]
+        pose = self.get_pose()[:3]
 
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking 
 
@@ -353,7 +369,7 @@ class Drawbot(Dobot):
 
     def joint_move_by(self, _j1, _j2, _j3, wait=True):
         """moves specific joints by an amount."""
-        (j1, j2, j3, j4) = self.pose()[-4:]
+        (j1, j2, j3, j4) = self.get_pose()[-4:]
 
         #if(z <= z_extents[0] + 2):  # if the arm is too low, rotate j2 slightly clockwise to raise the arm
         #    print("joint_move_by z too low, _j2 = -2")
@@ -370,7 +386,7 @@ class Drawbot(Dobot):
     def draw_square(self, size):      # draws a square at the robots current position with a size and angle (in degrees)
         """Draw a square from the pen's current position. Start from top left vertex and draw anti-clockwise. 
         Positions are saved to the squares array to be accessed by other functions."""
-        pos = self.pose()[:2]
+        pos = self.get_pose()[:2]
         square = []
 
         local_pos = [
@@ -386,6 +402,7 @@ class Drawbot(Dobot):
             ]
             self.go_draw(next_pos[0], next_pos[1])
             square.append(next_pos)
+            self.coords.append(next_pos)
 
         self.go_draw(pos[0], pos[1], wait=False)
 
@@ -394,7 +411,7 @@ class Drawbot(Dobot):
     def draw_triangle(self, size):
         """Draws a triangle from the current pen position. Randomly chooses a type of triangle to draw 
         and uses the size parameter to determine the size. For irregular triangles, use draw_irregular(3)."""
-        pos = self.pose()[:2]     # x, y
+        pos = self.get_pose()[:2]     # x, y
         triangle = []
 
         rand_type = randrange(0,2)
@@ -426,6 +443,7 @@ class Drawbot(Dobot):
                 return None
 
             triangle.append(next_pos)
+            self.coords.append(next_pos)
 
         self.go_draw(pos[0], pos[1])     # go back to the first vertex to join up the shape
         self.triangles.append(triangle)
@@ -433,7 +451,7 @@ class Drawbot(Dobot):
     def draw_sunburst(self, r, randomAngle):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
         """Draw a sunburst from the pens position. Will draw r number of lines coming from the centre point. 
         Can be drawn with lines at random angles between 0 and 360 degrees or with pre-defined angles. Positions are saved to the sunbursts array to be accessed by other functions."""
-        pos = self.pose()
+        pos = self.get_pose()
 
         if(randomAngle == True):
             random_angles = [
@@ -467,16 +485,17 @@ class Drawbot(Dobot):
                 pos[1] + local_pos[i][1],
             ]
             sunburst.append(next_pos)
+            self.coords.append(next_pos)  
 
             self.go_draw(next_pos[0], next_pos[1], wait=False)       #draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line            
+            self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line          
 
         self.sunbursts.append(sunburst)
 
     def draw_irregular_shape(self, num_vertices):
         """Draws an irregular shape from the current pen position with 'num_vertices' number of randomly generated vertices. If set to 0, 'num_vertices' will be randomised between 3 and 10.
         Positions are saved to the irregulars array to be accessed by other functions."""
-        pos = self.pose()
+        pos = self.get_pose()
 
         if(num_vertices <= 0):
             num_vertices = randrange(3, 10)
@@ -486,6 +505,7 @@ class Drawbot(Dobot):
             x = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
             y = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
             vertices.append((x,y))
+            self.coords.append((x,y))
 
         for i in range(len(vertices)):
             x, y = vertices[i]
@@ -499,7 +519,7 @@ class Drawbot(Dobot):
     def draw_circle(self, size, side=0, wait=True):
         """Draws a circle from the current pen position. 'side' is used to determine which direction the circle is drawn relative 
         to the pen position, allows for creation of figure-8 patterns.The start position, size, and side are saved to the circles list."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
 
         if(side == 0):  # side is used to draw figure 8 patterns
             self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
@@ -510,6 +530,7 @@ class Drawbot(Dobot):
         circle.append(pos)
         circle.append(size)
         circle.append(side)
+        self.coords(pos)
 
         self.circles.append(circle)
 
@@ -518,7 +539,7 @@ class Drawbot(Dobot):
         A, B, C, D, E, F, G, P. All letters consisting of just straight lines are drawn in this function whereas 
         letters with curves are drarn in their own respective functions."""
         #print("Drawing letter: ", _char)
-        pos = self.pose()[:2]     # x, y
+        pos = self.get_pose()[:2]     # x, y
         char = []
         char.append(_char.upper())
 
@@ -604,13 +625,14 @@ class Drawbot(Dobot):
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
 
             char.append(next_pos)     # append the current position to the letter
+            self.coords.append(next_pos)
 
         self.chars.append(char)          # add the completed character to the characters list
 
     def draw_p(self, size, wait=True):
         """Draws the letter P at the pens current position. Seperate from the draw_char() function as it requires an arc.
         Is called in draw_char() when P is passed as the _char parameter."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
         char = []
         char.append("P")
 
@@ -633,11 +655,12 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
+        for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_b(self, size, wait=True):
         """Draws the letter B at the pens current position. Seperate from the draw_char() function as it requires an arc.
         Is called in draw_char() when B is passed as the _char parameter."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
         char = []
         char.append("B")
 
@@ -663,11 +686,12 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
+        for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_c(self, size, wait=True):
         """Draws the letter C at the pens current position. Seperate from the draw_char() function as it requires an arc.
         Is called in draw_char() when C is passed as the _char parameter."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
         char = []
         char.append("C")
 
@@ -687,11 +711,12 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
+        for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_d(self, size, wait=True):
         """Draws the letter D at the pens current position. Seperate from the draw_char() function as it requires an arc.
         Is called in draw_char() when D is passed as the _char parameter."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
         char = []
         char.append("D")
 
@@ -712,11 +737,12 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
+        for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_g(self, size, wait=True):
         """Draws the letter G at the pens current position. Seperate from the draw_char() function as it requires an arc.
         Is called in draw_char() when G is passed as the _char parameter."""
-        pos = self.pose()[:4]
+        pos = self.get_pose()[:4]
         char = []
         char.append("G")
 
@@ -743,6 +769,7 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
+        for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_random_char(self, size, wait=True):
         chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
@@ -751,17 +778,78 @@ class Drawbot(Dobot):
 
         self.draw_char(rand_char, size, wait)
 
+    def create_shape_group(self, wait=True):
+        pos = self.get_pose()[:3]       # position of the group
+        shapes_num = randrange(2,5)     # number of shapes in this group
+        shape_group = []                # stores the current shape group
+        
+        for i in range(shapes_num):
+            type = Shapes(randrange(0, len(Shapes)))                    # generate random shape type
+
+            if type == Shapes.Line:                                     # if it's a line, add the type and x and y target position
+                local_target_pos = uniform(-20, 20), uniform(-20, 20)   # random change in position (is added to pos to get world_pos)
+                shape_group.append( (type, local_target_pos) )          # add the shape type and its local_pos to the group
+
+            else:
+                size = uniform(10,30)
+                shape_group.append( ( type, size ) )         # add the shape type and its size to the group
+
+        shape_group.append( ( pos[0], pos[1] ) )           # add the group x and y position to the last index of the shape_group object
+        self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
+
+    def draw_shape_group(self, group, variation = 0):
+
+        pos = group[len(group) - 1]     # group pos is stored in the last index of the shape group list
+
+        for i in range(len(group) - 1):     # last element in group is the position
+            match group[i][0]:              # [i][0] = shape type     
+                case Shapes.Square:
+                    self.draw_square(group[i][1] + variation)     # [i][1] = size (when shape isn't a line)
+                case Shapes.Triangle:
+                    self.draw_triangle(group[i][1] + variation)   # size variation can be added when group is re-drawn
+                case Shapes.Sunburst:
+                    self.draw_sunburst(group[i][1] + variation)
+                case Shapes.Irregular:
+                    self.draw_irregular_shape(randrange(3,8))     # irregular shape will always be random
+                case Shapes.Circle:
+                    self.draw_circle(group[i][1] + variation)
+                case Shapes.Line:
+                    local_target = group[i][1]                    # [i][1] = local_target_pos (when shape is a line)
+
+                    self.go_draw(pos[0] + local_target[0], pos[1] + local_target[1])    # draw the line then go back to original group position
+                    self.go_draw(pos[0], pos[1])
+        
+        self.shape_groups.append(group)                     # add shape_group object to list
+        self.last_shape_group = group                       # set most recent shape group to this one, is used in repeat_shape_group
+
+    def repeat_shape_group(self):
+        shape_group = self.last_shape_group         # get the last drawn shape group
+
+        old_pos = shape_group[len(shape_group) - 1]     # get the position of the previous shape group ( last index in list )
+
+        new_pos = [                                 # point at a random distance from the previous shape group
+            old_pos[0] + uniform(-20, 20),            # 
+            old_pos[1] + uniform(-20, 20)
+        ]
+
+        shape_group[len(shape_group) - 1] = new_pos     # set the shape group position to the new pos with offset
+
+        self.go_draw(new_pos[0], new_pos[1])    # go to new position
+
+        self.draw_shape_group(shape_group, uniform(-3, 3))  # set variation param to random, varies sizes when re-drawing shape group
+
+
     #-- return to shape functions --#
     def return_to_square(self):     # returns to a random pre-existing square and does something
         """Randomly chooses a square from the 'squares' list and randomly chooses a behaviour to do with it."""
         square_length = int(len(self.squares))
-        if(square_length > 0):
+        if square_length > 0:
             square = self.squares[int(uniform(0, square_length))]
             print(square)
 
             rand = uniform(0, 1)
 
-            if(rand == 0):              # move to a random corner on the square and draw a new square with a random size
+            if rand == 0:              # move to a random corner on the square and draw a new square with a random size
                 randCorner = uniform(0,3)
                 self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
                 self.draw_square(uniform(20,29), True)        
@@ -825,3 +913,11 @@ class Drawbot(Dobot):
 
         else:
             print("Cannot return to char, no chars in list")
+    
+    def return_to_coord(self):
+        """Randomly choose a coordinate from the list of coords and move the pen to it."""
+        coords_length = int(len(self.coords))
+        if(coords_length > 0):
+            coord = self.coords[randrange(0, coords_length)]
+
+            self.go_draw_up(coord[0], coord[1])

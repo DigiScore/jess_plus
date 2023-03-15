@@ -263,7 +263,11 @@ class Affect:
                             #     rand_yfactor = random.randrange(-3, 3)
                             #     position_move_by(5 * rand_xfactor, 5 * rand_yfactor, 0,
                             #                      wait=True)  # either move in positive, negative or no movement, then loop
-                            pass
+
+                            self.drawbot.create_shape_group()         # create a new shape group
+                            for i in range(randrange(2,6)):         # repeat the shape group a random number of times
+                                self.drawbot.repeat_shape_group()   
+                            
                             # todo - Adam to sort as discussed
 
                     # and wait for a cycle
