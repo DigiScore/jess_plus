@@ -918,7 +918,8 @@ class Drawbot(Dobot):
             print("Cannot return to char, no chars in list")
     
     def return_to_coord(self):
-        """Randomly choose a coordinate from the list of coords and move the pen to it."""
+        """Randomly choose a coordinate from the list of coords and move the pen to it. 
+        Unlike the other return_to funtions it doesn't do anything other than move to that coord."""
         coords_length = int(len(self.coords))
         if(coords_length > 0):
             coord = self.coords[randrange(0, coords_length)]
