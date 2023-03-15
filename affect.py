@@ -51,7 +51,7 @@ class Affect:
         if self.drawbot:
             print('locating home')
             self.drawbot.home()
-            input('remove pen, then press enter')
+            input('remove pen lid, then press enter')
 
             # # todo CRAIG this should be decided in line with self.awareness
             # arm_speed = (((speed - 1) * (300 - 50)) / (10 - 1)) + 50
