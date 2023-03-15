@@ -31,6 +31,18 @@ class DataBorg:
             """Net that has some self awareness - ???"""
 
             ######################
+            # Outputs from NNets in AI Factory rework
+            ######################
+            self.eda2flow: float = random()
+            """Net 1 raw emission"""
+
+            self.eeg2flow: float = random()
+            """Net 2 raw emission"""
+
+            self.core2flow: float = random()
+            """Net 3 raw emission"""
+
+            ######################
             # Human inputs
             ######################
             self.mic_in: float = random()
