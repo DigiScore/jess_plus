@@ -265,6 +265,7 @@ class Affect:
                             #                      wait=True)  # either move in positive, negative or no movement, then loop
 
                             self.drawbot.create_shape_group()         # create a new shape group
+                            
                             for i in range(randrange(2,6)):         # repeat the shape group a random number of times
                                 self.drawbot.repeat_shape_group()   
                             

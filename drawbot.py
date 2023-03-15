@@ -779,6 +779,8 @@ class Drawbot(Dobot):
         self.draw_char(rand_char, size, wait)
 
     def create_shape_group(self, wait=True):
+        """Function to create a new shape group, populates a list with shape group data and draws it using draw_shape_group(). 
+        Is called once whenever affect module enters Repetition mode"""
         pos = self.get_pose()[:3]       # position of the group
         shapes_num = randrange(2,5)     # number of shapes in this group
         shape_group = []                # stores the current shape group
@@ -798,7 +800,8 @@ class Drawbot(Dobot):
         self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
 
     def draw_shape_group(self, group, variation = 0):
-
+        """Takes a shape group list and draws all the shapes within it. Also adds it to the 
+        list of shape groups and sets the last drawn shape group to this one."""
         pos = group[len(group) - 1]     # group pos is stored in the last index of the shape group list
 
         for i in range(len(group) - 1):     # last element in group is the position
@@ -823,12 +826,13 @@ class Drawbot(Dobot):
         self.last_shape_group = group                       # set most recent shape group to this one, is used in repeat_shape_group
 
     def repeat_shape_group(self):
+        """Repeats the last drawn shape group with a random offset position and slight variation to shape sizes."""
         shape_group = self.last_shape_group         # get the last drawn shape group
 
         old_pos = shape_group[len(shape_group) - 1]     # get the position of the previous shape group ( last index in list )
 
         new_pos = [                                 # point at a random distance from the previous shape group
-            old_pos[0] + uniform(-20, 20),            # 
+            old_pos[0] + uniform(-20, 20),          # new position at random distance from old position
             old_pos[1] + uniform(-20, 20)
         ]
 
@@ -836,8 +840,7 @@ class Drawbot(Dobot):
 
         self.go_draw(new_pos[0], new_pos[1])    # go to new position
 
-        self.draw_shape_group(shape_group, uniform(-3, 3))  # set variation param to random, varies sizes when re-drawing shape group
-
+        self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
 
     #-- return to shape functions --#
     def return_to_square(self):     # returns to a random pre-existing square and does something
