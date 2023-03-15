@@ -223,10 +223,20 @@ class Affect:
                         # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
                             inc = joint_inc * current_phrase_num
 
-                            self.drawbot.position_move_by(uniform(-inc, inc),
-                                                          uniform(-inc, inc),
-                                                          self.drawbot.draw_position[2],
-                                             wait=False)
+                            
+                            
+                            if(random() > 0.5):     # use mic input - probably want to change this so x, y, z aren't all the same
+                                self.drawbot.position_move_by(self.hivemind.mic_in,         
+                                                              self.hivemind.mic_in, 
+                                                              self.hivemind.mic_in, 
+                                                              wait=False)
+                                
+                            else:                   # todo - use EMD data. Currently uses random data
+                                self.drawbot.position_move_by(uniform(-inc, inc),
+                                                              uniform(-inc, inc),
+                                                              self.drawbot.draw_position[2],
+                                                              wait=False)
+                                pass
 
                         case RobotMode.Inspiration:
                             # random shapes inspired by Wolffs "1,2,3 players"
@@ -265,7 +275,7 @@ class Affect:
                             #                      wait=True)  # either move in positive, negative or no movement, then loop
 
                             self.drawbot.create_shape_group()         # create a new shape group
-                            
+
                             for i in range(randrange(2,6)):         # repeat the shape group a random number of times
                                 self.drawbot.repeat_shape_group()   
                             
