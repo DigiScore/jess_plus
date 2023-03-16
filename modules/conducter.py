@@ -25,7 +25,6 @@ class Conducter:
     """
 
     def __init__(self,
-                 duration_of_piece: int = 120,
                  continuous_line: bool = True,
                  speed: int = 5,
                  staves: int = 0,
@@ -51,6 +50,8 @@ class Conducter:
                 port = available_ports[0].device
             elif PLATFORM == "Linux":
                 port = available_ports[-1].device
+            else:
+                port = None
 
             self.drawbot = Drawbot(port=port,
                               verbose=False,
@@ -64,12 +65,7 @@ class Conducter:
         self.hivemind = DataBorg()
 
         # start operating vars
-        self.duration_of_piece = duration_of_piece
         self.continuous_line = continuous_line
-        self.running = True
-        self.old_value = 0
-        self.local_start_time = time()
-        # self.end_time = self.start_time + duration_of_piece
         self.pen = pen
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         self.joint_inc = 10
@@ -115,11 +111,6 @@ class Conducter:
             #############################
             # Phrase-level gesture gate: 3 - 8 seconds
             #############################
-            # todo CRAIG calls the robot arm to do different modes
-            # todo CRAIG global speed and self-awareness stretch
-            # # calc rhythmic intensity based on self-awareness factor & global speed
-            # intensity = getattr(self.hivemind, 'self_awareness')
-            # logging.debug(f'////////////////////////   intensity =  {intensity}')
 
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
             phrase_loop_end = time() + phrase_length
@@ -228,32 +219,33 @@ class Conducter:
 
                     else:
                         # MID response
-                        match robot_mode:
-                            case RobotMode.Continuous:
-                                # move continuously using data streams from EMD, borg
-                                print("Continuous Mode")
-                                # self.continuous(thought_train)
-                                self.offpage(thought_train)
+                        if self.drawbot:
+                            match robot_mode:
+                                case RobotMode.Continuous:
+                                    # move continuously using data streams from EMD, borg
+                                    print("Continuous Mode")
+                                    # self.continuous(thought_train)
+                                    self.offpage(thought_train)
 
-                            case RobotMode.Inspiration:
-                                # random shapes inspired by Wolff's 1, 2, 3
-                                print("Inspiration/ Wollf Mode")
-                                self.wolff_inspiration(thought_train)
+                                case RobotMode.Inspiration:
+                                    # random shapes inspired by Wolff's 1, 2, 3
+                                    print("Inspiration/ Wollf Mode")
+                                    self.wolff_inspiration(thought_train)
 
-                            case RobotMode.Modification:
-                                # random shapes inspired by Cardews "Treatise"
-                                print("Modification/ Cardew Mode")
-                                self.cardew_inspiration(thought_train)
+                                case RobotMode.Modification:
+                                    # random shapes inspired by Cardews "Treatise"
+                                    print("Modification/ Cardew Mode")
+                                    self.cardew_inspiration(thought_train)
 
-                            case RobotMode.OffPage:
-                                # random movements off the page, balletic movements above the page
-                                print("OffPage Mode")
-                                self.offpage(thought_train)
+                                case RobotMode.OffPage:
+                                    # random movements off the page, balletic movements above the page
+                                    print("OffPage Mode")
+                                    self.offpage(thought_train)
 
-                            case RobotMode.Repetition:
-                                # large, repetitive movements
-                                print("Repetition Mode")
-                                self.repetition(thought_train)
+                                case RobotMode.Repetition:
+                                    # large, repetitive movements
+                                    print("Repetition Mode")
+                                    self.repetition(thought_train)
 
                     # and wait for a cycle
                 sleep(rhythm_rate)

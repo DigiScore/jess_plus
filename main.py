@@ -19,7 +19,7 @@ class Main:
         speed: int the dynamic tempo of the all processes. 1 = slow, 10 = fast
         pen: bool - True for pen, false for pencil
     """
-    def __init__(self, duration_of_piece: int = 120,
+    def __init__(self,
                  continuous_line: bool = True,
                  speed: int = 5,
                  staves: int = 1,
@@ -33,11 +33,12 @@ class Main:
         logging.debug(f'Data dict initial values are = {self.hivemind}')
 
         # init the AI factory (inherits AIFactory, Listener)
-        nebula = Nebula(speed=speed)
+        nebula = Nebula(
+            speed=speed
+        )
 
-        # Conducter & Gesture management (controls Drawbot)
+        # init Conducter & Gesture management (controls Drawbot)
         robot1 = Conducter(
-            duration_of_piece=duration_of_piece,
             continuous_line=continuous_line,
             speed=speed,
             staves=staves,
@@ -60,9 +61,8 @@ class Main:
 
 if __name__ == "__main__":
     Main(
-        duration_of_piece=200,
-         continuous_line=False,
-         speed=5,
-         staves=0,
-         pen=True
+        continuous_line=False,
+        speed=5,
+        staves=0,
+        pen=True
     )

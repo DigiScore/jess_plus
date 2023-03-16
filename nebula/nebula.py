@@ -17,7 +17,7 @@ Dedicated to Fabrizio Poltronieri
 # import python modules
 from threading import Thread
 import logging
-from time import sleep
+from time import sleep, time
 # from bitalino import BITalino
 
 
@@ -86,6 +86,9 @@ class Nebula(Listener,
         #     first_eda_data = self.eda.read(10)
         #     logging.info(f'Data from BITalino = {first_eda_data}')
 
+        # work out master timing then collapse hivemind.running
+        self.endtime = time() + config.duration_of_piece
+
     def main_loop(self):
         """Starts the server/ AI threads
          and gets the data rolling."""
@@ -98,9 +101,14 @@ class Nebula(Listener,
         # start them all
         t1.start()
         t2.start()
+        t3.start()
 
     def jess_input(self):
-        while self.hivemind.running:
+        """
+        Listens to live human input
+        :return:
+        """
+        while time() <= self.endtime:
             # read data from bitalino
             # if self.BITALINO_CONNECTED:
             #     eda_data = self.eda.read()
@@ -109,11 +117,33 @@ class Nebula(Listener,
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
-                eeg_data = self.eeg_board.read(255)
-                self.hivemind.eeg_board = eeg_data
-                logging.info(f"eeg data input = {eeg_data}")
+                eeg = []
+                raw_eeg_data = self.eeg_board.read(255)
+                self.hivemind.eeg_board = raw_eeg_data
+                logging.info(f"eeg data raw = {raw_eeg_data}")
+
+                # normalise the output
+                for e in raw_eeg_data:
+                    norm_e = self.normalise_eeg(e)
+                    eeg.append(norm_e)
+                self.hivemind.eeg = eeg
+                self.hivemind.eeg_single = eeg[0]
+                logging.info(f"eeg data normalised = {eeg}")
 
             sleep(self.hivemind.rhythm_rate)
+
+        self.hivemind.running = False
+
+    def normalise_eeg(self, eeg) -> float:
+        """
+        takes an eeg data atom -10000 -> 10000, and
+        normalises it between 0.0 -> 1.0
+        :param eeg: float
+        :return:
+        """
+        # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+        eeg_normalised = ((eeg - -10000) / (10000 - -10000)) * (1.0 - 0.0) + 0.0
+        return eeg_normalised
 
     def terminate(self):
         # self.affect.quit()

@@ -3,6 +3,8 @@ robot = True
 eeg_live = False
 eda_live = False
 
+duration_of_piece = 200
+
 # [BITALINO]
 baudrate = 100
 channels = [0]
@@ -19,7 +21,8 @@ stream_list = ['mic_in',
                'rnd_poetry',
                'move_rnn',
                'affect_rnn',
-               'self_awareness']
+               'self_awareness',
+               'eeg_single']
 
 # todo - CRAIG if this is false then the "feeding" NNets need to be operting too
 all_nets_predicting = True

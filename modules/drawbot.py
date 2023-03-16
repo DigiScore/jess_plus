@@ -12,8 +12,9 @@ from pydobot.message import Message
 from pydobot.enums.ControlValues import ControlValues
 from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
+# install project modules
+import config
 
-# todo ADAMS script
 
 class Shapes(Enum):
     Square = 0
@@ -36,8 +37,8 @@ class Drawbot(Dobot):
     def __init__(self,
                  port,
                  verbose,
-                 duration_of_piece,
-                 continuous_line):
+                 continuous_line
+                 ):
 
         super().__init__(port, verbose)
 
@@ -65,7 +66,7 @@ class Drawbot(Dobot):
 
         self.last_shape_group = None
 
-        self.duration_of_piece = duration_of_piece
+        self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
 
     def rnd(self, power_of_command: int) -> int:
@@ -355,13 +356,14 @@ class Drawbot(Dobot):
 
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking 
 
-        if(newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]):     # check x posiion
+        # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
+        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
             print("delta x reset to 0")
             x = 0
-        if(newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]):     # check y position
+        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:     # check y position
             print("delta y reset to 0")
             y = 0
-        if(newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]):      # check z height
+        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:      # check z height
             print("delta z reset to 0")
             z = 0
 
@@ -415,7 +417,7 @@ class Drawbot(Dobot):
         triangle = []
 
         rand_type = randrange(0,2)
-        if(rand_type == 0):
+        if rand_type == 0:
             #right angle triangle
             local_pos = [
                 (0, 0),
@@ -423,7 +425,7 @@ class Drawbot(Dobot):
                 (-size, size)
             ]
 
-        elif(rand_type == 1):
+        elif rand_type == 1:
             #isosceles triangle
             local_pos = [
                 (0, 0),
@@ -449,8 +451,13 @@ class Drawbot(Dobot):
         self.triangles.append(triangle)
 
     def draw_sunburst(self, r, randomAngle = True):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
-        """Draw a sunburst from the pens position. Will draw r number of lines coming from the centre point. 
-        Can be drawn with lines at random angles between 0 and 360 degrees or with pre-defined angles. Positions are saved to the sunbursts array to be accessed by other functions."""
+        """
+        Draw a sunburst from the pens position. Will draw r number of
+        lines coming from the centre point.
+        Can be drawn with lines at random angles between 0 and
+        360 degrees or with pre-defined angles. Positions are saved
+        to the sunbursts array to be accessed by other functions.
+        """
         pos = self.get_pose()
 
         if randomAngle == True:

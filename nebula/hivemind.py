@@ -36,8 +36,24 @@ class DataBorg:
             self.mic_in: float = random()
             """Percept input stream from client e.g. live mic level"""
 
-            self.eeg: list = [0, 0, 0, 0]
+            self.eeg: list = [
+                random(),
+                random(),
+                random(),
+                random()
+            ]
             """Live data from brainbit"""
+
+            self.eeg_normalised: list = [
+                random(),
+                random(),
+                random(),
+                random()
+            ]
+            """normalised eeg output"""
+
+            self.eeg_single: float = random()
+            """pre-processed single data atom from eeg for thought train"""
 
             self.eda: int = 0
             """Live data from Bitalino"""
@@ -57,9 +73,6 @@ class DataBorg:
 
             self.rhythm_rate: float = randrange(30, 100) / 100
             """Internal clock/ rhythm sub division"""
-
-            # self.rnd_stream: str = ""
-            # """Stream name currently used for active data"""
 
             ######################
             # Robot vars
@@ -98,7 +111,4 @@ class DataBorg:
         # self.affect_decision = ""
         self.rhythm_rate = randrange(30, 100) / 100
         # self.rnd_stream = ""
-        self.eeg = [random(),
-                    random(),
-                    random(),
-                    random()]
+        self.eeg_single = random()
