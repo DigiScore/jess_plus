@@ -33,5 +33,3 @@ while True:
             test.cardew_inspiration(rnd)
         case 6:
             test.high_energy_response()
-
-
