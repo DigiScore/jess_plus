@@ -16,12 +16,12 @@ from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 # todo ADAMS script
 
 class Shapes(Enum):
-    Square: 0
-    Triangle: 1
-    Sunburst: 2
-    Irregular: 3
-    Circle: 4
-    Line: 5
+    Square = 0
+    Triangle = 1
+    Sunburst = 2
+    Irregular = 3
+    Circle = 4
+    Line = 5
 
 ######################
 # DRAWBOT CONTROLS
@@ -45,7 +45,7 @@ class Drawbot(Dobot):
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
-        self.draw_position = [250, 0, -10, 0]
+        self.draw_position = [250, 0, 0, 0]
         self.end_position = (250, 0, 50, 0)
 
         self.x_extents = [160, 350]
@@ -237,12 +237,12 @@ class Drawbot(Dobot):
     # todo - continuous trajectory - test circle
     def go_position_ready(self):
         """moves directly to pre-defined position 'Ready Position'"""
-        x, y, z, r = self._ready_position[:4]
+        x, y, z, r = self.ready_position[:4]
         self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_draw(self):
         """moves directly to pre-defined position 'Ready Position'"""
-        x, y, z, r = self._draw_position[:4]
+        x, y, z, r = self.draw_position[:4]
         self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_end(self):
@@ -263,11 +263,11 @@ class Drawbot(Dobot):
         """moves specific joints direct to new angles."""
         self.joint_move_to(j1, j2, j3, j4, wait)
 
-    def joint_move_by(self, j1, j2, j3, j4, wait=True):
-        """moves specific joints by an amount."""
-        pose = self.get_pose()
-        self.move_to(pose.x, pose.y, pose.z, pose.r, pose.j1 + j1, pose.j2 + j2, pose.j3 + j3, pose.j4 + j4)
-        self._set_ptp_cmd(j1, j2, j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
+    # def joint_move_by(self, j1, j2, j3, j4, wait=True):
+    #     """moves specific joints by an amount."""
+    #     pose = self.get_pose()
+    #     self.move_to(pose.x, pose.y, pose.z, pose.r, pose.j1 + j1, pose.j2 + j2, pose.j3 + j3, pose.j4 + j4)
+    #     self._set_ptp_cmd(j1, j2, j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
     def home(self):
         """Go directly to the home position 0, 0, 0, 0"""
@@ -311,17 +311,17 @@ class Drawbot(Dobot):
     #-- go to position functions --#
     def go(self, x, y, z, wait=True):
         """Go to an x, y, z position"""
-        self.coords.append(x, y)
+        self.coords.append((x, y))
         self._set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
-        self.coords.append(x, y)
+        self.coords.append((x, y))
         self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
-        self.coords.append(x, y)
+        self.coords.append((x, y))
         self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     #-- creative go to position functions --#
@@ -370,16 +370,16 @@ class Drawbot(Dobot):
     def joint_move_by(self, _j1, _j2, _j3, wait=True):
         """moves specific joints by an amount."""
         (j1, j2, j3, j4) = self.get_pose()[-4:]
-
+        print(j1, j2, j3, j4)
         #if(z <= z_extents[0] + 2):  # if the arm is too low, rotate j2 slightly clockwise to raise the arm
         #    print("joint_move_by z too low, _j2 = -2")
         #    _j2 = -2
 
-        newPose = [
-            _j1 + j1,
-            _j2 + j2, 
-            _j3 + j3
-        ]
+        # newPose = [
+        _j1 += j1
+        _j2 += j2
+        _j3 -= j3
+        # ]
         self._set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
     #-- shape drawing functions --#
@@ -436,11 +436,11 @@ class Drawbot(Dobot):
                 pos[0] + local_pos[i][0],
                 pos[1] + local_pos[i][1]
             ]
-            if shape_interrupt == False:
-                self.go_draw(next_pos[0], next_pos[1], wait=True)
-            else:
-                shape_interrupt = False
-                return None
+            # if shape_interrupt == False:
+            self.go_draw(next_pos[0], next_pos[1], wait=True)
+            # else:
+            #     shape_interrupt = False
+            #     return None
 
             triangle.append(next_pos)
             self.coords.append(next_pos)
@@ -448,33 +448,33 @@ class Drawbot(Dobot):
         self.go_draw(pos[0], pos[1])     # go back to the first vertex to join up the shape
         self.triangles.append(triangle)
 
-    def draw_sunburst(self, r, randomAngle):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
+    def draw_sunburst(self, r, randomAngle = True):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
         """Draw a sunburst from the pens position. Will draw r number of lines coming from the centre point. 
         Can be drawn with lines at random angles between 0 and 360 degrees or with pre-defined angles. Positions are saved to the sunbursts array to be accessed by other functions."""
         pos = self.get_pose()
 
-        if(randomAngle == True):
+        if randomAngle == True:
             random_angles = [
-                uniform(0,360),
-                uniform(0,360),
-                uniform(0,360),
-                uniform(0,360),
-                uniform(0,360)
+                uniform(0, 360),
+                uniform(0, 360),
+                uniform(0, 360),
+                uniform(0, 360),
+                uniform(0, 360)
             ]
             local_pos = [
-                (r * math.sin(random_angles[0]),r * math.cos(random_angles[0])),
-                (r * math.sin(random_angles[1]),r * math.cos(random_angles[1])),
-                (r * math.sin(random_angles[2]),r * math.cos(random_angles[2])),
-                (r * math.sin(random_angles[3]),r * math.cos(random_angles[3])),
-                (r * math.sin(random_angles[4]),r * math.cos(random_angles[4]))
+                (r * math.sin(random_angles[0]), r * math.cos(random_angles[0])),
+                (r * math.sin(random_angles[1]), r * math.cos(random_angles[1])),
+                (r * math.sin(random_angles[2]), r * math.cos(random_angles[2])),
+                (r * math.sin(random_angles[3]), r * math.cos(random_angles[3])),
+                (r * math.sin(random_angles[4]), r * math.cos(random_angles[4]))
             ]
         else:
             local_pos = [
-                (r * math.sin(320),r * math.cos(320)),
-                (r * math.sin(340),r * math.cos(340)),
-                (r * math.sin(0),r * math.cos(0)),
-                (r * math.sin(20),r * math.cos(20)),
-                (r * math.sin(40),r * math.cos(40))
+                (r * math.sin(320), r * math.cos(320)),
+                (r * math.sin(340), r * math.cos(340)),
+                (r * math.sin(0), r * math.cos(0)),
+                (r * math.sin(20), r * math.cos(20)),
+                (r * math.sin(40), r * math.cos(40))
             ]
 
         sunburst = []  #saves all points in this sunburst then saves it to the list of drawn sunbursts
@@ -521,16 +521,16 @@ class Drawbot(Dobot):
         to the pen position, allows for creation of figure-8 patterns.The start position, size, and side are saved to the circles list."""
         pos = self.get_pose()[:4]
 
-        if(side == 0):  # side is used to draw figure 8 patterns
+        if side == 0:  # side is used to draw figure 8 patterns
             self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
-        elif(side == 1):
+        elif side == 1:
             self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
 
         circle = []
         circle.append(pos)
         circle.append(size)
         circle.append(side)
-        self.coords(pos)
+        self.coords.append(pos)
 
         self.circles.append(circle)
 
@@ -782,24 +782,24 @@ class Drawbot(Dobot):
         """Function to create a new shape group, populates a list with shape group data and draws it using draw_shape_group(). 
         Is called once whenever affect module enters Repetition mode"""
         pos = self.get_pose()[:3]       # position of the group
-        shapes_num = randrange(2,5)     # number of shapes in this group
+        shapes_num = randrange(2, 4)     # number of shapes in this group
         shape_group = []                # stores the current shape group
         
         for i in range(shapes_num):
-            type = Shapes(randrange(0, len(Shapes)))                    # generate random shape type
+            type = Shapes(randrange(6))                    # generate random shape type
 
             if type == Shapes.Line:                                     # if it's a line, add the type and x and y target position
                 local_target_pos = uniform(-20, 20), uniform(-20, 20)   # random change in position (is added to pos to get world_pos)
-                shape_group.append( (type, local_target_pos) )          # add the shape type and its local_pos to the group
+                shape_group.append((type, local_target_pos))          # add the shape type and its local_pos to the group
 
             else:
-                size = uniform(10,30)
-                shape_group.append( ( type, size ) )         # add the shape type and its size to the group
+                size = uniform(10, 30)
+                shape_group.append((type, size))         # add the shape type and its size to the group
 
-        shape_group.append( ( pos[0], pos[1] ) )           # add the group x and y position to the last index of the shape_group object
+        shape_group.append((pos[0], pos[1]))           # add the group x and y position to the last index of the shape_group object
         self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
 
-    def draw_shape_group(self, group, variation = 0):
+    def draw_shape_group(self, group, variation=0):
         """Takes a shape group list and draws all the shapes within it. Also adds it to the 
         list of shape groups and sets the last drawn shape group to this one."""
         pos = group[len(group) - 1]     # group pos is stored in the last index of the shape group list

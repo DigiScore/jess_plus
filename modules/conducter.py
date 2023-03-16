@@ -1,6 +1,6 @@
 # install python modules
 from time import time, sleep
-from random import randrange, getrandbits, uniform
+from random import random, randrange, getrandbits, uniform
 import logging
 from enum import Enum
 from serial.tools import list_ports
@@ -27,7 +27,7 @@ class Conducter:
                  duration_of_piece: int = 120,
                  continuous_line: bool = True,
                  speed: int = 5,
-                 staves: int = 1,
+                 staves: int = 0,
                  pen: bool = True,
                  ):
 
@@ -70,6 +70,8 @@ class Conducter:
         self.local_start_time = time()
         # self.end_time = self.start_time + duration_of_piece
         self.pen = pen
+        self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
+        self.joint_inc = 10
 
         # calculate the inverse of speed
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
@@ -108,8 +110,6 @@ class Conducter:
         # names for affect listening
         stream_list = config.stream_list
         stream_list_len = len(stream_list)
-        current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
-        joint_inc = 10
 
         while self.hivemind.running:
             # flag for breaking a phrase from big affect signal
@@ -228,59 +228,70 @@ class Conducter:
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
-                            else:
-                                # random shapes inspired by Wolffs "1,2,3 players"
-                                self.drawbot.go_random_draw_up()
-                                # self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
-                                #                               uniform(-joint_inc, joint_inc),
-                                #                               uniform(-joint_inc, joint_inc), wait=False)
+
                     else:
                         # MID response
                         match robot_mode:
                             case RobotMode.Continuous:
-                            # move continuously using data streams from EMD, borg
-
-                            # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
-                                inc = joint_inc * current_phrase_num
-
-                                self.drawbot.position_move_by(uniform(-inc, inc),
-                                                              uniform(-inc, inc),
-                                                              self.drawbot.draw_position[2],
-                                                 wait=False)
+                                # move continuously using data streams from EMD, borg
+                                print("Continuous Mode")
+                                self.continuous(thought_train)
 
                             case RobotMode.Inspiration:
+                                # random shapes inspired by Wolff's 1, 2, 3
+                                print("Inspiration/ Wollf Mode")
                                 self.wolff_inspiration(thought_train)
 
                             case RobotMode.Modification:
-                            # random shapes inspired by Cardews "Treatise"
+                                # random shapes inspired by Cardews "Treatise"
+                                print("Modification/ Cardew Mode")
                                 self.cardew_inspiration(thought_train)
 
                             case RobotMode.OffPage:
-                            # random movements off the page, balletic movements above the page
-                            # print("OffPage Mode")
-                                self.drawbot.joint_move_by(uniform(-joint_inc, joint_inc),
-                                                           uniform(-joint_inc, joint_inc),
-                                                           uniform(-joint_inc, joint_inc), wait=False)
+                                # random movements off the page, balletic movements above the page
+                                print("OffPage Mode")
+                                self.offpage(thought_train)
 
                             case RobotMode.Repetition:
                                 # large, repetitive movements
                                 print("Repetition Mode")
-
-                                self.drawbot.draw_square(uniform(10, 40))  # draw a square of random size
-                                rand_xfactor = randrange(-3, 3)
-                                rand_yfactor = randrange(-3, 3)
-                                self.drawbot.position_move_by(
-                                    5 * rand_xfactor,
-                                    5 * rand_yfactor,
-                                    0,
-                                    wait=True
-                                )  # either move in positive, negative or no movement, then loop
-                                # todo - Adam to sort as discussed
+                                self.repetition(thought_train)
 
                     # and wait for a cycle
                 sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
+
+    def repetition(self, peak):
+        self.drawbot.go_random_draw_up()
+        self.drawbot.create_shape_group()  # create a new shape group
+        for i in range(randrange(1, 2)):  # repeat the shape group a random number of times
+            logging.debug("repetition of shape")
+            self.drawbot.repeat_shape_group()
+
+    def offpage(self, peak):
+        move_var = (peak * 10) * self.joint_inc
+        self.drawbot.position_move_by(
+            uniform(-move_var, move_var),
+            uniform(-move_var, move_var),
+            uniform(0, move_var),
+            wait=False
+        )
+    def continuous(self, peak):
+        # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
+        inc = self.joint_inc * self.current_phrase_num
+
+        if random() > 0.5:  # use mic input - probably want to change this so x, y, z aren't all the same
+            self.drawbot.position_move_by(self.hivemind.mic_in,
+                                          self.hivemind.mic_in,
+                                          self.hivemind.mic_in,
+                                          wait=False)
+
+        else:  # todo - use EMD data. Currently uses random data
+            self.drawbot.position_move_by(uniform(-inc, inc),
+                                          uniform(-inc, inc),
+                                          self.drawbot.draw_position[2],
+                                          wait=False)
 
     def wolff_inspiration(self, peak):
         """
@@ -370,17 +381,15 @@ class Conducter:
 
             case 2:
                 self.drawbot.draw_irregular_shape(int(peak * 10))
-                self.drawbot.bot_move_to(x + self.rnd(peak),
-                                     y + self.rnd(peak),
-                                     z, 0,
-                                     False)
+
                 logging.info('Emission: irregular shape')
 
             case 3:
-                # note_size = randrange(5)
-                # # note_shape = randrange(20)
-                # self.drawbot.note_head(size=note_size)
-                # todo - Adam - new func
+                self.drawbot.bot_move_to(x + self.rnd(peak),
+                                         y + self.rnd(peak),
+                                         z, 0,
+                                         False)
+                # todo - Adam - new func random shape
                 # self.drawbot.return_to_random()
                 logging.info('Emission: random shape')
 
