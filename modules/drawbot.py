@@ -101,10 +101,10 @@ class Drawbot(Dobot):
             z = randrange(-2, 2)
 
         # which mode
-        if self.continuous_line:
-            self.bot_move_to(x, newy, z, r, True)
-        else:
-            self.jump_to(x, newy, z, r, True)
+        # if self.continuous_line:
+        self.bot_move_to(x, newy, z, r, True)
+        # else:
+        #     self.jump_to(x, newy, z, r, True)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
@@ -771,7 +771,7 @@ class Drawbot(Dobot):
         self.chars.append(char)
         for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
-    def draw_random_char(self, size, wait=True):
+    def draw_random_char(self, size=1, wait=True):
         chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
 
         rand_char = chars[randrange(0, len(chars))]

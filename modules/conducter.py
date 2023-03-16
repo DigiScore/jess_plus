@@ -235,7 +235,8 @@ class Conducter:
                             case RobotMode.Continuous:
                                 # move continuously using data streams from EMD, borg
                                 print("Continuous Mode")
-                                self.continuous(thought_train)
+                                # self.continuous(thought_train)
+                                self.offpage(thought_train)
 
                             case RobotMode.Inspiration:
                                 # random shapes inspired by Wolff's 1, 2, 3
@@ -274,7 +275,7 @@ class Conducter:
         self.drawbot.position_move_by(
             uniform(-move_var, move_var),
             uniform(-move_var, move_var),
-            uniform(0, move_var),
+            uniform(-move_var, move_var),
             wait=False
         )
     def continuous(self, peak):
@@ -306,48 +307,51 @@ class Conducter:
         # self.drawbot.move_y_random()
 
         # randomly choose from the following choices
-        randchoice = randrange(6)
-        logging.debug(f'randchoice == {randchoice}')
+        randchoice = randrange(7)
+        logging.debug(f'randchoice WOLFF == {randchoice}')
 
         match randchoice:
             case 0:
+                logging.info('Emission: draw line')
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
                                      False)
-                logging.info('Emission: draw line')
 
             case 1:
-                self.drawbot.draw_random_char(peak * randrange(10, 20))
                 logging.info('Emission: random character')
+                self.drawbot.draw_random_char(peak * randrange(10, 20))
 
             case 2:
+                logging.info('Emission: dot and line')
                 self.drawbot.dot()
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
                                      False)
-                logging.info('Emission: dot and line')
 
             case 3:
+                logging.info('Emission: note head')
                 note_size = randrange(1, 10)
                 # note_shape = randrange(20)
                 self.drawbot.note_head(size=note_size)
-                logging.info('Emission: note head')
 
             case 4:
+                logging.info('Emission 3-8: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
                                      False)
-                logging.info('Emission 3-8: note head and line')
 
             case 5:
-                self.drawbot.dot()
-                # self.move_y_random()
                 logging.info('Emission: dot')
+                self.drawbot.dot()
+
+            case 6:
+                logging.info('Emission: random character')
+                self.drawbot.draw_random_char(peak)
 
     def cardew_inspiration(self, peak):
         """
@@ -356,61 +360,52 @@ class Conducter:
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
+        # move Y along
+        self.drawbot.move_y()
+
         # randomly choose from the following choices
-        randchoice = randrange(6)
-        logging.debug(f'randchoice == {randchoice}')
+        randchoice = randrange(5)
+        logging.debug(f'randchoice CARDEW == {randchoice}')
 
         match randchoice:
             case 0:
+                logging.info('Emission: draw arc')
+                # range = peak * 10
                 self.drawbot.arc2D(x + randrange(-10, 10),
                                    y + randrange(-10, 10),
                                    x + randrange(-10, 10),
                                    y + randrange(-10, 10),
                                    )
-                logging.info('Emission: draw arc')
 
             case 1:
+                logging.info('Emission: small squiggle')
                 squiggle_list = []
-                for n in range(randrange(3, 6)):
-                    squiggle_list.append((randrange(-5, 5) / 5,
-                                          randrange(-5, 5) / 5,
-                                          randrange(-5, 5) / 5)
+                for n in range(randrange(3, 9)):
+                    squiggle_list.append((randrange(-5, 5),
+                                          randrange(-5, 5),
+                                          randrange(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
-                logging.info('Emission: small squiggle')
 
             case 2:
-                self.drawbot.draw_irregular_shape(int(peak * 10))
-
-                logging.info('Emission: irregular shape')
+                logging.info('Emission: draw circle')
+                self.drawbot.draw_circle(int(peak * 10))
 
             case 3:
-                self.drawbot.bot_move_to(x + self.rnd(peak),
-                                         y + self.rnd(peak),
-                                         z, 0,
-                                         False)
-                # todo - Adam - new func random shape
-                # self.drawbot.return_to_random()
-                logging.info('Emission: random shape')
-
-            case 4:
+                logging.info('Emission: line')
                 self.drawbot.go_draw(x + self.rnd(peak * 10),
                                      y + self.rnd(peak * 10))
-                logging.info('Emission: line')
 
-            case 5:
-                self.drawbot.position_move_by(self.rnd(peak * 10),
-                                              self.rnd(peak * 10),
-                                              randrange(10)
-                                              )
-                logging.info('Emission: z dance')
+            case 4:
+                logging.info('Emission: return to coord')
+                self.drawbot.return_to_coord()
 
     def high_energy_response(self):
         """
         move to a random x, y position
         """
         self.drawbot.clear_commands()
-        self.drawbot.move_y_random()
+        self.drawbot.return_to_coord()
 
     def terminate(self):
         """
