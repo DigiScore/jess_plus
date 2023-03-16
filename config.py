@@ -3,7 +3,14 @@ robot = True
 eeg_live = False
 eda_live = False
 
+robot1_port = "/usb1"
+robot2_port = "/usb2"
+
+# play params
 duration_of_piece = 200
+continuous_line = False
+speed = 5
+staves = 0
 
 # [BITALINO]
 baudrate = 100
@@ -24,9 +31,7 @@ stream_list = ['mic_in',
                'self_awareness',
                'eeg_single']
 
-# todo - CRAIG if this is false then the "feeding" NNets need to be operting too
 all_nets_predicting = True
-
 
 # [DEV PARAMETERS]
 temperature = 0

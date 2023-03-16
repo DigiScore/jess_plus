@@ -1,6 +1,7 @@
 # import python modules
 import logging
 
+import config
 # import project modules
 from modules.conducter import Conducter
 from nebula.nebula import Nebula
@@ -20,10 +21,11 @@ class Main:
         pen: bool - True for pen, false for pencil
     """
     def __init__(self,
-                 continuous_line: bool = True,
-                 speed: int = 5,
-                 staves: int = 1,
-                 pen: bool = True):
+                 # continuous_line: bool = True,
+                 # speed: int = 5,
+                 # staves: int = 1,
+                 # pen: bool = True
+                 ):
 
         # logging for all modules
         logging.basicConfig(level=logging.INFO)
@@ -34,35 +36,35 @@ class Main:
 
         # init the AI factory (inherits AIFactory, Listener)
         nebula = Nebula(
-            speed=speed
+            speed=config.speed
         )
 
         # init Conducter & Gesture management (controls Drawbot)
         robot1 = Conducter(
-            continuous_line=continuous_line,
-            speed=speed,
-            staves=staves,
-            pen=pen,
+            port=config.robot1_port,
+            continuous_line=config.continuous_line,
+            speed=config.speed,
+            staves=config.staves,
         )
 
         # start Nebula AI Factory here after affect starts data moving
         robot1.main_loop()
         nebula.main_loop()
 
-    def terminate(self):
-        """Smart collapse of all threads and comms"""
-        print('TERMINATING')
-        self.hivemind.running = False
-        # self.digibot.home()
-        # self.digibot.close()
-        # self.eeg_board.terminate()
-        # self.eda.close()
+    # def terminate(self):
+    #     """Smart collapse of all threads and comms"""
+    #     print('TERMINATING')
+    #     self.hivemind.running = False
+    #     # self.digibot.home()
+    #     # self.digibot.close()
+    #     # self.eeg_board.terminate()
+    #     # self.eda.close()
 
 
 if __name__ == "__main__":
     Main(
-        continuous_line=False,
-        speed=5,
-        staves=0,
-        pen=True
+        # continuous_line=False,
+        # speed=5,
+        # staves=0,
+        # pen=True
     )

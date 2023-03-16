@@ -25,13 +25,13 @@ class Conducter:
     """
 
     def __init__(self,
+                 port: str,
                  continuous_line: bool = True,
                  speed: int = 5,
                  staves: int = 0,
-                 pen: bool = True,
                  ):
 
-        PLATFORM = platform.system()
+        # PLATFORM = platform.system()
         ROBOT_CONNECTED = config.robot
 
         ############################
@@ -40,24 +40,23 @@ class Conducter:
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
         if ROBOT_CONNECTED:
+            # # find available ports and locate Dobot (-1)
+            # available_ports = list_ports.comports()
+            # print(f'available ports: {[x.device for x in available_ports]}')
+            # if PLATFORM == "darwin":
+            #     port = available_ports[-1].device
+            # elif PLATFORM == "Windows":
+            #     port = available_ports[0].device
+            # elif PLATFORM == "Linux":
+            #     port = available_ports[-1].device
+            # else:
+            #     port = None
 
-            # find available ports and locate Dobot (-1)
-            available_ports = list_ports.comports()
-            print(f'available ports: {[x.device for x in available_ports]}')
-            if PLATFORM == "darwin":
-                port = available_ports[-1].device
-            elif PLATFORM == "Windows":
-                port = available_ports[0].device
-            elif PLATFORM == "Linux":
-                port = available_ports[-1].device
-            else:
-                port = None
-
-            self.drawbot = Drawbot(port=port,
-                              verbose=False,
-                              duration_of_piece=duration_of_piece,
-                              continuous_line=continuous_line
-                              )
+            self.drawbot = Drawbot(
+                port=port,
+                verbose=False,
+                continuous_line=continuous_line
+            )
         else:
             self.drawbot = None
 
@@ -66,7 +65,6 @@ class Conducter:
 
         # start operating vars
         self.continuous_line = continuous_line
-        self.pen = pen
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         self.joint_inc = 10
 
@@ -251,6 +249,7 @@ class Conducter:
                 sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
+        self.terminate()
 
     def repetition(self, peak):
         self.drawbot.go_random_draw_up()
@@ -403,7 +402,6 @@ class Conducter:
         print('TERMINATING')
         self.drawbot.home()
         self.drawbot.close()
-        self.running = False
 
     def rnd(self, power_of_command: int) -> int:
         """
