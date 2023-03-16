@@ -1,18 +1,15 @@
 # install python modules
-import sys
-import os
 from time import time, sleep
-from random import randrange, getrandbits, random, uniform
+from random import randrange, getrandbits, uniform
 import logging
 from enum import Enum
+from serial.tools import list_ports
+import platform
 
 # import project modules
 from nebula.hivemind import DataBorg
-from drawbot import Drawbot
+from modules.drawbot import Drawbot
 import config
-
-# todo - CRAIGS script
-
 
 class RobotMode(Enum):
     Continuous = 0
@@ -32,14 +29,36 @@ class Conducter:
                  speed: int = 5,
                  staves: int = 1,
                  pen: bool = True,
-                 drawbot: Drawbot = None
+                 # drawbot: Drawbot = None
                  ):
-        # super().__init__(port, verbose)
 
-        self.drawbot = drawbot
+        PLATFORM = platform.system()
+        ROBOT_CONNECTED = config.robot
 
-        # set global path
-        sys.path.insert(0, os.path.abspath('..'))
+        ############################
+        # Robot
+        ############################
+        # start dobot communications
+        # may need sudo chmod 666 /dev/ttyACM0
+        if ROBOT_CONNECTED:
+
+            # find available ports and locate Dobot (-1)
+            available_ports = list_ports.comports()
+            print(f'available ports: {[x.device for x in available_ports]}')
+            if PLATFORM == "darwin":
+                port = available_ports[-1].device
+            elif PLATFORM == "Windows":
+                port = available_ports[0].device
+            elif PLATFORM == "Linux":
+                port = available_ports[-1].device
+
+            self.drawbot = Drawbot(port=port,
+                              verbose=False,
+                              duration_of_piece=duration_of_piece,
+                              continuous_line=continuous_line
+                              )
+        else:
+            self.drawbot = None
 
         # own the dataclass
         self.hivemind = DataBorg()
@@ -63,10 +82,6 @@ class Conducter:
             self.drawbot.home()
             input('remove pen lid, then press enter')
 
-            # # todo CRAIG this should be decided in line with self.awareness
-            # arm_speed = (((speed - 1) * (300 - 50)) / (10 - 1)) + 50
-            # self.drawbot.speed(velocity=arm_speed,
-            #            acceleration=arm_speed)
             self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
@@ -97,7 +112,6 @@ class Conducter:
         current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         joint_inc = 10
 
-
         while self.running:
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_bang = True
@@ -117,11 +131,11 @@ class Conducter:
             logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
             logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
 
+            # define robot mode for this phase length
+            robot_mode = RobotMode(randrange(5))
+
             while time() < phrase_loop_end:
                 print('================')
-
-                # define robot mode
-                robot_mode = RobotMode(randrange(5))
 
                 # if a major break out then go to Daddy cycle and restart
                 if not self.hivemind.interrupt_bang:
@@ -134,7 +148,6 @@ class Conducter:
                     if self.continuous_line:
                         self.drawbot.move_y()
 
-                # todo - CRAIG sort this out.!!
                 # generate rhythm rate here
                 rhythm_rate = (randrange(10,
                                          80) / 100) #* self.global_speed
@@ -158,7 +171,6 @@ class Conducter:
                 # Rhythm-level gesture gate: .5-2 seconds
                 # THis streams the chosen data
                 #############################
-                # todo CRAIG add global time stretch here (from self awareness)
                 # rhythmic loop 0.5-2 (or 1-4) secs, unless interrupt bang
                 rhythm_loop = time() + (randrange(500, 2000) / 1000)
                 logging.debug(f'end time = {rhythm_loop}')
@@ -178,7 +190,6 @@ class Conducter:
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 
                     # 3. modify speed and accel through self awareness
-                    # # todo CRAIG this should be decided in line with self.awareness
                     # calc rhythmic intensity based on self-awareness factor & global speed
                     self_awareness = getattr(self.hivemind, 'self_awareness')
                     logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
@@ -221,7 +232,6 @@ class Conducter:
                                 self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
                                                               uniform(-joint_inc, joint_inc),
                                                               uniform(-joint_inc, joint_inc), wait=False)
-
                     # MID response
                     match robot_mode:
                         case RobotMode.Continuous:

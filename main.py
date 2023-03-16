@@ -12,7 +12,7 @@ from nebula.hivemind import DataBorg
 # from bitalino import BITalino
 import config
 
-from modules.drawbot import Drawbot
+# from modules.drawbot import Drawbot
 
 
 class Main:
@@ -34,9 +34,8 @@ class Main:
                  staves: int = 1,
                  pen: bool = True):
 
-        # config & logging for all modules
+        # logging for all modules
         logging.basicConfig(level=logging.DEBUG)
-        ROBOT_CONNECTED = config.robot
 
         # build initial dataclass fill with random numbers
         self.hivemind = DataBorg()
@@ -45,58 +44,36 @@ class Main:
         ############################
         # Ai Factory
         ############################
-
         # init the AI factory (inherits AIFactory, Listener)
-        self.nebula = Nebula(speed=speed)
+        nebula = Nebula(speed=speed)
 
         ############################
-        # Robot
+        # Conducter & Gesture management (controls Drawbot)
         ############################
+        self.robot1 = Conducter(
+            duration_of_piece=duration_of_piece,
+            continuous_line=continuous_line,
+            speed=speed,
+            staves=staves,
+            pen=pen,
+        )
 
-        # start dobot communications
-        if ROBOT_CONNECTED:
-            # find available ports and locate Dobot (-1)
-            available_ports = list_ports.comports()
-            print(f'available ports: {[x.device for x in available_ports]}')
-            port = available_ports[-1].device
-
-            drawbot = Drawbot(port=port,
-                                   verbose=True,
-                                   duration_of_piece=duration_of_piece,
-                                   continuous_line=continuous_line
-                                   )
-        else:
-            drawbot = None
-
-        ############################
-        # Conducter & Gesture management
-        ############################
-
-        self.conducter = Conducter(duration_of_piece=duration_of_piece,
-                                continuous_line=continuous_line,
-                                speed=speed,
-                                staves=staves,
-                                pen=pen,
-                                drawbot=drawbot
-                                )
-
-        gesture_thread = Thread(target=self.conducter.gesture_manager)
+        robot_thread = Thread(target=self.robot1.gesture_manager)
 
         # start Nebula AI Factory here after affect starts data moving
-        gesture_thread.start()
-        self.nebula.main_loop()
+        robot_thread.start()
+        nebula.main_loop()
 
-        # start operating vars
-        self.running = True
-        self.start_time = time()
-        self.end_time = self.start_time + duration_of_piece
+        # # start operating vars
+        # self.start_time = time()
+        # self.end_time = self.start_time + duration_of_piece
 
     def terminate(self):
         """Smart collapse of all threads and comms"""
         print('TERMINATING')
-        self.digibot.running = False
-        self.digibot.home()
-        self.digibot.close()
+        self.hivemind.running = False
+        # self.digibot.home()
+        # self.digibot.close()
         # self.eeg_board.terminate()
         # self.eda.close()
 

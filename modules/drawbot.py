@@ -95,7 +95,6 @@ class Drawbot(Dobot):
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
-
     def move_y_random(self):
         """Moves x and y pen position to nearly the true Y point."""
         # How far into the piece
@@ -116,7 +115,6 @@ class Drawbot(Dobot):
             self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-
 
     ######################
     # DIGIBOT FUNCTIONS
@@ -226,12 +224,12 @@ class Drawbot(Dobot):
     # todo - continuous trajectory - test circle
     def go_position_ready(self):
         """moves directly to pre-defined position 'Ready Position'"""
-        x, y, z, r = self._ready_position[:4]
+        x, y, z, r = self.ready_position[:4]
         self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_draw(self):
         """moves directly to pre-defined position 'Ready Position'"""
-        x, y, z, r = self._draw_position[:4]
+        x, y, z, r = self.draw_position[:4]
         self.bot_move_to(x, y, z, r, wait=True)
 
     def go_position_end(self):

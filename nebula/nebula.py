@@ -17,12 +17,16 @@ Dedicated to Fabrizio Poltronieri
 # import python modules
 from threading import Thread
 import logging
+from time import sleep
+# from bitalino import BITalino
+
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
 from modules.listener import Listener
 import config
 from modules.brainbit import BrainbitReader
+
 
 class Nebula(Listener,
              AIFactory
@@ -64,17 +68,18 @@ class Nebula(Listener,
             self,
             speed
         )
-        BRAINBIT_CONNECTED = config.eeg
+        self.BRAINBIT_CONNECTED = config.eeg_live
+        self.BITALINO_CONNECTED = config.eda_live
 
         # init brainbit reader
-        if BRAINBIT_CONNECTED:
+        if self.BRAINBIT_CONNECTED:
             logging.info("Starting EEG connection")
             self.eeg_board = BrainbitReader()
             self.eeg_board.start()
             first_brain_data = self.eeg_board.read(255)
             logging.info(f'Data from brainbit = {first_brain_data}')
-        #
-        # # # init bitalino
+
+        # # init bitalino
         # if self.BITALINO_CONNECTED:
         #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
         #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
@@ -88,27 +93,27 @@ class Nebula(Listener,
         # declares all threads
         t1 = Thread(target=self.make_data)
         t2 = Thread(target=self.snd_listen)
+        t3 = Thread(target=self.jess_input)
 
         # start them all
         t1.start()
         t2.start()
 
-    # def jess_input(self):
-    #     while self.running:
-    #         # read data from bitalino
-    #         if self.BITALINO_CONNECTED:
-    #             eda_data = self.eda.read()
-    #             # setattr(self.hivemind, 'eda', eda_data)
-    #             self.hivemind.eda = eda_data
-    #
-    #         # read data from brainbit
-    #         if self.BRAINBIT_CONNECTED:
-    #             eeg_data = self.eeg_board.read()
-    #             # setattr(self.hivemind, 'eeg_board', eeg_data)
-    #             self.hivemind.eeg_board = eeg_data
-    #             print(eeg_data)
-    #
-    #         sleep(0.1)
+    def jess_input(self):
+        while self.hivemind.running:
+            # read data from bitalino
+            # if self.BITALINO_CONNECTED:
+            #     eda_data = self.eda.read()
+            #     # setattr(self.hivemind, 'eda', eda_data)
+            #     self.hivemind.eda = eda_data
+
+            # read data from brainbit
+            if self.BRAINBIT_CONNECTED:
+                eeg_data = self.eeg_board.read(255)
+                self.hivemind.eeg_board = eeg_data
+                logging.info(f"eeg data input = {eeg_data}")
+
+            sleep(self.hivemind.rhythm_rate)
 
     def terminate(self):
         # self.affect.quit()
