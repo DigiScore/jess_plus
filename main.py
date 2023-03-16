@@ -1,24 +1,18 @@
-from time import sleep, time
+from time import time
 from threading import Thread
 import pyaudio
 import numpy as np
 import logging
 from random import random
 from serial.tools import list_ports
-from configparser import ConfigParser
-import threading
-import platform
 
-from  affect import Affect
+from modules.conducter import Conducter
 from nebula.nebula import Nebula
 from nebula.nebula_dataclass import DataBorg
-from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
 
-from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
-from drawbot import Drawbot
+from modules.drawbot import Drawbot
 
 
 class Main:
@@ -81,13 +75,13 @@ class Main:
         # Affect & Gesture management
         ############################
 
-        self.affect = Affect(duration_of_piece=duration_of_piece,
-                             continuous_line=continuous_line,
-                             speed=speed,
-                             staves=staves,
-                             pen=pen,
-                             drawbot=drawbot
-                             )
+        self.affect = Conducter(duration_of_piece=duration_of_piece,
+                                continuous_line=continuous_line,
+                                speed=speed,
+                                staves=staves,
+                                pen=pen,
+                                drawbot=drawbot
+                                )
 
         gesture_thread = Thread(target=self.affect.gesture_manager)
         gesture_thread.start()

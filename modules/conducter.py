@@ -21,8 +21,9 @@ class RobotMode(Enum):
     Repetition = 3
     OffPage = 4
 
-class Affect:
-    """Controls movement and shapes drawn by Dobot.
+class Conducter:
+    """
+    Controls movement and shapes drawn by Dobot.
     """
 
     def __init__(self,
@@ -38,7 +39,7 @@ class Affect:
         self.drawbot = drawbot
 
         # set global path
-        sys.path.insert(0, os.path.abspath('.'))
+        sys.path.insert(0, os.path.abspath('..'))
 
         # own the dataclass
         self.hivemind = DataBorg()
