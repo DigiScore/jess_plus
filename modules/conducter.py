@@ -73,8 +73,8 @@ class Conducter:
 
         # calculate the inverse of speed
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        self.global_speed = ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
-        print(f'user def speed = {speed}, global speed = {self.global_speed}')
+        self.global_speed = speed # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
+        # print(f'user def speed = {speed}, global speed = {self.global_speed}')
 
         if self.drawbot:
             print('locating home')
@@ -181,7 +181,6 @@ class Conducter:
                     self.drawbot.speed(velocity=arm_speed,
                                        acceleration=arm_speed)
 
-
                 while time() < rhythm_loop:
                     logging.debug('\t\t\t\t\t\t\t\t=========Hello - baby cycle 2 ===========')
 
@@ -231,10 +230,10 @@ class Conducter:
                                 self.drawbot.move_y()
                             else:
                                 # random shapes inspired by Wolffs "1,2,3 players"
-                                # self.drawbot.go_random_draw_up()
-                                self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
-                                                              uniform(-joint_inc, joint_inc),
-                                                              uniform(-joint_inc, joint_inc), wait=False)
+                                self.drawbot.go_random_draw_up()
+                                # self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
+                                #                               uniform(-joint_inc, joint_inc),
+                                #                               uniform(-joint_inc, joint_inc), wait=False)
                     else:
                         # MID response
                         match robot_mode:
@@ -292,8 +291,8 @@ class Conducter:
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
-        # self.drawbot.go_random_draw_up()
-        self.drawbot.move_y_random()
+        self.drawbot.go_random_draw_up()
+        # self.drawbot.move_y_random()
 
         # randomly choose from the following choices
         randchoice = randrange(6)

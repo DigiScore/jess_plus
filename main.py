@@ -82,7 +82,7 @@ if __name__ == "__main__":
     Main(
         duration_of_piece=200,
          continuous_line=False,
-         speed=10,
+         speed=5,
          staves=0,
          pen=True
     )
