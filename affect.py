@@ -21,7 +21,6 @@ class RobotMode(Enum):
     Repetition = 3
     OffPage = 4
 
-
 class Affect:
     """Controls movement and shapes drawn by Dobot.
     """
@@ -74,8 +73,10 @@ class Affect:
     ######################
     # DRAWBOT CONTROLS
     ######################
-    """Mid level functions for operating the drawing and moving 
-    functions of the Dobot"""
+    """
+    Mid level functions for operating the drawing and moving 
+    functions of the Dobot
+    """
 
     def gesture_manager(self):
         """Listens to the realtime incoming signal that is stored in the dataclass ("mic_in")
@@ -207,13 +208,18 @@ class Affect:
                         break
 
                         # LOW
-                        # nothing happens here
                     elif thought_train <= 0.1:
                         logging.info('interrupt LOW ----------- move Y')
 
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
+                            else:
+                                # random shapes inspired by Wolffs "1,2,3 players"
+                                self.drawbot.go_random_draw_up()
+                                self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
+                                                              uniform(-joint_inc, joint_inc),
+                                                              uniform(-joint_inc, joint_inc), wait=False)
 
                     # MID response
                     match robot_mode:
@@ -229,27 +235,15 @@ class Affect:
                                              wait=False)
 
                         case RobotMode.Inspiration:
-                            # random shapes inspired by Wolffs "1,2,3 players"
-                            # go_random_draw_up()
-                            # self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
-                            #                               uniform(-joint_inc, joint_inc),
-                            #                               uniform(-joint_inc, joint_inc), wait=False)
                             self.wolff_inspiration(thought_train)
 
                         case RobotMode.Modification:
                         # random shapes inspired by Cardews "Treatise"
-                        # go_random_draw_up()
-                        # draw_sunburst(random.uniform(20, 40), True)
-                        #
-                        # if (random.randrange(0, 1) == 1):
-                        #     return_to_sunburst()
-
                             self.cardew_inspiration(thought_train)
 
                         case RobotMode.OffPage:
                         # random movements off the page, balletic movements above the page
                         # print("OffPage Mode")
-
                             self.drawbot.joint_move_by(uniform(-joint_inc, joint_inc),
                                                        uniform(-joint_inc, joint_inc),
                                                        uniform(-joint_inc, joint_inc), wait=False)
@@ -272,139 +266,138 @@ class Affect:
         logging.info('quitting dobot director thread')
 
     def wolff_inspiration(self, peak):
+        """
+        jumps to a random spot and makes a mark inspired by Wolff
+        """
+        # get the current position
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
         self.drawbot.go_random_draw_up()
 
-        """between 2 and 8 make shapes in situ"""
-        # randomly choose from the following c hoices
+        # randomly choose from the following choices
         randchoice = randrange(6)
         logging.debug(f'randchoice == {randchoice}')
 
-        # 0= line to somewhere
-        if randchoice == 0:
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: draw line')
+        match randchoice:
+            case 0:
+                self.drawbot.bot_move_to(x + self.rnd(peak),
+                                     y + self.rnd(peak),
+                                     z, 0,
+                                     False)
+                logging.info('Emission: draw line')
 
-        # 1 = messy squiggles
-        if randchoice == 1:
-            self.drawbot.draw_random_char(peak * randrange(10, 20))
-            logging.info('Emission 3-8: small squiggle')
+            case 1:
+                self.drawbot.draw_random_char(peak * randrange(10, 20))
+                logging.info('Emission: random character')
 
-        # 2 = dot & line
-        elif randchoice == 2:
-            self.drawbot.dot()
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: dot')
+            case 2:
+                self.drawbot.dot()
+                self.drawbot.bot_move_to(x + self.rnd(peak),
+                                     y + self.rnd(peak),
+                                     z, 0,
+                                     False)
+                logging.info('Emission: dot and line')
 
-        # 3 = note head
-        elif randchoice == 3:
-            note_size = randrange(5)
-            # note_shape = randrange(20)
-            self.drawbot.note_head(size=note_size)
-            logging.info('Emission 3-8: note head')
+            case 3:
+                note_size = randrange(1, 10)
+                # note_shape = randrange(20)
+                self.drawbot.note_head(size=note_size)
+                logging.info('Emission: note head')
 
-        # 4 = note head and line
-        elif randchoice == 4:
-            note_size = randrange(1, 10)
-            self.drawbot.note_head(size=note_size)
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: note head and line')
+            case 4:
+                note_size = randrange(1, 10)
+                self.drawbot.note_head(size=note_size)
+                self.drawbot.bot_move_to(x + self.rnd(peak),
+                                     y + self.rnd(peak),
+                                     z, 0,
+                                     False)
+                logging.info('Emission 3-8: note head and line')
 
-        # 5 = dot
-        elif randchoice == 5:
-            self.drawbot.dot()
-            # self.move_y_random()
-            logging.info('Emission 3-8: dot and line')
+            case 5:
+                self.drawbot.dot()
+                # self.move_y_random()
+                logging.info('Emission: dot')
 
     def cardew_inspiration(self, peak):
+        """
+        randomly chooses a shape inspired by Cardew
+        """
         (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
-        """between 2 and 8 make shapes in situ"""
-        # randomly choose from the following c hoices
+        # randomly choose from the following choices
         randchoice = randrange(6)
         logging.debug(f'randchoice == {randchoice}')
 
-        # 0= arc to somewhere
-        if randchoice == 0:
-            self.drawbot.arc2D(x + randrange(-10, 10),
-                               y + randrange(-10, 10),
-                               x + randrange(-10, 10),
-                               y + randrange(-10, 10),
-                               )
-            logging.info('Emission: draw arc')
+        match randchoice:
+            case 0:
+                self.drawbot.arc2D(x + randrange(-10, 10),
+                                   y + randrange(-10, 10),
+                                   x + randrange(-10, 10),
+                                   y + randrange(-10, 10),
+                                   )
+                logging.info('Emission: draw arc')
 
-        # 1 = messy squiggles
-        if randchoice == 1:
-            squiggle_list = []
-            for n in range(randrange(3, 6)):
-                squiggle_list.append((randrange(-5, 5) / 5,
-                                      randrange(-5, 5) / 5,
-                                      randrange(-5, 5) / 5)
-                                     )
-            self.drawbot.squiggle(squiggle_list)
-            logging.info('Emission 3-8: small squiggle')
+            case 1:
+                squiggle_list = []
+                for n in range(randrange(3, 6)):
+                    squiggle_list.append((randrange(-5, 5) / 5,
+                                          randrange(-5, 5) / 5,
+                                          randrange(-5, 5) / 5)
+                                         )
+                self.drawbot.squiggle(squiggle_list)
+                logging.info('Emission: small squiggle')
 
-        # 2 = irregular shape
-        elif randchoice == 2:
-            self.drawbot.draw_irregular_shape(int(peak * 10))
-            self.drawbot.bot_move_to(x + self.rnd(peak),
-                                 y + self.rnd(peak),
-                                 z, 0,
-                                 False)
-            logging.info('Emission 3-8: dot')
+            case 2:
+                self.drawbot.draw_irregular_shape(int(peak * 10))
+                self.drawbot.bot_move_to(x + self.rnd(peak),
+                                     y + self.rnd(peak),
+                                     z, 0,
+                                     False)
+                logging.info('Emission: irregular shape')
 
-        # 3 = note head
-        elif randchoice == 3:
-            # note_size = randrange(5)
-            # # note_shape = randrange(20)
-            # self.drawbot.note_head(size=note_size)
-            # todo - Adam - new func
-            # self.drawbot.return_to_random()
-            logging.info('Emission 3-8: note head')
+            case 3:
+                # note_size = randrange(5)
+                # # note_shape = randrange(20)
+                # self.drawbot.note_head(size=note_size)
+                # todo - Adam - new func
+                # self.drawbot.return_to_random()
+                logging.info('Emission: random shape')
 
-        # 4 = line
-        elif randchoice == 4:
-            self.drawbot.go_draw(x + self.rnd(peak * 10),
-                                 y + self.rnd(peak * 10))
-            logging.info('Emission 3-8: line')
+            case 4:
+                self.drawbot.go_draw(x + self.rnd(peak * 10),
+                                     y + self.rnd(peak * 10))
+                logging.info('Emission: line')
 
-        # 5 = Z dance
-        elif randchoice == 5:
-            # self.drawbot.dot()
-            # self.move_y_random()
-            self.drawbot.position_move_by(self.rnd(peak * 10),
-                                          self.rnd(peak * 10),
-                                          randrange(peak) * 10)
-            logging.info('Emission 3-8:z dance')
+            case 5:
+                self.drawbot.position_move_by(self.rnd(peak * 10),
+                                              self.rnd(peak * 10),
+                                              randrange(peak) * 10)
+                logging.info('Emission: z dance')
 
     def high_energy_response(self):
-        """move to a random x, y position"""
+        """
+        move to a random x, y position
+        """
         self.drawbot.clear_commands()
         self.drawbot.move_y_random()
 
     def terminate(self):
-        """Smart collapse of all threads and comms"""
+        """
+        Smart collapse of all threads and comms
+        """
         print('TERMINATING')
         self.drawbot.home()
         self.drawbot.close()
         self.running = False
 
     def rnd(self, power_of_command: int) -> int:
-        """Returns a randomly generated + or - integer,
-        influenced by the incoming power factor"""
+        """
+        Returns a randomly generated + or - integer,
+        influenced by the incoming power factor
+        """
         pos = 1
         if getrandbits(1):
             pos = -1

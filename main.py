@@ -7,10 +7,11 @@ from random import random
 from serial.tools import list_ports
 from configparser import ConfigParser
 import threading
+import platform
 
 from  affect import Affect
 from nebula.nebula import Nebula
-from nebula.nebula_dataclass import DataBorg #NebulaDataClass
+from nebula.nebula_dataclass import DataBorg
 from brainbit import BrainbitReader
 # from bitalino import BITalino
 import config
@@ -18,7 +19,6 @@ import config
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
 from drawbot import Drawbot
-
 
 
 class Main:
@@ -130,8 +130,6 @@ class Main:
         #     logging.info(f'Data from brainbit = {first_brain_data}')
 
 
-
-
     def listener(self):
         """Loop thread that listens to live sound and analyses amplitude.
         Normalises then stores this into the nebula dataclass for shared use."""
@@ -169,7 +167,6 @@ class Main:
                     self.hivemind.randomiser()
                     print("-----------------------------INTERRUPT----------------------------")
 
-
         logging.info('quitting listener thread')
 
     def terminate(self):
@@ -183,8 +180,10 @@ class Main:
 
 
 if __name__ == "__main__":
-    Main(duration_of_piece=200,
+    Main(
+        duration_of_piece=200,
          continuous_line=False,
          speed=10,
          staves=0,
-         pen=True)
+         pen=True
+    )
