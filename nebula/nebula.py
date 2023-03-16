@@ -21,8 +21,12 @@ import logging
 # import Nebula modules
 from nebula.ai_factory import AIFactory
 from modules.listener import Listener
+import config
+from modules.brainbit import BrainbitReader
 
-class Nebula(Listener, AIFactory):
+class Nebula(Listener,
+             AIFactory
+             ):
     """Nebula is the core "director" of an AI factory.
               It generates data in response to incoming percpts
              from human-in-the-loop interactions, and responds
@@ -60,16 +64,15 @@ class Nebula(Listener, AIFactory):
             self,
             speed
         )
+        BRAINBIT_CONNECTED = config.eeg
 
-
-        # self.BRAINBIT_CONNECTED = config.brainbit
-        #
-        # # init brainbit reader
-        # if self.BRAINBIT_CONNECTED:
-        #     self.eeg_board = BrainbitReader()
-        #     self.eeg_board.start()
-        #     first_brain_data = self.eeg_board.read()
-        #     logging.info(f'Data from brainbit = {first_brain_data}')
+        # init brainbit reader
+        if BRAINBIT_CONNECTED:
+            logging.info("Starting EEG connection")
+            self.eeg_board = BrainbitReader()
+            self.eeg_board.start()
+            first_brain_data = self.eeg_board.read(255)
+            logging.info(f'Data from brainbit = {first_brain_data}')
         #
         # # # init bitalino
         # if self.BITALINO_CONNECTED:

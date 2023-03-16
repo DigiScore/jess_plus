@@ -91,58 +91,6 @@ class Main:
         self.start_time = time()
         self.end_time = self.start_time + duration_of_piece
 
-
-        ############################
-        # BrainBit & UI
-        ############################
-        # todo CRAIG get these working
-        # if EEG_CONNECTED:
-        #     logging.info("Starting EEG connection")
-        #     self.eeg_board = BrainbitReader()
-        #     self.eeg_board.start()
-        #     first_brain_data = self.eeg_board.read(255)
-        #     logging.info(f'Data from brainbit = {first_brain_data}')
-
-
-    # def listener(self):
-    #     """Loop thread that listens to live sound and analyses amplitude.
-    #     Normalises then stores this into the nebula dataclass for shared use."""
-    #
-    #     print("Starting mic listening stream & thread")
-    #     while self.running:
-    #         if time() > self.end_time:
-    #             self.terminate()
-    #             self.running = False
-    #             break
-    #
-    #         # get amplitude from mic input
-    #         data = np.frombuffer(self.stream.read(
-    #             self.CHUNK,
-    #             exception_on_overflow=False),
-    #                              dtype=np.int16)
-    #         peak = np.average(np.abs(data)) * 2
-    #
-    #         if peak > 2000:
-    #             bars = "#" * int(50 * peak / 2 ** 16)
-    #             logging.debug("MIC LISTENER: %05d %s" % (peak, bars))
-    #
-    #         # normalise it for range 0.0 - 1.0
-    #         normalised_peak = ((peak - 0) / (20000 - 0)) * (1 - 0) + 0
-    #         if normalised_peak > 1.0:
-    #             normalised_peak = 1.0
-    #
-    #         # put normalised amplitude into Nebula's dictionary for use
-    #         self.hivemind.mic_in = normalised_peak
-    #
-    #         # if loud sound then 63% affect gesture manager
-    #         if normalised_peak > 0.8:
-    #             if random() > 0.63:
-    #                 self.hivemind.interrupt_bang = False
-    #                 self.hivemind.randomiser()
-    #                 print("-----------------------------INTERRUPT----------------------------")
-    #
-    #     logging.info('quitting listener thread')
-
     def terminate(self):
         """Smart collapse of all threads and comms"""
         print('TERMINATING')

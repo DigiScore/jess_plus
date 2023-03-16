@@ -1,6 +1,8 @@
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from time import sleep
 from random import random
+import logging
+
 from nebula.hivemind import DataBorg
 
 
@@ -14,12 +16,11 @@ class BrainbitReader:
 
         # set it logging
         BoardShim.enable_dev_board_logger()
-        print('BrainBit reader ready')
+        logging.info('BrainBit reader ready')
         self.brain_bit = False
 
         # get dataclass
         self.hivemind = DataBorg()
-        self.running = True
 
     def start(self):
         # instantiate the board reading
@@ -32,15 +33,14 @@ class BrainbitReader:
 
             # board.start_stream () # use this for default options
             self.board.start_stream(450000) # removed 2
-            print('BrainBit stream started')
+            logging.info('BrainBit stream started')
             self.brain_bit = True
         except:
-            print("BrainBit ALT started")
+            logging.info("BrainBit ALT started")
 
     def read(self, num_points):
-        graph_data = self.board.get_current_board_data(num_points)
         if self.brain_bit:
-            raw_data = graph_data[1:5]
+            raw_data = self.board.get_board_data()[1:5]
             parse_data = raw_data.tolist()
 
             if len(parse_data[0][0:1]) > 0:
@@ -62,19 +62,13 @@ class BrainbitReader:
                          random(),
                          random()
                          ]
-        # self.hivemind.eeg = self.data
-        print(f"BrainBit data = {self.data}")
+
+        logging.debug(f"BrainBit data = {self.data}")
         self.hivemind.eeg = self.data
-        return graph_data
+        return self.data
 
     def terminate(self):
         self.board.stop_stream()
         self.board.release_session()
 
-if __name__ == "__main__":
-    bb = BrainbitReader()
-    bb.start()
-    while True:
-        data = bb.read()
-        print(data)
-        sleep(1)
+
