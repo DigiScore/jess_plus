@@ -7,7 +7,7 @@ import logging
 from enum import Enum
 
 # import project modules
-from nebula.nebula_dataclass import DataBorg
+from nebula.hivemind import DataBorg
 from drawbot import Drawbot
 import config
 

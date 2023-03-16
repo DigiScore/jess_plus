@@ -1,4 +1,4 @@
-from nebula.nebula_dataclass import DataBorg
+from nebula.hivemind import DataBorg
 
 
 b1 = DataBorg()

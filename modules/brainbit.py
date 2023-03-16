@@ -1,7 +1,7 @@
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from time import sleep
 from random import random
-from nebula.nebula_dataclass import DataBorg
+from nebula.hivemind import DataBorg
 
 
 class BrainbitReader:

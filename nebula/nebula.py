@@ -9,8 +9,8 @@ script (such as a sound generator, or QT graphics) gives
 the feeling of the AI creating in-the-moment with the
 human in-the-loop.
 
-© Craig Vear 2022
-cvear@dmu.ac.uk
+© Craig Vear 2022-23
+craig.vear@nottingham.ac.uk
 
 Dedicated to Fabrizio Poltronieri
 """
@@ -20,46 +20,47 @@ import logging
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
+from modules.listener import Listener
 
-# todo JOHANNS/ CRAIG script (this might control EDA and EEG too!!)
+class Nebula(Listener, AIFactory):
+    """Nebula is the core "director" of an AI factory.
+              It generates data in response to incoming percpts
+             from human-in-the-loop interactions, and responds
+             in-the-moment to the gestural input of live data.
+             There are 4 components:
+                 Nebula: as "director" it coordinates the overall
+                     operations of the AI Factory
+                 AIFactory: builds the neural nets that form the
+                     factory, coordinates data exchange,
+                     and liases with the common data dict
+                 Hivemind: is the central dataclass that
+                     holds and shares all the  data exchanges
+                     in the AI factory
+                 Conducter: receives the live percept input from
+                     the client and produces an affectual response
+                     to it's energy input, which in turn interferes
+                     with the data generation.
 
-class Nebula:
-    def __init__(self,
-                 speed=1,
-                 ):
-        """Nebula is the core "director" of an AI factory.
-           It generates data in response to incoming percpts
-          from human-in-the-loop interactions, and responds
-          in-the-moment to the gestural input of live data.
-          There are 4 components:
-              Nebula: as "director" it coordinates the overall
-                  operations of the AI Factory
-              AIFactory: builds the neural nets that form the
-                  factory, coordinates data exchange,
-                  and liases with the common data dict
-              NebulaDataClass: is the central dataclass that
-                  holds and shares all the  data exchanges
-                  in the AI factory
-              Affect: receives the live percept input from
-                  the client and produces an affectual response
-                  to it's energy input, which in turn interferes
-                  with the data generation.
+             Args:
+                 speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
 
-          Args:
-              speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
+    def __init__(
+            self,
+            speed=1,
+    ):
 
         print('building engine server')
+        Listener.__init__(self)
 
         # Set global vars
-        self.running = True
+        self.hivemind.running = True
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(speed) #, hivemind)
+        AIFactory.__init__(
+            self,
+            speed
+        )
 
-        # todo CRAIG - get these working
-        # init the EEG and EDA percepts
-        # config_object = ConfigParser()
-        # config_object.read('config.ini')
 
         # self.BRAINBIT_CONNECTED = config.brainbit
         #
@@ -82,12 +83,12 @@ class Nebula:
          and gets the data rolling."""
         print('Starting the Nebula Director')
         # declares all threads
-        t1 = Thread(target=self.AI_factory.make_data)
-        # t2 = Thread(target=self.jess_input)
+        t1 = Thread(target=self.make_data)
+        t2 = Thread(target=self.snd_listen)
 
         # start them all
         t1.start()
-        # t2.start()
+        t2.start()
 
     # def jess_input(self):
     #     while self.running:
@@ -113,7 +114,4 @@ class Nebula:
         # self.eda.close()
         self.running = False
 
-if __name__ == '__main':
-    logging.basicConfig(level=logging.DEBUG)
-    test = Nebula()
-    test.main_loop()
+

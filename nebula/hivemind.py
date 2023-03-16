@@ -72,10 +72,14 @@ class DataBorg:
             """Generated output of robot movement from NNets"""
 
             ######################
-            # Additional vars
+            # Running vars
             ######################
 
-            self.interrupt_bang = True
+            self.interrupt_bang: bool = True
+            """Signals an interrupt to the gesture manager"""
+
+            self.running: bool = True
+            """Master running bool for whole script"""
 
         else:
             self.__dict__ = DataBorg.__hivemind
