@@ -35,7 +35,7 @@ class Main:
                  pen: bool = True):
 
         # logging for all modules
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
 
         # build initial dataclass fill with random numbers
         self.hivemind = DataBorg()

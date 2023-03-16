@@ -29,7 +29,6 @@ class Conducter:
                  speed: int = 5,
                  staves: int = 1,
                  pen: bool = True,
-                 # drawbot: Drawbot = None
                  ):
 
         PLATFORM = platform.system()
@@ -112,7 +111,7 @@ class Conducter:
         current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         joint_inc = 10
 
-        while self.running:
+        while self.hivemind.running:
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_bang = True
 
@@ -175,6 +174,14 @@ class Conducter:
                 rhythm_loop = time() + (randrange(500, 2000) / 1000)
                 logging.debug(f'end time = {rhythm_loop}')
 
+                # speed for this phrase
+                # arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
+                arm_speed = randrange(20, 100)
+                if self.drawbot:
+                    self.drawbot.speed(velocity=arm_speed,
+                                       acceleration=arm_speed)
+
+
                 while time() < rhythm_loop:
                     logging.debug('\t\t\t\t\t\t\t\t=========Hello - baby cycle 2 ===========')
 
@@ -193,10 +200,6 @@ class Conducter:
                     # calc rhythmic intensity based on self-awareness factor & global speed
                     self_awareness = getattr(self.hivemind, 'self_awareness')
                     logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
-                    arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
-                    if self.drawbot:
-                        self.drawbot.speed(velocity=arm_speed,
-                               acceleration=arm_speed)
 
                     ######################################
                     #
@@ -228,48 +231,52 @@ class Conducter:
                                 self.drawbot.move_y()
                             else:
                                 # random shapes inspired by Wolffs "1,2,3 players"
-                                self.drawbot.go_random_draw_up()
+                                # self.drawbot.go_random_draw_up()
                                 self.drawbot.position_move_by(uniform(-joint_inc, joint_inc),
                                                               uniform(-joint_inc, joint_inc),
                                                               uniform(-joint_inc, joint_inc), wait=False)
-                    # MID response
-                    match robot_mode:
-                        case RobotMode.Continuous:
-                        # move continuously using data streams from EMD, borg
+                    else:
+                        # MID response
+                        match robot_mode:
+                            case RobotMode.Continuous:
+                            # move continuously using data streams from EMD, borg
 
-                        # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
-                            inc = joint_inc * current_phrase_num
+                            # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
+                                inc = joint_inc * current_phrase_num
 
-                            self.drawbot.position_move_by(uniform(-inc, inc),
-                                                          uniform(-inc, inc),
-                                                          self.drawbot.draw_position[2],
-                                             wait=False)
+                                self.drawbot.position_move_by(uniform(-inc, inc),
+                                                              uniform(-inc, inc),
+                                                              self.drawbot.draw_position[2],
+                                                 wait=False)
 
-                        case RobotMode.Inspiration:
-                            self.wolff_inspiration(thought_train)
+                            case RobotMode.Inspiration:
+                                self.wolff_inspiration(thought_train)
 
-                        case RobotMode.Modification:
-                        # random shapes inspired by Cardews "Treatise"
-                            self.cardew_inspiration(thought_train)
+                            case RobotMode.Modification:
+                            # random shapes inspired by Cardews "Treatise"
+                                self.cardew_inspiration(thought_train)
 
-                        case RobotMode.OffPage:
-                        # random movements off the page, balletic movements above the page
-                        # print("OffPage Mode")
-                            self.drawbot.joint_move_by(uniform(-joint_inc, joint_inc),
-                                                       uniform(-joint_inc, joint_inc),
-                                                       uniform(-joint_inc, joint_inc), wait=False)
+                            case RobotMode.OffPage:
+                            # random movements off the page, balletic movements above the page
+                            # print("OffPage Mode")
+                                self.drawbot.joint_move_by(uniform(-joint_inc, joint_inc),
+                                                           uniform(-joint_inc, joint_inc),
+                                                           uniform(-joint_inc, joint_inc), wait=False)
 
-                        case RobotMode.Repetition:
-                            # large, repetitive movements
-                            # print("Repetition Mode")
-                            #
-                            #     draw_square(random.uniform(10, 40))  # draw a square of random size
-                            #     rand_xfactor = random.randrange(-3, 3)
-                            #     rand_yfactor = random.randrange(-3, 3)
-                            #     position_move_by(5 * rand_xfactor, 5 * rand_yfactor, 0,
-                            #                      wait=True)  # either move in positive, negative or no movement, then loop
-                            pass
-                            # todo - Adam to sort as discussed
+                            case RobotMode.Repetition:
+                                # large, repetitive movements
+                                print("Repetition Mode")
+
+                                self.drawbot.draw_square(uniform(10, 40))  # draw a square of random size
+                                rand_xfactor = randrange(-3, 3)
+                                rand_yfactor = randrange(-3, 3)
+                                self.drawbot.position_move_by(
+                                    5 * rand_xfactor,
+                                    5 * rand_yfactor,
+                                    0,
+                                    wait=True
+                                )  # either move in positive, negative or no movement, then loop
+                                # todo - Adam to sort as discussed
 
                     # and wait for a cycle
                 sleep(rhythm_rate)
@@ -285,7 +292,8 @@ class Conducter:
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
-        self.drawbot.go_random_draw_up()
+        # self.drawbot.go_random_draw_up()
+        self.drawbot.move_y_random()
 
         # randomly choose from the following choices
         randchoice = randrange(6)
@@ -385,7 +393,8 @@ class Conducter:
             case 5:
                 self.drawbot.position_move_by(self.rnd(peak * 10),
                                               self.rnd(peak * 10),
-                                              randrange(peak) * 10)
+                                              randrange(10)
+                                              )
                 logging.info('Emission: z dance')
 
     def high_energy_response(self):
@@ -409,6 +418,9 @@ class Conducter:
         Returns a randomly generated + or - integer,
         influenced by the incoming power factor
         """
+        power_of_command = int(power_of_command)
+        if power_of_command <= 0:
+            power_of_command = 1
         pos = 1
         if getrandbits(1):
             pos = -1

@@ -135,7 +135,7 @@ class AIFactory:
             rnd = random()
             self.hivemind.rnd_poetry = rnd
 
-            sleep(rhythm_rate / 10)
+            sleep(rhythm_rate)
 
     def get_seed(self, net_name):
         """gets the seed data for a given NNet"""

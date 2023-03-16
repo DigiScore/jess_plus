@@ -37,7 +37,7 @@ class Drawbot(Dobot):
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
-        self.draw_position = [250, 0, -10, 0]
+        self.draw_position = [250, 0, 0, 0]
         self.end_position = (250, 0, 50, 0)
 
         self.x_extents = [160, 350]
@@ -299,7 +299,7 @@ class Drawbot(Dobot):
 
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
-        self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        self._set_ptp_cmd(x, y, 0, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
@@ -310,7 +310,7 @@ class Drawbot(Dobot):
         """Move to a random position within the x and y extents with the pen touching the page."""
         x = uniform(self.x_extents[0],self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
-        z = self.draw_position[2]
+        z = 0
         r = 0
         print("Random draw pos x:", round(x, 2)," y:", round(y,2))
         self._set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
@@ -337,13 +337,13 @@ class Drawbot(Dobot):
 
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking 
 
-        if(newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]):     # check x posiion
+        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
             print("delta x reset to 0")
             x = 0
-        if(newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]):     # check y position
+        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:     # check y position
             print("delta y reset to 0")
             y = 0
-        if(newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]):      # check z height
+        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:      # check z height
             print("delta z reset to 0")
             z = 0
 
@@ -396,7 +396,7 @@ class Drawbot(Dobot):
         triangle = []
 
         rand_type = randrange(0,2)
-        if(rand_type == 0):
+        if rand_type == 0:
             #right angle triangle
             local_pos = [
                 (0, 0),
@@ -404,7 +404,7 @@ class Drawbot(Dobot):
                 (-size, size)
             ]
 
-        elif(rand_type == 1):
+        elif rand_type == 1:
             #isosceles triangle
             local_pos = [
                 (0, 0),
@@ -433,7 +433,7 @@ class Drawbot(Dobot):
         Can be drawn with lines at random angles between 0 and 360 degrees or with pre-defined angles. Positions are saved to the sunbursts array to be accessed by other functions."""
         pos = self.pose()
 
-        if(randomAngle == True):
+        if randomAngle == True:
             random_angles = [
                 uniform(0,360),
                 uniform(0,360),
@@ -476,7 +476,7 @@ class Drawbot(Dobot):
         Positions are saved to the irregulars array to be accessed by other functions."""
         pos = self.pose()
 
-        if(num_vertices <= 0):
+        if num_vertices <= 0:
             num_vertices = randrange(3, 10)
 
         vertices = []
@@ -499,9 +499,9 @@ class Drawbot(Dobot):
         to the pen position, allows for creation of figure-8 patterns.The start position, size, and side are saved to the circles list."""
         pos = self.pose()[:4]
 
-        if(side == 0):  # side is used to draw figure 8 patterns
+        if side == 0:  # side is used to draw figure 8 patterns
             self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
-        elif(side == 1):
+        elif side == 1:
             self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
 
         circle = []
@@ -595,8 +595,10 @@ class Drawbot(Dobot):
             ]
 
             if jump_num != -1:                      # for characters that need a jump
-                if i == jump_num: self.go_draw_up(next_pos[0], next_pos[1])
-                else: self.go_draw(next_pos[0], next_pos[1], wait=True)
+                if i == jump_num:
+                    self.go_draw_up(next_pos[0], next_pos[1])
+                else:
+                    self.go_draw(next_pos[0], next_pos[1], wait=True)
 
             else:                                   # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
@@ -671,7 +673,7 @@ class Drawbot(Dobot):
 
         local_pos = [
             (size * 0.3 , 0),      # 0 bottom of curve
-            (size       , size),      # 1 middle of curve
+            (size, size),      # 1 middle of curve
             (size * 1.7 , 0)       # 2 top of curve
         ]
 
