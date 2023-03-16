@@ -1,19 +1,10 @@
-from time import time
-from threading import Thread
-import pyaudio
-import numpy as np
+# import python modules
 import logging
-from random import random
-from serial.tools import list_ports
 
+# import project modules
 from modules.conducter import Conducter
 from nebula.nebula import Nebula
 from nebula.hivemind import DataBorg
-# from bitalino import BITalino
-import config
-
-# from modules.drawbot import Drawbot
-
 
 class Main:
     """
@@ -41,16 +32,11 @@ class Main:
         self.hivemind = DataBorg()
         logging.debug(f'Data dict initial values are = {self.hivemind}')
 
-        ############################
-        # Ai Factory
-        ############################
         # init the AI factory (inherits AIFactory, Listener)
         nebula = Nebula(speed=speed)
 
-        ############################
         # Conducter & Gesture management (controls Drawbot)
-        ############################
-        self.robot1 = Conducter(
+        robot1 = Conducter(
             duration_of_piece=duration_of_piece,
             continuous_line=continuous_line,
             speed=speed,
@@ -58,15 +44,9 @@ class Main:
             pen=pen,
         )
 
-        robot_thread = Thread(target=self.robot1.gesture_manager)
-
         # start Nebula AI Factory here after affect starts data moving
-        robot_thread.start()
+        robot1.main_loop()
         nebula.main_loop()
-
-        # # start operating vars
-        # self.start_time = time()
-        # self.end_time = self.start_time + duration_of_piece
 
     def terminate(self):
         """Smart collapse of all threads and comms"""

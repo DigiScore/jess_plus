@@ -5,6 +5,7 @@ import logging
 from enum import Enum
 from serial.tools import list_ports
 import platform
+from threading import Thread
 
 # import project modules
 from nebula.hivemind import DataBorg
@@ -86,18 +87,14 @@ class Conducter:
             self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
-
-    ######################
-    # DRAWBOT CONTROLS
-    ######################
-    """
-    Mid level functions for operating the drawing and moving 
-    functions of the Dobot
-    """
+    def main_loop(self):
+        robot_thread = Thread(target=self.gesture_manager)
+        robot_thread.start()
 
     def gesture_manager(self):
-        """Listens to the realtime incoming signal that is stored in the dataclass ("mic_in")
-        and calculates an affectual response based on general boundaries:
+        """
+        Listens to the realtime incoming signal and calculates
+        an affectual response based on general boundaries:
             HIGH - if input stream is LOUD (0.8+) then emit, smash a random fill and break out to Daddy cycle...
             MEDIUM - if input energy is 0.3-0.8 then emit, a jump out of child loop
             LOW - nothing happens, continues with cycles
