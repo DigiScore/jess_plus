@@ -175,6 +175,7 @@ class Drawbot(Dobot):
             end point x, end point y: distance from last/ previous position
              """
         [x, y, z, r] = self.get_pose()[0:4]
+        self.coords.append((x, y))
         for arc in arc_list:
             circumference, dx, dy = arc[0], arc[1], arc[2]
             self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
@@ -204,7 +205,7 @@ class Drawbot(Dobot):
         """Simplified arc function for drawing 2D arcs on the xy axis. apex_x and y determine 
         the coordinates of the apex of the curve. target_x and y determine the end point of the curve"""
         pos = self.get_pose()
-
+        self.coords.append(pos[:2])
         msg = Message()
         msg.id = 101
         msg.ctrl = 0x03
@@ -367,6 +368,7 @@ class Drawbot(Dobot):
             print("delta z reset to 0")
             z = 0
 
+        self.coords.append(newPose[:2])
         self._set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
 
     def joint_move_by(self, _j1, _j2, _j3, wait=True):
@@ -880,13 +882,13 @@ class Drawbot(Dobot):
     def return_to_sunburst(self):
         """Randomly chooses a sunburst from the 'sunbursts' list and randomly chooses a behaviour to do with it."""
         sunbursts_length = int(len(self.sunbursts))
-        if(sunbursts_length > 0):
+        if sunbursts_length > 0:
             sunburst = self.sunbursts[int(uniform(0, sunbursts_length))]
             print(sunburst)
 
             rand = uniform(0,1)      #randomly choose between two behaviours
 
-            if(rand == 0):                  #join up the ends of the sunburst lines
+            if rand == 0:                  #join up the ends of the sunburst lines
                 self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True) 
                 self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=True)
                 self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
@@ -902,7 +904,7 @@ class Drawbot(Dobot):
     def return_to_irregular(self):
         """Randomly chooses an irregular shape from the 'irregulars' list and randomly chooses a behaviour to do with it."""
         irregulars_length = int(len(self.irregulars))
-        if(irregulars_length > 0):
+        if irregulars_length > 0:
             irregular = self.irregulars[randrange(0, irregulars_length)]
 
             #rand = random.uniform(0,1)     #add random choice of behaviours
@@ -918,7 +920,7 @@ class Drawbot(Dobot):
     def return_to_char(self):
         """Randomly chooses a character from the 'chars' list and randomly chooses a behaviour to do with it. (NOT FINISHED)"""
         chars_length = int(len(self.chars))
-        if(chars_length > 0):
+        if chars_length > 0:
             char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
 
         else:
@@ -928,7 +930,7 @@ class Drawbot(Dobot):
         """Randomly choose a coordinate from the list of coords and move the pen to it. 
         Unlike the other return_to funtions it doesn't do anything other than move to that coord."""
         coords_length = int(len(self.coords))
-        if(coords_length > 0):
+        if coords_length > 0:
             coord = self.coords[randrange(0, coords_length)]
 
             self.go_draw_up(coord[0], coord[1])
