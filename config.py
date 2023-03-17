@@ -18,7 +18,7 @@ robot1_port = '/dev/ttyACM0'
 robot2_port = '/dev/ttyXXXX'
 
 # play params
-duration_of_piece = 60
+duration_of_piece = 600
 continuous_line = False
 speed = 5
 staves = 0
