@@ -19,7 +19,7 @@ robot2_port = '/dev/ttyXXXX'
 
 # play params
 duration_of_piece = 200
-continuous_line = False
+continuous_line = True
 speed = 5
 staves = 0
 temperature = 0

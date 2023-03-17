@@ -162,7 +162,7 @@ class Conducter:
 
                 # speed for this phrase
                 # arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
-                arm_speed = randrange(20, 100)
+                arm_speed = randrange(20, 500)
                 if self.drawbot:
                     self.drawbot.speed(velocity=arm_speed,
                                        acceleration=arm_speed)
@@ -300,18 +300,18 @@ class Conducter:
 
         match randchoice:
             case 0:
-                logging.info('Emission: draw line')
+                logging.info('Wolff: draw line')
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
                                      False)
 
             case 1:
-                logging.info('Emission: random character')
+                logging.info('Wolff: random character')
                 self.drawbot.draw_random_char(peak * randrange(10, 20))
 
             case 2:
-                logging.info('Emission: dot and line')
+                logging.info('Wolff: dot and line')
                 self.drawbot.dot()
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
@@ -319,13 +319,13 @@ class Conducter:
                                      False)
 
             case 3:
-                logging.info('Emission: note head')
+                logging.info('Wolff: note head')
                 note_size = randrange(1, 10)
                 # note_shape = randrange(20)
                 self.drawbot.note_head(size=note_size)
 
             case 4:
-                logging.info('Emission 3-8: note head and line')
+                logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
                 self.drawbot.bot_move_to(x + self.rnd(peak),
@@ -334,11 +334,11 @@ class Conducter:
                                      False)
 
             case 5:
-                logging.info('Emission: dot')
+                logging.info('Wolff: dot')
                 self.drawbot.dot()
 
             case 6:
-                logging.info('Emission: random character')
+                logging.info('Wolff: random character')
                 self.drawbot.draw_random_char(peak)
 
     def cardew_inspiration(self, peak):
@@ -357,7 +357,7 @@ class Conducter:
 
         match randchoice:
             case 0:
-                logging.info('Emission: draw arc')
+                logging.info('Cardew: draw arc')
                 # range = peak * 10
                 self.drawbot.arc2D(x + randrange(-10, 10),
                                    y + randrange(-10, 10),
@@ -366,7 +366,7 @@ class Conducter:
                                    )
 
             case 1:
-                logging.info('Emission: small squiggle')
+                logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
                     squiggle_list.append((randrange(-5, 5),
@@ -376,16 +376,16 @@ class Conducter:
                 self.drawbot.squiggle(squiggle_list)
 
             case 2:
-                logging.info('Emission: draw circle')
+                logging.info('Cardew: draw circle')
                 self.drawbot.draw_circle(int(peak * 10))
 
             case 3:
-                logging.info('Emission: line')
+                logging.info('Cardew: line')
                 self.drawbot.go_draw(x + self.rnd(peak * 10),
                                      y + self.rnd(peak * 10))
 
             case 4:
-                logging.info('Emission: return to coord')
+                logging.info('Cardew: return to coord')
                 self.drawbot.return_to_coord()
 
     def high_energy_response(self):

@@ -96,10 +96,10 @@ class Drawbot(Dobot):
             x = 250
 
         # move z (pen head) a little
-        if getrandbits(1):
-            z = 0
-        else:
-            z = randrange(-2, 2)
+        # if getrandbits(1):
+        #     z = 0
+        # else:
+        #     z = randrange(-2, 2)
 
         # which mode
         # if self.continuous_line:
