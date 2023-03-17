@@ -110,7 +110,7 @@ class AIFactory:
 
         Do not disturb - it has its own life cycle"""
 
-        while self.running:
+        while self.hivemind.running:
             # get the first rhythm rate from the hivemind
             # todo CRAIG - need to sort our global speed/ stretch
             rhythm_rate = self.hivemind.rhythm_rate
@@ -156,7 +156,7 @@ class AIFactory:
 
     def quit(self):
         """Quit the loop like a grown up"""
-        self.running = False
+        self.hivemind.running = False
 
 if __name__ == "__main__":
     from hivemind import DataBorg
