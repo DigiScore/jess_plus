@@ -212,8 +212,8 @@ class Conducter:
                         logging.info('interrupt LOW ----------- move Y')
 
                         if self.drawbot:
-                            if self.continuous_line:
-                                self.drawbot.move_y()
+                            # if self.continuous_line:
+                            self.drawbot.move_y()
 
                     else:
                         # MID response
