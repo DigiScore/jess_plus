@@ -192,6 +192,9 @@ class Conducter:
                     # Makes a response to chosen thought stream
                     #
                     ######################################
+
+                    # todo - can this be farmed off as an emission to a seperate thread? Need to be careful with over-run/ repeats of "HIGH"
+
                     if thought_train > 0.8 or not self.hivemind.interrupt_bang:
                         logging.info('interrupt > HIGH !!!!!!!!!')
 
