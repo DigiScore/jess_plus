@@ -94,7 +94,7 @@ class AIFactory:
         print('NNet5 - self_awareness initialization')
         self.self_awareness = NNet(name="self_awareness",
                              model='nebula/models/EMR-full-sept-2021_conv2D_move-affect.h5',
-                             nnet_feed='master_stream',
+                             nnet_feed='mic_in',
                              live_feed=None,
                              )
 

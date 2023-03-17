@@ -117,7 +117,8 @@ class Conducter:
             logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
 
             # define robot mode for this phase length
-            robot_mode = RobotMode(randrange(5))
+            # robot_mode = RobotMode(randrange(5))
+            robot_mode = randrange(10)
 
             while time() < phrase_loop_end:
                 print('================')
@@ -162,7 +163,7 @@ class Conducter:
 
                 # speed for this phrase
                 # arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
-                arm_speed = randrange(20, 500)
+                arm_speed = randrange(30, 500)
                 if self.drawbot:
                     self.drawbot.speed(velocity=arm_speed,
                                        acceleration=arm_speed)
@@ -191,7 +192,7 @@ class Conducter:
                     # Makes a response to chosen thought stream
                     #
                     ######################################
-                    if thought_train > 0.8:
+                    if thought_train > 0.8 or not self.hivemind.interrupt_bang:
                         logging.info('interrupt > HIGH !!!!!!!!!')
 
                         # A - refill dict with random
@@ -208,7 +209,7 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train <= 0.1:
+                    elif thought_train <= 0.2:
                         logging.info('interrupt LOW ----------- move Y')
 
                         if self.drawbot:
@@ -219,31 +220,51 @@ class Conducter:
                         # MID response
                         if self.drawbot:
                             match robot_mode:
-                                case RobotMode.Continuous:
+                                case 1:
                                     # move continuously using data streams from EMD, borg
                                     print("Continuous Mode")
                                     # self.continuous(thought_train)
                                     self.offpage(thought_train)
 
-                                case RobotMode.Inspiration:
+                                case 2:
                                     # random shapes inspired by Wolff's 1, 2, 3
                                     print("Inspiration/ Wollf Mode")
                                     self.wolff_inspiration(thought_train)
 
-                                case RobotMode.Modification:
+                                case 3:
                                     # random shapes inspired by Cardews "Treatise"
                                     print("Modification/ Cardew Mode")
                                     self.cardew_inspiration(thought_train)
 
-                                case RobotMode.OffPage:
+                                case 4:
                                     # random movements off the page, balletic movements above the page
                                     print("OffPage Mode")
                                     self.offpage(thought_train)
 
-                                case RobotMode.Repetition:
+                                case 5:
                                     # large, repetitive movements
                                     print("Repetition Mode")
                                     self.repetition(thought_train)
+
+                                case 6:
+                                    # random shapes inspired by Wolff's 1, 2, 3
+                                    print("Inspiration/ Wollf Mode")
+                                    self.wolff_inspiration(thought_train)
+
+                                case 7:
+                                    # random shapes inspired by Wolff's 1, 2, 3
+                                    print("Inspiration/ Wollf Mode")
+                                    self.wolff_inspiration(thought_train)
+
+                                case 8:
+                                    # random shapes inspired by Cardews "Treatise"
+                                    print("Modification/ Cardew Mode")
+                                    self.cardew_inspiration(thought_train)
+
+                                case 9:
+                                    # random shapes inspired by Cardews "Treatise"
+                                    print("Modification/ Cardew Mode")
+                                    self.cardew_inspiration(thought_train)
 
                     # and wait for a cycle
                 sleep(rhythm_rate)
@@ -352,7 +373,7 @@ class Conducter:
         self.drawbot.move_y()
 
         # randomly choose from the following choices
-        randchoice = randrange(5)
+        randchoice = randrange(6)
         logging.debug(f'randchoice CARDEW == {randchoice}')
 
         match randchoice:
@@ -387,6 +408,16 @@ class Conducter:
             case 4:
                 logging.info('Cardew: return to coord')
                 self.drawbot.return_to_coord()
+
+            case 5:
+                logging.info('Cardew: small squiggle')
+                squiggle_list = []
+                for n in range(randrange(3, 9)):
+                    squiggle_list.append((randrange(-5, 5),
+                                          randrange(-5, 5),
+                                          randrange(-5, 5))
+                                         )
+                self.drawbot.squiggle(squiggle_list)
 
     def high_energy_response(self):
         """

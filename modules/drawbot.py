@@ -304,6 +304,7 @@ class Drawbot(Dobot):
         self.move_to(x, y, z, r, wait)
 
     def clear_commands(self):
+        self._set_queued_cmd_stop_exec
         self._set_queued_cmd_clear()
 
     def get_pose(self):

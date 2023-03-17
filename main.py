@@ -62,9 +62,4 @@ class Main:
 
 
 if __name__ == "__main__":
-    Main(
-        # continuous_line=False,
-        # speed=5,
-        # staves=0,
-        # pen=True
-    )
+    Main()

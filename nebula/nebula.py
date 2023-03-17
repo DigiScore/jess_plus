@@ -120,7 +120,7 @@ class Nebula(Listener,
                 eeg = []
                 raw_eeg_data = self.eeg_board.read(255)
                 self.hivemind.eeg_board = raw_eeg_data
-                logging.info(f"eeg data raw = {raw_eeg_data}")
+                logging.debug(f"eeg data raw = {raw_eeg_data}")
 
                 # normalise the output
                 for e in raw_eeg_data:
@@ -128,7 +128,7 @@ class Nebula(Listener,
                     eeg.append(norm_e)
                 self.hivemind.eeg = eeg
                 self.hivemind.eeg_single = eeg[0]
-                logging.info(f"eeg data normalised = {eeg}")
+                logging.debug(f"eeg data normalised = {eeg}")
 
             sleep(self.hivemind.rhythm_rate)
 
