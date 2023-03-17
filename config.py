@@ -3,14 +3,26 @@ robot = True
 eeg_live = False
 eda_live = False
 
-robot1_port = "/usb1"
-robot2_port = "/usb2"
+"""
+to check available ports run the following code:
+from serial.tools import list_ports
+
+available_ports = list_ports.comports()
+print(f'available ports: {[x.device for x in available_ports]}')
+
+may need 
+sudo chmod 666 /dev/ttyACM0
+"""
+
+robot1_port = '/dev/ttyACM0'
+robot2_port = '/dev/ttyXXXX'
 
 # play params
 duration_of_piece = 200
 continuous_line = False
 speed = 5
 staves = 0
+temperature = 0
 
 # [BITALINO]
 baudrate = 100
@@ -32,8 +44,3 @@ stream_list = ['mic_in',
                'eeg_single']
 
 all_nets_predicting = True
-
-# [DEV PARAMETERS]
-temperature = 0
-
-speed = 1
