@@ -118,7 +118,7 @@ class Conducter:
 
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
-            robot_mode = randrange(10)
+            robot_mode = randrange(3)
 
             while time() < phrase_loop_end:
                 print('================')
@@ -216,58 +216,60 @@ class Conducter:
                         logging.info('interrupt LOW ----------- move Y')
 
                         if self.drawbot:
-                            # if self.continuous_line:
-                            self.drawbot.move_y()
+                            if self.continuous_line:
+                                self.drawbot.move_y()
+                            else:
+                                self.offpage(thought_train)
+
 
                     else:
                         # MID response
                         if self.drawbot:
                             match robot_mode:
-                                case 1:
+                                case 0:
                                     # move continuously using data streams from EMD, borg
-                                    print("Continuous Mode")
-                                    # self.continuous(thought_train)
-                                    self.offpage(thought_train)
-
-                                case 2:
-                                    # random shapes inspired by Wolff's 1, 2, 3
-                                    print("Inspiration/ Wollf Mode")
-                                    self.wolff_inspiration(thought_train)
-
-                                case 3:
-                                    # random shapes inspired by Cardews "Treatise"
-                                    print("Modification/ Cardew Mode")
-                                    self.cardew_inspiration(thought_train)
-
-                                case 4:
-                                    # random movements off the page, balletic movements above the page
-                                    print("OffPage Mode")
-                                    self.offpage(thought_train)
-
-                                case 5:
-                                    # large, repetitive movements
                                     print("Repetition Mode")
                                     self.repetition(thought_train)
 
-                                case 6:
+                                case 1:
                                     # random shapes inspired by Wolff's 1, 2, 3
-                                    print("Inspiration/ Wollf Mode")
+                                    print("Inspiration/ Wolff Mode")
                                     self.wolff_inspiration(thought_train)
 
-                                case 7:
-                                    # random shapes inspired by Wolff's 1, 2, 3
-                                    print("Inspiration/ Wollf Mode")
-                                    self.wolff_inspiration(thought_train)
-
-                                case 8:
+                                case 2:
                                     # random shapes inspired by Cardews "Treatise"
                                     print("Modification/ Cardew Mode")
                                     self.cardew_inspiration(thought_train)
 
-                                case 9:
-                                    # random shapes inspired by Cardews "Treatise"
-                                    print("Modification/ Cardew Mode")
-                                    self.cardew_inspiration(thought_train)
+                                # case 4:
+                                #     # random movements off the page, balletic movements above the page
+                                #     print("OffPage Mode")
+                                #     self.offpage(thought_train)
+                                #
+                                # case 5:
+                                #     # large, repetitive movements
+                                #     print("Repetition Mode")
+                                #     self.repetition(thought_train)
+                                #
+                                # case 6:
+                                #     # random shapes inspired by Wolff's 1, 2, 3
+                                #     print("Inspiration/ Wollf Mode")
+                                #     self.wolff_inspiration(thought_train)
+                                #
+                                # case 7:
+                                #     # random shapes inspired by Wolff's 1, 2, 3
+                                #     print("Inspiration/ Wollf Mode")
+                                #     self.wolff_inspiration(thought_train)
+                                #
+                                # case 8:
+                                #     # random shapes inspired by Cardews "Treatise"
+                                #     print("Modification/ Cardew Mode")
+                                #     self.cardew_inspiration(thought_train)
+                                #
+                                # case 9:
+                                #     # random shapes inspired by Cardews "Treatise"
+                                #     print("Modification/ Cardew Mode")
+                                #     self.cardew_inspiration(thought_train)
 
                     # and wait for a cycle
                 sleep(rhythm_rate)

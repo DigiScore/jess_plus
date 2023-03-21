@@ -14,6 +14,7 @@ from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
 
 # install project modules
 import config
+from nebula.hivemind import DataBorg
 
 
 class Shapes(Enum):
@@ -43,6 +44,9 @@ class Drawbot(Dobot):
         super().__init__(port, verbose)
 
         self.continuous_line = continuous_line
+
+        # own a hive mind
+        self.hivemind = DataBorg()
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
@@ -177,11 +181,12 @@ class Drawbot(Dobot):
         [x, y, z, r] = self.get_pose()[0:4]
         self.coords.append((x, y))
         for arc in arc_list:
-            circumference, dx, dy = arc[0], arc[1], arc[2]
-            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
-            x += dx
-            y += dy
-            sleep(0.2)
+            while self.hivemind.interrupt_bang:
+                circumference, dx, dy = arc[0], arc[1], arc[2]
+                self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
+                x += dx
+                y += dy
+                sleep(0.2)
 
     def arc(self, x, y, z, r, cir_x, cir_y, cir_z, cir_r, wait=False):
         """Draws an arc defined by a) circumference of arc (x, y, z, r),
@@ -304,11 +309,40 @@ class Drawbot(Dobot):
         self.move_to(x, y, z, r, wait)
 
     def clear_commands(self):
-        self._set_queued_cmd_stop_exec
+        self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
 
     def get_pose(self):
         return self.pose()
+
+    def _send_command(self, msg, wait=False):
+        self.lock.acquire()
+        self._send_message(msg)
+        response = self._read_message()
+        self.lock.release()
+
+        if not wait:
+            return response
+        while self.hivemind.interrupt_bang:
+            try:
+                expected_idx = struct.unpack_from('L', response.params, 0)[0]
+                if self.verbose:
+                    print('pydobot: waiting for command', expected_idx)
+
+                while True:
+                    current_idx = self._get_queued_cmd_current_index()
+
+                    if current_idx != expected_idx:
+                        time.sleep(0.1)
+                        continue
+
+                    if self.verbose:
+                        print('pydobot: command %d executed' % current_idx)
+                    break
+            except:
+                pass
+
+        return response
 
     #----- NEW FUNCTIONS -----#
     #-- go to position functions --#
@@ -320,7 +354,8 @@ class Drawbot(Dobot):
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
         self.coords.append((x, y))
-        self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        while self.hivemind.interrupt_bang:
+            self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
@@ -401,15 +436,17 @@ class Drawbot(Dobot):
         ]
 
         for i in range(len(local_pos)):
-            next_pos = [
-                pos[0] + local_pos[i][0],
-                pos[1] + local_pos[i][1]
-            ]
-            self.go_draw(next_pos[0], next_pos[1])
-            square.append(next_pos)
-            self.coords.append(next_pos)
+            while self.hivemind.interrupt_bang:
+                next_pos = [
+                    pos[0] + local_pos[i][0],
+                    pos[1] + local_pos[i][1]
+                ]
+                self.go_draw(next_pos[0], next_pos[1])
+                square.append(next_pos)
+                self.coords.append(next_pos)
 
-        self.go_draw(pos[0], pos[1], wait=False)
+        if self.hivemind.interrupt_bang:
+            self.go_draw(pos[0], pos[1], wait=False)
 
         self.squares.append(square)
 
@@ -437,20 +474,22 @@ class Drawbot(Dobot):
             ]
 
         for i in range(len(local_pos)):
-            next_pos = [                    # next vertex to go to in world space
-                pos[0] + local_pos[i][0],
-                pos[1] + local_pos[i][1]
-            ]
-            # if shape_interrupt == False:
-            self.go_draw(next_pos[0], next_pos[1], wait=True)
-            # else:
-            #     shape_interrupt = False
-            #     return None
+            while self.hivemind.interrupt_bang:
+                next_pos = [                    # next vertex to go to in world space
+                    pos[0] + local_pos[i][0],
+                    pos[1] + local_pos[i][1]
+                ]
+                # if shape_interrupt == False:
+                self.go_draw(next_pos[0], next_pos[1], wait=True)
+                # else:
+                #     shape_interrupt = False
+                #     return None
 
-            triangle.append(next_pos)
-            self.coords.append(next_pos)
+                triangle.append(next_pos)
+                self.coords.append(next_pos)
 
-        self.go_draw(pos[0], pos[1])     # go back to the first vertex to join up the shape
+        if self.hivemind.interrupt_bang:
+            self.go_draw(pos[0], pos[1])     # go back to the first vertex to join up the shape
         self.triangles.append(triangle)
 
     def draw_sunburst(self, r, randomAngle = True):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
@@ -489,16 +528,16 @@ class Drawbot(Dobot):
 
         sunburst = []  #saves all points in this sunburst then saves it to the list of drawn sunbursts
         for i in range(len(local_pos)):
+            while self.hivemind.interrupt_bang:
+                next_pos = [
+                    pos[0] + local_pos[i][0],
+                    pos[1] + local_pos[i][1],
+                ]
+                sunburst.append(next_pos)
+                self.coords.append(next_pos)
 
-            next_pos = [
-                pos[0] + local_pos[i][0],
-                pos[1] + local_pos[i][1],
-            ]
-            sunburst.append(next_pos)
-            self.coords.append(next_pos)  
-
-            self.go_draw(next_pos[0], next_pos[1], wait=False)       #draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line          
+                self.go_draw(next_pos[0], next_pos[1], wait=False)       #draw line from centre point outwards
+                self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -518,12 +557,15 @@ class Drawbot(Dobot):
             self.coords.append((x,y))
 
         for i in range(len(vertices)):
-            x, y = vertices[i]
-            x = pos[0] + x
-            y = pos[1] + y
-            self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+            while self.hivemind.interrupt_bang:
+                x, y = vertices[i]
+                x = pos[0] + x
+                y = pos[1] + y
+                self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
-        self._set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+        if self.hivemind.interrupt_bang:
+            self._set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+
         self.irregulars.append(vertices)
 
     def draw_circle(self, size, side=0, wait=True):
@@ -647,10 +689,10 @@ class Drawbot(Dobot):
         char.append("P")
 
         local_pos = [
-            (0           , 0),                 # bottom of letter
-            (size * 2    , 0),          # top of letter
-            (size * 0.75 , -size * 0.85),   # peak of curve
-            (size * 1.2  , 0)               # middle of letter
+            (0, 0),                 # bottom of letter
+            (size * 2, 0),          # top of letter
+            (size * 0.75, -size * 0.85),   # peak of curve
+            (size * 1.2, 0)               # middle of letter
         ]
 
         world_pos = [
@@ -659,13 +701,16 @@ class Drawbot(Dobot):
             (pos[0] + local_pos[2][0], pos[1] + local_pos[2][1]),
             (pos[0] + local_pos[3][0], pos[1] + local_pos[3][1])
         ]
+        if self.hivemind.interrupt_bang:
+            self.go_draw(world_pos[1][0], world_pos[1][1])
 
-        self.go_draw(world_pos[1][0], world_pos[1][1])
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
+        if self.hivemind.interrupt_bang:
+            self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_b(self, size, wait=True):
         """Draws the letter B at the pens current position. Seperate from the draw_char() function as it requires an arc.
@@ -689,10 +734,10 @@ class Drawbot(Dobot):
             (pos[0] + local_pos[3][0], pos[1] + local_pos[3][1]),
             (pos[0] + local_pos[4][0], pos[1] + local_pos[4][1])
         ]
-
-        self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
-        self.arc2D(world_pos[4][0], world_pos[4][1], world_pos[0][0], world_pos[0][1], wait=wait)
+        while self.hivemind.interrupt_bang:
+            self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
+            self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
+            self.arc2D(world_pos[4][0], world_pos[4][1], world_pos[0][0], world_pos[0][1], wait=wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -716,8 +761,8 @@ class Drawbot(Dobot):
             (pos[0] + local_pos[1][0], pos[1] + local_pos[1][1]),
             (pos[0] + local_pos[2][0], pos[1] + local_pos[2][1])
         ]
-
-        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
+        if self.hivemind.interrupt_bang:
+            self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -742,12 +787,14 @@ class Drawbot(Dobot):
             (pos[0] + local_pos[2][0], pos[1] + local_pos[2][1])
         ]
 
-        self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[0][0], world_pos[0][1], wait=wait)
+        while self.hivemind.interrupt_bang:
+            self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
+            self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[0][0], world_pos[0][1], wait=wait)
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_g(self, size, wait=True):
         """Draws the letter G at the pens current position. Seperate from the draw_char() function as it requires an arc.
@@ -758,10 +805,10 @@ class Drawbot(Dobot):
 
         local_pos = [
             (0, 0),                  # 0 top right
-            (- size     , size),     # 1 peak of curve
-            (- size * 2 , 0),        # 2 bottom right
-            (-size      , 0),        # 3 mid right
-            (-size      , size / 2)  # 4 center point
+            (- size, size),     # 1 peak of curve
+            (- size * 2, 0),        # 2 bottom right
+            (-size, 0),        # 3 mid right
+            (-size, size / 2)  # 4 center point
 
         ]
 
@@ -773,13 +820,15 @@ class Drawbot(Dobot):
             (pos[0] + local_pos[4][0], pos[1] + local_pos[4][1])
         ]
 
-        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
-        self.go_draw(world_pos[3][0], world_pos[3][1], wait=wait)
-        self.go_draw(world_pos[4][0], world_pos[4][1], wait=wait)
+        while self.hivemind.interrupt_bang:
+            self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
+            self.go_draw(world_pos[3][0], world_pos[3][1], wait=wait)
+            self.go_draw(world_pos[4][0], world_pos[4][1], wait=wait)
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_random_char(self, size=1, wait=True):
         chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
@@ -807,7 +856,8 @@ class Drawbot(Dobot):
                 shape_group.append((type, size))         # add the shape type and its size to the group
 
         shape_group.append((pos[0], pos[1]))           # add the group x and y position to the last index of the shape_group object
-        self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
+        while self.hivemind.interrupt_bang:
+            self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
 
     def draw_shape_group(self, group, variation=0):
         """Takes a shape group list and draws all the shapes within it. Also adds it to the 
@@ -815,23 +865,24 @@ class Drawbot(Dobot):
         pos = group[len(group) - 1]     # group pos is stored in the last index of the shape group list
 
         for i in range(len(group) - 1):     # last element in group is the position
-            match group[i][0]:              # [i][0] = shape type     
-                case Shapes.Square:
-                    self.draw_square(group[i][1] + variation)     # [i][1] = size (when shape isn't a line)
-                case Shapes.Triangle:
-                    self.draw_triangle(group[i][1] + variation)   # size variation can be added when group is re-drawn
-                case Shapes.Sunburst:
-                    self.draw_sunburst(group[i][1] + variation)
-                case Shapes.Irregular:
-                    self.draw_irregular_shape(randrange(3,8))     # irregular shape will always be random
-                case Shapes.Circle:
-                    self.draw_circle(group[i][1] + variation)
-                case Shapes.Line:
-                    local_target = group[i][1]                    # [i][1] = local_target_pos (when shape is a line)
+            while self.hivemind.interrupt_bang:
+                match group[i][0]:              # [i][0] = shape type
+                    case Shapes.Square:
+                        self.draw_square(group[i][1] + variation)     # [i][1] = size (when shape isn't a line)
+                    case Shapes.Triangle:
+                        self.draw_triangle(group[i][1] + variation)   # size variation can be added when group is re-drawn
+                    case Shapes.Sunburst:
+                        self.draw_sunburst(group[i][1] + variation)
+                    case Shapes.Irregular:
+                        self.draw_irregular_shape(randrange(3,8))     # irregular shape will always be random
+                    case Shapes.Circle:
+                        self.draw_circle(group[i][1] + variation)
+                    case Shapes.Line:
+                        local_target = group[i][1]                    # [i][1] = local_target_pos (when shape is a line)
 
-                    self.go_draw(pos[0] + local_target[0], pos[1] + local_target[1])    # draw the line then go back to original group position
-                    self.go_draw(pos[0], pos[1])
-        
+                        self.go_draw(pos[0] + local_target[0], pos[1] + local_target[1])    # draw the line then go back to original group position
+                        self.go_draw(pos[0], pos[1])
+
         self.shape_groups.append(group)                     # add shape_group object to list
         self.last_shape_group = group                       # set most recent shape group to this one, is used in repeat_shape_group
 
@@ -848,31 +899,32 @@ class Drawbot(Dobot):
 
         shape_group[len(shape_group) - 1] = new_pos     # set the shape group position to the new pos with offset
 
-        self.go_draw(new_pos[0], new_pos[1])    # go to new position
-
-        self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
+        while self.hivemind.interrupt_bang:
+            self.go_draw(new_pos[0], new_pos[1])    # go to new position
+            self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
 
     #-- return to shape functions --#
     def return_to_square(self):     # returns to a random pre-existing square and does something
         """Randomly chooses a square from the 'squares' list and randomly chooses a behaviour to do with it."""
         square_length = int(len(self.squares))
         if square_length > 0:
-            square = self.squares[int(uniform(0, square_length))]
-            print(square)
+            while self.hivemind.interrupt_bang:
+                square = self.squares[int(uniform(0, square_length))]
+                print(square)
 
-            rand = uniform(0, 1)
+                rand = uniform(0, 1)
 
-            if rand == 0:              # move to a random corner on the square and draw a new square with a random size
-                randCorner = uniform(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
-                self.draw_square(uniform(20,29), True)        
-            else:                       # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
-                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
+                if rand == 0:              # move to a random corner on the square and draw a new square with a random size
+                    randCorner = uniform(0,3)
+                    self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                    self.draw_square(uniform(20,29), True)
+                else:                       # draw a cross in the square
+                    self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
+                    self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
+                    self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
+                    self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
 
-            #device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
+                #device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
             #device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
             #device.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
             #device.move_to(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
@@ -912,8 +964,9 @@ class Drawbot(Dobot):
             #if(rand == 0):
 
             rand_vertex = irregular[randrange(0,len(irregular))]
-            self.go_draw(rand_vertex[0], rand_vertex[1])
-            self.draw_irregular_shape(randrange(3,8))
+            while self.hivemind.interrupt_bang:
+                self.go_draw(rand_vertex[0], rand_vertex[1])
+                self.draw_irregular_shape(randrange(3,8))
 
         else:
             print("Cannot return to irregular, no irregulars in list")
@@ -933,5 +986,5 @@ class Drawbot(Dobot):
         coords_length = int(len(self.coords))
         if coords_length > 0:
             coord = self.coords[randrange(0, coords_length)]
-
-            self.go_draw_up(coord[0], coord[1])
+            if self.hivemind.interrupt_bang:
+                self.go_draw_up(coord[0], coord[1])
