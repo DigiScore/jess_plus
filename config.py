@@ -14,7 +14,7 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
-robot1_port = 'COM4'
+robot1_port = 'COM4' # '/dev/ttyACM0'
 robot2_port = '/dev/ttyXXXX'
 
 # play params
