@@ -1,7 +1,7 @@
 # [HARDWARE]
 robot = True
 eeg_live = False
-eda_live = False
+eda_live = True
 robot_verbose = False
 
 """
@@ -26,9 +26,9 @@ staves = 0
 temperature = 0
 
 # [BITALINO]
-baudrate = 100
+baudrate = 10
 channels = [0]
-mac_address = "/dev/cu.BITalino-3F-AE"
+mac_address = "98:D3:B1:FD:3D:1F"  #  "/dev/cu.BITalino-3F-AE"
 
 # [DEBUG]
 # debug = logging.INFO
@@ -42,6 +42,8 @@ stream_list = ['mic_in',
                'move_rnn',
                'affect_rnn',
                'self_awareness',
-               'eeg_single']
+               'eda',
+               'eeg_single'
+               ]
 
 all_nets_predicting = True

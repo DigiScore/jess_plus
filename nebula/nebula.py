@@ -18,7 +18,7 @@ Dedicated to Fabrizio Poltronieri
 from threading import Thread
 import logging
 from time import sleep, time
-# from bitalino import BITalino
+from modules.bitalino import BITalino
 
 
 # import Nebula modules
@@ -79,12 +79,16 @@ class Nebula(Listener,
             first_brain_data = self.eeg_board.read(255)
             logging.info(f'Data from brainbit = {first_brain_data}')
 
-        # # init bitalino
-        # if self.BITALINO_CONNECTED:
-        #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
-        #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
-        #     first_eda_data = self.eda.read(10)
-        #     logging.info(f'Data from BITalino = {first_eda_data}')
+        # init bitalino
+        if self.BITALINO_CONNECTED:
+            BITALINO_MAC_ADDRESS = config.mac_address
+            BITALINO_BAUDRATE = config.baudrate
+            BITALINO_ACQ_CHANNELS = config.channels
+
+            self.eda = BITalino(BITALINO_MAC_ADDRESS)
+            self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
+            first_eda_data = self.eda.read(10)
+            logging.info(f'Data from BITalino = {first_eda_data}')
 
         # work out master timing then collapse hivemind.running
         self.endtime = time() + config.duration_of_piece
@@ -110,10 +114,18 @@ class Nebula(Listener,
         """
         while time() <= self.endtime:
             # read data from bitalino
-            # if self.BITALINO_CONNECTED:
-            #     eda_data = self.eda.read()
-            #     # setattr(self.hivemind, 'eda', eda_data)
-            #     self.hivemind.eda = eda_data
+            if self.BITALINO_CONNECTED:
+                eda_data = self.eda.read()
+
+                # rescale for hivemind
+                raw_eda = eda_data[0][-1]
+                # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+                eda_rescale = ((raw_eda - 0) / (300 - 0)) * (1 - 0) + 0
+
+                if eda_rescale > 1:
+                    eda_rescale = 1
+                logging.debug(f"eda  raw = {eda_rescale}")
+                self.hivemind.eda = eda_data[0][-1]
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
