@@ -273,7 +273,8 @@ class Conducter:
                                 #     self.cardew_inspiration(thought_train)
 
                 # get new position for hivemind
-                self.drawbot.get_normalised_position()
+                if self.drawbot:
+                    self.drawbot.get_normalised_position()
 
                 # and wait for a cycle
                 sleep(rhythm_rate)
