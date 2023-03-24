@@ -1,6 +1,6 @@
 # [HARDWARE]
-robot = False
-eeg_live = True
+robot = True
+eeg_live = False
 eda_live = False
 
 """
@@ -14,7 +14,7 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
-robot1_port = '/dev/ttyACM0'
+robot1_port = 'COM4' # '/dev/ttyACM0'
 robot2_port = '/dev/ttyXXXX'
 
 # play params
