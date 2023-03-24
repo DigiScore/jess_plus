@@ -14,8 +14,14 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
-robot1_port = 'COM10' # '/dev/ttyACM0' or 'COM4' or 'COM10'
+robot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10'
 robot2_port = '/dev/ttyXXXX'
+robot_verbose = False
+
+x_extents = [160, 350]
+y_extents = [-150, 150]
+z_extents = [0, 150]
+irregular_shape_extents = 50
 
 # play params
 duration_of_piece = 3600
@@ -25,9 +31,9 @@ staves = 0
 temperature = 0
 
 # [BITALINO]
-baudrate = 100
+baudrate = 10
 channels = [0]
-mac_address = "/dev/cu.BITalino-3F-AE"
+mac_address = "98:D3:B1:FD:3D:1F"  #  "/dev/cu.BITalino-3F-AE"
 
 # [DEBUG]
 # debug = logging.INFO
@@ -41,5 +47,6 @@ stream_list = ['mic_in',
                'eeg2flow',
                'flow2core',
                'core2flow']
+               # 'eda']
 
 all_nets_predicting = True

@@ -33,6 +33,7 @@ class Conducter:
 
         # PLATFORM = platform.system()
         ROBOT_CONNECTED = config.robot
+        verbose = config.robot_verbose
 
         ############################
         # Robot
@@ -54,7 +55,7 @@ class Conducter:
 
             self.drawbot = Drawbot(
                 port=port,
-                verbose=False,
+                verbose=verbose,
                 continuous_line=continuous_line
             )
         else:
@@ -126,7 +127,7 @@ class Conducter:
 
                 # if a major break out then go to Daddy cycle and restart
                 if not self.hivemind.interrupt_bang:
-                    print("-----------------------------INTERRUPT----------------------------")
+                    print("-----------------------------STREAM INTERRUPT----------------------------")
                     break
 
                 # 1. clear the alarms
@@ -222,7 +223,6 @@ class Conducter:
                             else:
                                 self.offpage(thought_train)
 
-
                     else:
                         # MID response
                         if self.drawbot:
@@ -272,7 +272,10 @@ class Conducter:
                                 #     print("Modification/ Cardew Mode")
                                 #     self.cardew_inspiration(thought_train)
 
-                    # and wait for a cycle
+                # get new position for hivemind
+                self.drawbot.get_normalised_position()
+
+                # and wait for a cycle
                 sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
@@ -429,7 +432,7 @@ class Conducter:
         """
         move to a random x, y position
         """
-        self.drawbot.clear_commands()
+        # self.drawbot.clear_commands()
         self.drawbot.return_to_coord()
 
     def terminate(self):
