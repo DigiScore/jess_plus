@@ -271,7 +271,10 @@ class Conducter:
                                 #     print("Modification/ Cardew Mode")
                                 #     self.cardew_inspiration(thought_train)
 
-                    # and wait for a cycle
+                # get new position for hivemind
+                self.drawbot.get_normalised_position()
+
+                # and wait for a cycle
                 sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')

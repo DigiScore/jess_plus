@@ -4,6 +4,7 @@ from enum import Enum
 import logging
 import struct
 import math
+import numpy as np
 
 # install dobot modules
 from pydobot import Dobot
@@ -53,10 +54,10 @@ class Drawbot(Dobot):
         self.draw_position = [250, 0, 0, 0]
         self.end_position = (250, 0, 50, 0)
 
-        self.x_extents = [160, 350]
-        self.y_extents = [-150, 150]
-        self.z_extents = [self.draw_position[2], 150]
-        self.irregular_shape_extents = 50
+        self.x_extents = config.x_extents
+        self.y_extents = config.y_extents
+        self.z_extents = config.z_extents
+        self.irregular_shape_extents = config.irregular_shape_extents
 
         self.squares = []
         self.sunbursts = []
@@ -72,6 +73,23 @@ class Drawbot(Dobot):
 
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
+
+    def get_normalised_position(self):
+        pose = self.get_pose()[:3]
+
+        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+
+        norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
+        norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
+        norm_z = ((pose[2] - config.z_extents[0]) / (config.z_extents[1] - config.z_extents[0])) * (1 - 0) + 0
+
+        norm_xyz = (norm_x, norm_y, norm_z)
+        norm_xyz = np.clip(norm_xyz, 0.0, 1.0)
+
+        self.hivemind.current_robot_x_y_z = norm_xyz
+
+        logging.info(f'current x,y,z normalised  = {norm_xyz}')
 
     def rnd(self, power_of_command: int) -> int:
         """Returns a randomly generated + or - integer,

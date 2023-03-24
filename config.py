@@ -1,8 +1,7 @@
 # [HARDWARE]
 robot = True
 eeg_live = False
-eda_live = True
-robot_verbose = False
+eda_live = False
 
 """
 to check available ports run the following code:
@@ -15,8 +14,15 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
+# ROBOT PARAMS
 robot1_port = 'COM4' # '/dev/ttyACM0'
 robot2_port = '/dev/ttyXXXX'
+robot_verbose = False
+
+x_extents = [160, 350]
+y_extents = [-150, 150]
+z_extents = [0, 150]
+irregular_shape_extents = 50
 
 # play params
 duration_of_piece = 3600
