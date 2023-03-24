@@ -23,5 +23,5 @@ class Hourglass(nn.Module):
         # Decode
         x = F.relu(self.fc2(x))
         x = x.view(batch_size, 8, -1)  # un-flatten
-        x = self.tconv1(x)
+        x = F.sigmoid(self.tconv1(x))
         return x

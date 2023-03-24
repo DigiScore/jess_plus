@@ -3,6 +3,7 @@ import logging
 from random import random, randrange
 import tensorflow as tf
 import numpy as np
+import pickle
 from time import sleep
 
 # install local modules
@@ -12,6 +13,14 @@ import config
 # Libraries for rework
 import torch
 from nebula.models.pt_models import Hourglass
+
+
+def scaler(input, mins, maxs):
+    maxs = maxs[np.newaxis, :, np.newaxis]
+    mins = mins[np.newaxis, :, np.newaxis]
+    input = (input - mins) / (maxs - mins)
+    input = input.clip(0, 1)
+    return input
 
 
 class NNet:
@@ -195,10 +204,15 @@ class NNetRework:
         """Makes a prediction for this NNet.
         Args:
             in_val: 2D input value for this NNet might be feedback or live input"""
+        # min-max scale
+        with open(f'{self.model[:-3]}_minmax.pickle', 'rb') as f:
+            mins, maxs = pickle.load(f)
+        in_val = scaler(in_val, mins, maxs)
+
         # make prediction
         prediction = self.model(torch.tensor(in_val[np.newaxis, :, :]))
         prediction = np.squeeze(prediction.detach().numpy(), axis=0)
-        prediction = np.mean(prediction, axis=0)
+        # prediction = np.mean(prediction, axis=0)
 
         # get random variable from prediction and save to data dict
         individual_val = np.random.choice(prediction, 4)
@@ -222,29 +236,49 @@ class AIFactoryRework:
         self.running = True
 
         # instantiate nets as objects and make models
-        print('NNetRework1 - EDA to flow initialization')
-        self.eda2flow = NNet(name="eda2flow",
-                             model='nebula/models/eda2flow.pt',
-                             nnet_feed='eda2flow',
-                             live_feed=None,
-                             )
-        print('NNetRework2 - EEG to flow initialization')
+        print('NNetRework1 - EEG to flow initialization')
         self.eeg2flow = NNet(name="eeg2flow",
                              model='nebula/models/eeg2flow.pt',
                              nnet_feed='eeg2flow',
-                             live_feed=None,
+                             live_feed=self.hivemind.eeg_batch,
                              )
-        print('NNetRework3 - core to flow initialization')
+        print('NNetRework2 - Flow to core initialization')
+        self.flow2core = NNet(name="flow2core",
+                              model='nebula/models/flow2core.pt',
+                              nnet_feed='flow2core',
+                              live_feed=None,
+                              )
+        print('NNetRework3 - Core to flow initialization')
         self.core2flow = NNet(name="core2flow",
-                             model='nebula/models/core2flow.pt',
-                             nnet_feed='core2flow',
-                             live_feed=None,
-                             )
+                              model='nebula/models/core2flow.pt',
+                              nnet_feed='core2flow',
+                              live_feed=None,
+                              )
+        print('NNetRework4 - Audio to core initialization')
+        self.audio2core = NNet(name="audio2core",
+                               model='nebula/models/audio2core.pt',
+                               nnet_feed='audio2core',
+                               live_feed=None,
+                               )
+        print('NNetRework5 - Audio to flow initialization')
+        self.audio2flow = NNet(name="audio2flow",
+                               model='nebula/models/audio2flow.pt',
+                               nnet_feed='audio2flow',
+                               live_feed=None,
+                               )
+        print('NNetRework6 - Flow to audio initialization')
+        self.flow2audio = NNet(name="flow2audio",
+                               model='nebula/models/flow2audio.pt',
+                               nnet_feed='flow2audio',
+                               live_feed=None,
+                               )
 
-
-        self.netlist = [self.eda2flow,
-                        self.eeg2flow,
-                        self.core2flow
+        self.netlist = [self.eeg2flow,
+                        self.flow2core,
+                        self.core2flow,
+                        self.audio2core,
+                        self.audio2flow,
+                        self.flow2audio
                         ]
 
     def make_data(self):

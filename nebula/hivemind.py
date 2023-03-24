@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import numpy as np
+import pickle
 from random import random, randrange
 
 
@@ -33,14 +35,17 @@ class DataBorg:
             ######################
             # Outputs from NNets in AI Factory rework
             ######################
-            self.eda2flow: float = random()
-            """Net 1 raw emission"""
+            self.eeg2flow: list = [random() for _ in range(50)]
 
-            self.eeg2flow: float = random()
-            """Net 2 raw emission"""
+            self.flow2core: float = random()
 
             self.core2flow: float = random()
-            """Net 3 raw emission"""
+
+            self.audio2core: float = random()
+
+            self.audio2flow: float = random()
+
+            self.flow2audio: float = random()
 
             ######################
             # Human inputs
@@ -56,8 +61,14 @@ class DataBorg:
             ]
             """Live data from brainbit"""
 
-            # TODO
-            # self.eeg_buffer: np.array
+            with open('./nebula/models/eeg2flow_minmax.pickle', 'rb') as f:
+                mins, maxs = pickle.load(f)
+            self.eeg_buffer: np.array = np.random.uniform(
+                low=np.array([*mins])[:, np.newaxis],
+                high=np.array([*maxs])[:, np.newaxis],
+                size=(4, 50)
+            )
+            """Live 5 sec buffered data from brainbit"""
 
             self.eeg_normalised: list = [
                 random(),
