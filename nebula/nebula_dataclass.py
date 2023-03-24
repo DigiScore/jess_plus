@@ -51,6 +51,9 @@ class DataBorg:
             self.eeg: list = [0, 0, 0, 0]
             """Live data from brainbit"""
 
+            # TODO
+            # self.eeg_buffer: np.array
+
             self.eda: int = 0
             """Live data from Bitalino"""
 
@@ -110,4 +113,3 @@ class DataBorg:
                     random(),
                     random(),
                     random()]
-
