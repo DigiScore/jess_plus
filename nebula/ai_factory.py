@@ -6,7 +6,7 @@ import numpy as np
 from time import sleep
 
 # install local modules
-from nebula.nebula_dataclass import DataBorg
+from nebula.hivemind import DataBorg
 import config
 
 # Libraries for rework
@@ -96,7 +96,7 @@ class AIFactory:
         print('NNet5 - self_awareness initialization')
         self.self_awareness = NNet(name="self_awareness",
                              model='nebula/models/EMR-full-sept-2021_conv2D_move-affect.h5',
-                             nnet_feed='master_stream',
+                             nnet_feed='mic_in',
                              live_feed=None,
                              )
 
@@ -112,7 +112,7 @@ class AIFactory:
 
         Do not disturb - it has its own life cycle"""
 
-        while self.running:
+        while self.hivemind.running:
             # get the first rhythm rate from the hivemind
             # todo CRAIG - need to sort our global speed/ stretch
             rhythm_rate = self.hivemind.rhythm_rate
@@ -137,7 +137,7 @@ class AIFactory:
             rnd = random()
             self.hivemind.rnd_poetry = rnd
 
-            sleep(rhythm_rate / 10)
+            sleep(rhythm_rate)
 
     def get_seed(self, net_name):
         """gets the seed data for a given NNet"""
@@ -158,7 +158,7 @@ class AIFactory:
 
     def quit(self):
         """Quit the loop like a grown up"""
-        self.running = False
+        self.hivemind.running = False
 
 
 class NNetRework:
@@ -302,7 +302,7 @@ class AIFactoryRework:
 
 
 if __name__ == "__main__":
-    from nebula_dataclass import DataBorg
+    from hivemind import DataBorg
     test = AIFactory()
     print(test.hivemind.move_rnn)
     test.make_data()

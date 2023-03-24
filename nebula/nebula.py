@@ -9,102 +9,141 @@ script (such as a sound generator, or QT graphics) gives
 the feeling of the AI creating in-the-moment with the
 human in-the-loop.
 
-© Craig Vear 2022
-cvear@dmu.ac.uk
+© Craig Vear 2022-23
+craig.vear@nottingham.ac.uk
 
 Dedicated to Fabrizio Poltronieri
 """
 # import python modules
 from threading import Thread
 import logging
+from time import sleep, time
+# from bitalino import BITalino
+
 
 # import Nebula modules
 from nebula.ai_factory import AIFactory
+from modules.listener import Listener
+import config
+from modules.brainbit import BrainbitReader
 
-# todo JOHANNS/ CRAIG script (this might control EDA and EEG too!!)
 
-class Nebula:
-    def __init__(self,
-                 speed=1,
-                 ):
-        """Nebula is the core "director" of an AI factory.
-           It generates data in response to incoming percpts
-          from human-in-the-loop interactions, and responds
-          in-the-moment to the gestural input of live data.
-          There are 4 components:
-              Nebula: as "director" it coordinates the overall
-                  operations of the AI Factory
-              AIFactory: builds the neural nets that form the
-                  factory, coordinates data exchange,
-                  and liases with the common data dict
-              NebulaDataClass: is the central dataclass that
-                  holds and shares all the  data exchanges
-                  in the AI factory
-              Affect: receives the live percept input from
-                  the client and produces an affectual response
-                  to it's energy input, which in turn interferes
-                  with the data generation.
+class Nebula(Listener,
+             AIFactory
+             ):
+    """Nebula is the core "director" of an AI factory.
+              It generates data in response to incoming percpts
+             from human-in-the-loop interactions, and responds
+             in-the-moment to the gestural input of live data.
+             There are 4 components:
+                 Nebula: as "director" it coordinates the overall
+                     operations of the AI Factory
+                 AIFactory: builds the neural nets that form the
+                     factory, coordinates data exchange,
+                     and liases with the common data dict
+                 Hivemind: is the central dataclass that
+                     holds and shares all the  data exchanges
+                     in the AI factory
+                 Conducter: receives the live percept input from
+                     the client and produces an affectual response
+                     to it's energy input, which in turn interferes
+                     with the data generation.
 
-          Args:
-              speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
+             Args:
+                 speed: general tempo/ feel of Nebula's response (0.5 ~ moderate fast, 1 ~ moderato; 2 ~ presto)"""
+
+    def __init__(
+            self,
+            speed=1,
+    ):
 
         print('building engine server')
+        Listener.__init__(self)
 
         # Set global vars
-        self.running = True
+        self.hivemind.running = True
 
         # Build the AI factory and pass it the data dict
-        self.AI_factory = AIFactory(speed) #, hivemind)
+        AIFactory.__init__(
+            self,
+            speed
+        )
+        self.BRAINBIT_CONNECTED = config.eeg_live
+        self.BITALINO_CONNECTED = config.eda_live
 
-        # todo CRAIG - get these working
-        # init the EEG and EDA percepts
-        # config_object = ConfigParser()
-        # config_object.read('config.ini')
+        # init brainbit reader
+        if self.BRAINBIT_CONNECTED:
+            logging.info("Starting EEG connection")
+            self.eeg_board = BrainbitReader()
+            self.eeg_board.start()
+            first_brain_data = self.eeg_board.read(255)
+            logging.info(f'Data from brainbit = {first_brain_data}')
 
-        # self.BRAINBIT_CONNECTED = config.brainbit
-        #
-        # # init brainbit reader
-        # if self.BRAINBIT_CONNECTED:
-        #     self.eeg_board = BrainbitReader()
-        #     self.eeg_board.start()
-        #     first_brain_data = self.eeg_board.read()
-        #     logging.info(f'Data from brainbit = {first_brain_data}')
-        #
-        # # # init bitalino
+        # # init bitalino
         # if self.BITALINO_CONNECTED:
         #     self.eda = BITalino(BITALINO_MAC_ADDRESS)
         #     self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
         #     first_eda_data = self.eda.read(10)
         #     logging.info(f'Data from BITalino = {first_eda_data}')
 
+        # work out master timing then collapse hivemind.running
+        self.endtime = time() + config.duration_of_piece
+
     def main_loop(self):
         """Starts the server/ AI threads
          and gets the data rolling."""
         print('Starting the Nebula Director')
         # declares all threads
-        t1 = Thread(target=self.AI_factory.make_data)
-        # t2 = Thread(target=self.jess_input)
+        t1 = Thread(target=self.make_data)
+        t2 = Thread(target=self.snd_listen)
+        t3 = Thread(target=self.jess_input)
 
         # start them all
         t1.start()
-        # t2.start()
+        t2.start()
+        t3.start()
 
-    # def jess_input(self):
-    #     while self.running:
-    #         # read data from bitalino
-    #         if self.BITALINO_CONNECTED:
-    #             eda_data = self.eda.read()
-    #             # setattr(self.hivemind, 'eda', eda_data)
-    #             self.hivemind.eda = eda_data
-    #
-    #         # read data from brainbit
-    #         if self.BRAINBIT_CONNECTED:
-    #             eeg_data = self.eeg_board.read()
-    #             # setattr(self.hivemind, 'eeg_board', eeg_data)
-    #             self.hivemind.eeg_board = eeg_data
-    #             print(eeg_data)
-    #
-    #         sleep(0.1)
+    def jess_input(self):
+        """
+        Listens to live human input
+        :return:
+        """
+        while time() <= self.endtime:
+            # read data from bitalino
+            # if self.BITALINO_CONNECTED:
+            #     eda_data = self.eda.read()
+            #     # setattr(self.hivemind, 'eda', eda_data)
+            #     self.hivemind.eda = eda_data
+
+            # read data from brainbit
+            if self.BRAINBIT_CONNECTED:
+                eeg = []
+                raw_eeg_data = self.eeg_board.read(255)
+                self.hivemind.eeg_board = raw_eeg_data
+                logging.debug(f"eeg data raw = {raw_eeg_data}")
+
+                # normalise the output
+                for e in raw_eeg_data:
+                    norm_e = self.normalise_eeg(e)
+                    eeg.append(norm_e)
+                self.hivemind.eeg = eeg
+                self.hivemind.eeg_single = eeg[0]
+                logging.debug(f"eeg data normalised = {eeg}")
+
+            sleep(self.hivemind.rhythm_rate)
+
+        self.hivemind.running = False
+
+    def normalise_eeg(self, eeg) -> float:
+        """
+        takes an eeg data atom -10000 -> 10000, and
+        normalises it between 0.0 -> 1.0
+        :param eeg: float
+        :return:
+        """
+        # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+        eeg_normalised = ((eeg - -10000) / (10000 - -10000)) * (1.0 - 0.0) + 0.0
+        return eeg_normalised
 
     def terminate(self):
         # self.affect.quit()
@@ -113,7 +152,4 @@ class Nebula:
         # self.eda.close()
         self.running = False
 
-if __name__ == '__main':
-    logging.basicConfig(level=logging.DEBUG)
-    test = Nebula()
-    test.main_loop()
+
