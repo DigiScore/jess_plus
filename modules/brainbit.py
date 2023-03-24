@@ -81,6 +81,3 @@ if __name__ == "__main__":
         data = bb.read(1)
         print(data)
         sleep(1)
-
-        bb.hivemind.eeg_buffer = np.append(bb.hivemind.eeg_buffer, data, axis=1)
-        bb.hivemind.eeg_buffer = np.delete(bb.hivemind.eeg_buffer, 0, axis=1)

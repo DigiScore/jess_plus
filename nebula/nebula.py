@@ -17,19 +17,29 @@ Dedicated to Fabrizio Poltronieri
 # import python modules
 from threading import Thread
 import logging
+import numpy as np
 from time import sleep, time
 # from bitalino import BITalino
 
 
 # import Nebula modules
-from nebula.ai_factory import AIFactory
+from nebula.ai_factory import AIFactory, AIFactoryRework
 from modules.listener import Listener
 import config
 from modules.brainbit import BrainbitReader
 
 
+def scaler(in_feature, mins, maxs):
+    in_feature = np.array(in_feature)
+    mins = np.array(mins)
+    maxs = np.array(maxs)
+    in_feature = (in_feature - mins) / (maxs - mins)
+    in_feature = in_feature.clip(0, 1)
+    return in_feature
+
+
 class Nebula(Listener,
-             AIFactory
+             AIFactoryRework
              ):
     """Nebula is the core "director" of an AI factory.
               It generates data in response to incoming percpts
@@ -64,7 +74,7 @@ class Nebula(Listener,
         self.hivemind.running = True
 
         # Build the AI factory and pass it the data dict
-        AIFactory.__init__(
+        AIFactoryRework.__init__(
             self,
             speed
         )
@@ -76,7 +86,7 @@ class Nebula(Listener,
             logging.info("Starting EEG connection")
             self.eeg_board = BrainbitReader()
             self.eeg_board.start()
-            first_brain_data = self.eeg_board.read(255)
+            first_brain_data = self.eeg_board.read(1)
             logging.info(f'Data from brainbit = {first_brain_data}')
 
         # # init bitalino
@@ -118,32 +128,27 @@ class Nebula(Listener,
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
                 eeg = []
-                raw_eeg_data = self.eeg_board.read(255)
-                self.hivemind.eeg_board = raw_eeg_data
-                logging.debug(f"eeg data raw = {raw_eeg_data}")
+                eeg = self.eeg_board.read(1)
+                logging.debug(f"eeg data raw = {eeg}")
+                eeg_norm = scaler(eeg, self.hivemind.eeg_mins, self.hivemind.eeg_maxs)
+                eeg_2d = eeg_norm[:, np.newaxis]
+                self.hivemind.eeg_buffer = np.append(self.hivemind.eeg_buffer, eeg_2d, axis=1)
+                self.hivemind.eeg_buffer = np.delete(self.hivemind.eeg_buffer, 0, axis=1)
 
-                # normalise the output
-                for e in raw_eeg_data:
-                    norm_e = self.normalise_eeg(e)
-                    eeg.append(norm_e)
-                self.hivemind.eeg = eeg
-                self.hivemind.eeg_single = eeg[0]
-                logging.debug(f"eeg data normalised = {eeg}")
-
-            sleep(self.hivemind.rhythm_rate)
+            sleep(0.1)  # for 10 Hz
 
         self.hivemind.running = False
 
-    def normalise_eeg(self, eeg) -> float:
-        """
-        takes an eeg data atom -10000 -> 10000, and
-        normalises it between 0.0 -> 1.0
-        :param eeg: float
-        :return:
-        """
-        # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-        eeg_normalised = ((eeg - -10000) / (10000 - -10000)) * (1.0 - 0.0) + 0.0
-        return eeg_normalised
+    # def normalise_eeg(self, eeg) -> float:
+    #     """
+    #     takes an eeg data atom -10000 -> 10000, and
+    #     normalises it between 0.0 -> 1.0
+    #     :param eeg: float
+    #     :return:
+    #     """
+    #     # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+    #     eeg_normalised = ((eeg - -10000) / (10000 - -10000)) * (1.0 - 0.0) + 0.0
+    #     return eeg_normalised
 
     def terminate(self):
         # self.affect.quit()
@@ -151,5 +156,3 @@ class Nebula(Listener,
         # self.eeg_board.terminate()
         # self.eda.close()
         self.running = False
-
-

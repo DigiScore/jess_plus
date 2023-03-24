@@ -15,14 +15,6 @@ import torch
 from nebula.models.pt_models import Hourglass
 
 
-def scaler(input, mins, maxs):
-    maxs = maxs[np.newaxis, :, np.newaxis]
-    mins = mins[np.newaxis, :, np.newaxis]
-    input = (input - mins) / (maxs - mins)
-    input = input.clip(0, 1)
-    return input
-
-
 class NNet:
     def __init__(self,
                  name: str,
@@ -174,8 +166,7 @@ class NNetRework:
     def __init__(self,
                  name: str,
                  model: str,
-                 nnet_feed: str,
-                 live_feed: str = None,
+                 in_feature: str,
                  ):
         """Makes an object  for each neural net in AI factory.
         Args:
@@ -186,9 +177,7 @@ class NNetRework:
             """
         self.hivemind = DataBorg()
         self.name = name
-        self.nnet_feed = nnet_feed
-        self.live_feed = live_feed
-        self.which_feed = "net"
+        self.in_feature = in_feature
 
         state_dict = torch.load(model)
         n_ch_in = list(state_dict.values())[0].size()[1]
@@ -203,19 +192,14 @@ class NNetRework:
     def make_prediction(self, in_val):
         """Makes a prediction for this NNet.
         Args:
-            in_val: 2D input value for this NNet might be feedback or live input"""
-        # min-max scale
-        with open(f'{self.model[:-3]}_minmax.pickle', 'rb') as f:
-            mins, maxs = pickle.load(f)
-        in_val = scaler(in_val, mins, maxs)
-
+            in_val: 2D input value for this NNet"""
         # make prediction
         prediction = self.model(torch.tensor(in_val[np.newaxis, :, :]))
         prediction = np.squeeze(prediction.detach().numpy(), axis=0)
-        # prediction = np.mean(prediction, axis=0)
+        setattr(self.hivemind, f'{self.name}_2D', prediction)
 
-        # get random variable from prediction and save to data dict
-        individual_val = np.random.choice(prediction, 4)
+        # get average from prediction and save to data dict
+        individual_val = np.mean(prediction)
         setattr(self.hivemind, self.name, individual_val)
         logging.debug(f"NNet {self.name} in: {in_val} predicted {individual_val}")
 
@@ -237,40 +221,34 @@ class AIFactoryRework:
 
         # instantiate nets as objects and make models
         print('NNetRework1 - EEG to flow initialization')
-        self.eeg2flow = NNet(name="eeg2flow",
+        self.eeg2flow = NNetRework(name="eeg2flow",
                              model='nebula/models/eeg2flow.pt',
-                             nnet_feed='eeg2flow',
-                             live_feed=self.hivemind.eeg_batch,
+                             in_feature='eeg_buffer'
                              )
         print('NNetRework2 - Flow to core initialization')
-        self.flow2core = NNet(name="flow2core",
+        self.flow2core = NNetRework(name="flow2core",
                               model='nebula/models/flow2core.pt',
-                              nnet_feed='flow2core',
-                              live_feed=None,
+                              in_feature='eeg2flow'
                               )
         print('NNetRework3 - Core to flow initialization')
-        self.core2flow = NNet(name="core2flow",
+        self.core2flow = NNetRework(name="core2flow",
                               model='nebula/models/core2flow.pt',
-                              nnet_feed='core2flow',
-                              live_feed=None,
+                              in_feature='current_robot_x_y_z'
                               )
         print('NNetRework4 - Audio to core initialization')
-        self.audio2core = NNet(name="audio2core",
+        self.audio2core = NNetRework(name="audio2core",
                                model='nebula/models/audio2core.pt',
-                               nnet_feed='audio2core',
-                               live_feed=None,
+                               in_feature='audio_buffer'
                                )
         print('NNetRework5 - Audio to flow initialization')
-        self.audio2flow = NNet(name="audio2flow",
+        self.audio2flow = NNetRework(name="audio2flow",
                                model='nebula/models/audio2flow.pt',
-                               nnet_feed='audio2flow',
-                               live_feed=None,
+                               in_feature='audio_buffer'
                                )
         print('NNetRework6 - Flow to audio initialization')
-        self.flow2audio = NNet(name="flow2audio",
+        self.flow2audio = NNetRework(name="flow2audio",
                                model='nebula/models/flow2audio.pt',
-                               nnet_feed='flow2audio',
-                               live_feed=None,
+                               in_feature='eeg2flow'
                                )
 
         self.netlist = [self.eeg2flow,
@@ -287,48 +265,23 @@ class AIFactoryRework:
         Do not disturb - it has its own life cycle"""
 
         while self.running:
-            # get the first rhythm rate from the hivemind
-            # todo CRAIG - need to sort our global speed/ stretch
-            rhythm_rate = self.hivemind.rhythm_rate
-
             # make a prediction for each of the NNets in the factory
             if config.all_nets_predicting:
                 for net in self.netlist:
                     in_val = self.get_seed(net)
                     net.make_prediction(in_val)
 
-            # todo - CRAIG if this is false then the "feeding" NNets need to be operting too
-            # or just the current one
-            else:
-                current_stream = self.hivemind.thought_train_stream
-                for net in self.netlist:
-                    if net.name == current_stream:
-                        in_val = self.get_seed(net)
-                        net.make_prediction(in_val)
-                        break
-
             # creates a stream of random poetry
             rnd = random()
             self.hivemind.rnd_poetry = rnd
 
-            sleep(rhythm_rate / 10)
+            sleep(0.1)  # 10 Hz
 
     def get_seed(self, net_name):
         """gets the seed data for a given NNet"""
-        which_feed = net_name.which_feed
-        if which_feed == "net":
-            seed_source = net_name.nnet_feed
-            seed = getattr(self.hivemind, seed_source)
-        else:
-            seed_source = net_name.live_feed
-            seed = getattr(self.hivemind, seed_source)
-        return self.get_in_val(seed)
-
-    def get_in_val(self, input_val):
-        """get the current value and reshape ready for input for prediction"""
-        input_val = np.reshape(input_val, (1, 1, 1))
-        input_val = tf.convert_to_tensor(input_val, np.float32)
-        return input_val
+        seed_source = net_name.in_feature
+        seed = getattr(self.hivemind, seed_source)
+        return seed
 
     def quit(self):
         """Quit the loop like a grown up"""
@@ -337,7 +290,7 @@ class AIFactoryRework:
 
 if __name__ == "__main__":
     from hivemind import DataBorg
-    test = AIFactory()
-    print(test.hivemind.move_rnn)
+    test = AIFactoryRework()
+    print(test.hivemind.eeg2flow)
     test.make_data()
-    print(test.hivemind.move_rnn)
+    print(test.hivemind.eeg2flow)
