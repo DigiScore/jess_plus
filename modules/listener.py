@@ -75,7 +75,7 @@ class Listener:
                 if random() > 0.63:
                     self.hivemind.interrupt_bang = False
                     self.hivemind.randomiser()
-                    print("-----------------------------INTERRUPT----------------------------")
+                    print("-----------------------------MICROPHONE INTERRUPT----------------------------")
 
         logging.info('quitting listener thread')
 

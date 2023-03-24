@@ -2,6 +2,7 @@
 robot = True
 eeg_live = False
 eda_live = False
+robot_verbose = False
 
 """
 to check available ports run the following code:

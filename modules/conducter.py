@@ -33,6 +33,7 @@ class Conducter:
 
         # PLATFORM = platform.system()
         ROBOT_CONNECTED = config.robot
+        verbose = config.robot_verbose
 
         ############################
         # Robot
@@ -54,7 +55,7 @@ class Conducter:
 
             self.drawbot = Drawbot(
                 port=port,
-                verbose=False,
+                verbose=verbose,
                 continuous_line=continuous_line
             )
         else:
@@ -125,7 +126,7 @@ class Conducter:
 
                 # if a major break out then go to Daddy cycle and restart
                 if not self.hivemind.interrupt_bang:
-                    print("-----------------------------INTERRUPT----------------------------")
+                    print("-----------------------------STREAM INTERRUPT----------------------------")
                     break
 
                 # 1. clear the alarms
@@ -220,7 +221,6 @@ class Conducter:
                                 self.drawbot.move_y()
                             else:
                                 self.offpage(thought_train)
-
 
                     else:
                         # MID response
@@ -428,7 +428,7 @@ class Conducter:
         """
         move to a random x, y position
         """
-        self.drawbot.clear_commands()
+        # self.drawbot.clear_commands()
         self.drawbot.return_to_coord()
 
     def terminate(self):

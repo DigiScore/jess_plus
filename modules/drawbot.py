@@ -384,7 +384,7 @@ class Drawbot(Dobot):
 
         self.coords.append((x, y))
         print("Random draw pos above page x:",x," y:",y)
-        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=True)
+        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
 
     #-- move by functions --#
     def position_move_by(self, x, y, z, wait=True):
@@ -547,7 +547,7 @@ class Drawbot(Dobot):
         Positions are saved to the irregulars array to be accessed by other functions."""
         pos = self.get_pose()
 
-        if(num_vertices <= 0):
+        if num_vertices <= 0:
             num_vertices = randrange(3, 10)
 
         vertices = []

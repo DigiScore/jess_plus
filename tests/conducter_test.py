@@ -51,4 +51,4 @@ def main(mode=999):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main(999)
+    main(6)
