@@ -94,7 +94,12 @@ class DataBorg:
             self.current_robot_x_y_z: tuple = (0, 0, 0)
             """Actual cartesian coords reported by Dobot"""
 
+            self.current_robot_x_y: np.array = np.zeros((2, 50))
+            """Actual cartesian coords reported by Dobot"""
+
             self.current_nnet_x_y_z: tuple = (0, 0, 0)
+            # TODO: 2 first elements could be assigned based on the nnets out
+            # eg. flow2core or audio2core
             """Generated output of robot movement from NNets"""
 
             ######################

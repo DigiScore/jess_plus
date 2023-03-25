@@ -233,7 +233,7 @@ class AIFactoryRework:
         print('NNetRework3 - Core to flow initialization')
         self.core2flow = NNetRework(name="core2flow",
                               model='nebula/models/core2flow.pt',
-                              in_feature='current_robot_x_y_z'
+                              in_feature='current_robot_x_y'
                               )
         print('NNetRework4 - Audio to core initialization')
         self.audio2core = NNetRework(name="audio2core",
@@ -294,3 +294,16 @@ if __name__ == "__main__":
     print(test.hivemind.eeg2flow)
     test.make_data()
     print(test.hivemind.eeg2flow)
+
+
+# 1. Live EEG -> predicted flow
+
+# 2. Predicted flow from EEG -> core (for current_nnet_x_y_z into current_robot_x_y_z)
+
+# 3. Robot position (current_robot_x_y) -> predicted flow
+
+# 4. Live sound (amplitude of envelope) -> core (for current_nnet_x_y_z into current_robot_x_y_z)
+
+# 5. Live sound (amplitude of envelope) -> predicted flow
+
+# 6. Predicted flow from EEG -> sound (amplitude of envelope)
