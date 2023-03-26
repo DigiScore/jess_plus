@@ -46,7 +46,10 @@ stream_list = ['mic_in',
                'rnd_poetry',
                'eeg2flow',
                'flow2core',
-               'core2flow']
+               'core2flow',
+               'audio2core',
+               'audio2flow',
+               'flow2audio']
                # 'eda']
 
 all_nets_predicting = True

@@ -35,28 +35,33 @@ class DataBorg:
             # Outputs from NNets in AI Factory rework
             ######################
             self.eeg2flow: float = random()
-            self.eeg2flow_2D: np.array = np.random.uniform(size=(1, 50))
+            self.eeg2flow_2d: np.array = np.random.uniform(size=(1, 50))
 
             self.flow2core: float = random()
-            self.flow2core_2D: np.array = np.random.uniform(size=(2, 50))
+            self.flow2core_2d: np.array = np.random.uniform(size=(2, 50))
 
             self.core2flow: float = random()
-            self.core2flow_2D: np.array = np.random.uniform(size=(1, 50))
+            self.core2flow_2d: np.array = np.random.uniform(size=(1, 50))
 
             self.audio2core: float = random()
-            self.audio2core_2D: np.array = np.random.uniform(size=(2, 50))
+            self.audio2core_2d: np.array = np.random.uniform(size=(2, 50))
 
             self.audio2flow: float = random()
-            self.audio2flow_2D: np.array = np.random.uniform(size=(1, 50))
+            self.audio2flow_2d: np.array = np.random.uniform(size=(1, 50))
 
             self.flow2audio: float = random()
-            self.flow2audio_2D: np.array = np.random.uniform(size=(1, 50))
+            self.flow2audio_2d: np.array = np.random.uniform(size=(1, 50))
 
             ######################
             # Human inputs
             ######################
             self.mic_in: float = random()
             """Percept input stream from client e.g. live mic level"""
+
+            with open('./nebula/models/audio2core_minmax.pickle', 'rb') as f:
+                audio_mins, audio_maxs = pickle.load(f)
+            self.audio_mins: list = audio_mins
+            self.audio_maxs: list = audio_maxs
 
             self.audio_buffer: np.array = np.random.uniform(size=(1, 50))
 
@@ -134,19 +139,19 @@ class DataBorg:
         self.audio_buffer = np.random.uniform(size=(1, 50))
 
         self.eeg2flow = random()
-        self.eeg2flow_2D = np.random.uniform(size=(1, 50))
+        self.eeg2flow_2d = np.random.uniform(size=(1, 50))
 
         self.flow2core = random()
-        self.flow2core_2D = np.random.uniform(size=(2, 50))
+        self.flow2core_2d = np.random.uniform(size=(2, 50))
 
         self.core2flow = random()
-        self.core2flow_2D = np.random.uniform(size=(1, 50))
+        self.core2flow_2d = np.random.uniform(size=(1, 50))
 
         self.audio2core = random()
-        self.audio2core_2D = np.random.uniform(size=(2, 50))
+        self.audio2core_2d = np.random.uniform(size=(2, 50))
 
         self.audio2flow = random()
-        self.audio2flow_2D = np.random.uniform(size=(1, 50))
+        self.audio2flow_2d = np.random.uniform(size=(1, 50))
 
         self.flow2audio = random()
-        self.flow2audio_2D = np.random.uniform(size=(1, 50))
+        self.flow2audio_2d = np.random.uniform(size=(1, 50))

@@ -2,9 +2,19 @@ import logging
 from random import random
 import numpy as np
 import pyaudio
+from scipy import signal
 
 #  import local methods
 from nebula.hivemind import DataBorg
+
+
+def buffer_scaler(in_feature, mins, maxs):
+    in_feature = np.array(in_feature)
+    mins = np.array(mins)[:, np.newaxis]
+    maxs = np.array(maxs)[:, np.newaxis]
+    in_feature = (in_feature - mins) / (maxs - mins)
+    in_feature = in_feature.clip(0, 1)
+    return in_feature
 
 
 class Listener:
@@ -49,6 +59,7 @@ class Listener:
         Normalises then stores this into the nebula dataclass for shared use."""
 
         print("Starting mic listening stream & thread")
+        data_buffer = np.empty(0)
         while self.hivemind.running:
 
             # get amplitude from mic input
@@ -56,6 +67,20 @@ class Listener:
                 self.CHUNK,
                 exception_on_overflow=False),
                 dtype=np.int16)
+
+            # make audio envelope buffer
+            data_buffer = np.append(data_buffer, data)
+            if len(data_buffer) > self.RATE*5:  # 5 sec buffer
+                data_buffer = data_buffer[-(self.RATE*5):]
+                hb_data = signal.hilbert(data_buffer)
+                envolope = np.abs(hb_data)
+                num = int(len(envolope)/self.RATE*10.0)
+                envolope = signal.resample(envolope, num)[np.newaxis, :]
+                envolope_norm = buffer_scaler(envolope,
+                                              self.hivemind.audio_mins,
+                                              self.hivemind.audio_maxs)
+                self.hivemind.audio_buffer = envolope_norm
+
             peak = np.average(np.abs(data)) * 2
 
             if peak > 1000:
