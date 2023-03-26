@@ -228,7 +228,7 @@ class AIFactoryRework:
         print('NNetRework2 - Flow to core initialization')
         self.flow2core = NNetRework(name="flow2core",
                               model='nebula/models/flow2core.pt',
-                              in_feature='eeg2flow'
+                              in_feature='eeg2flow_2d'
                               )
         print('NNetRework3 - Core to flow initialization')
         self.core2flow = NNetRework(name="core2flow",
@@ -248,7 +248,7 @@ class AIFactoryRework:
         print('NNetRework6 - Flow to audio initialization')
         self.flow2audio = NNetRework(name="flow2audio",
                                model='nebula/models/flow2audio.pt',
-                               in_feature='eeg2flow'
+                               in_feature='eeg2flow_2d'
                                )
 
         self.netlist = [self.eeg2flow,
