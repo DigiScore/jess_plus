@@ -97,8 +97,7 @@ class Nebula(Listener,
 
             self.eda = BITalino(BITALINO_MAC_ADDRESS)
             self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
-            # TODO: maybe read one sample at a time instead of 10
-            first_eda_data = self.eda.read(10)
+            first_eda_data = self.eda.read(1)
             logging.info(f'Data from BITalino = {first_eda_data}')
 
         # work out master timing then collapse hivemind.running
@@ -126,19 +125,17 @@ class Nebula(Listener,
         while self.hivemind.running:  #  time() <= self.endtime:
             # read data from bitalino
             if self.BITALINO_CONNECTED:
-                eda = []
-                eda = [self.eda.read()[0][-1]]
+                eda_raw = [self.eda.read(1)[0][0]]
                 # TODO: to check, eda needs to be a list of length 1, the shape
                 # will depend on the number of samples read at a time
-                logging.debug(f"eda data raw = {eda}")
-                eda_norm = scaler(eda, self.hivemind.eda_mins, self.hivemind.eda_maxs)
+                logging.debug(f"eda data raw = {eda_raw}")
+                eda_norm = scaler(eda_raw, self.hivemind.eda_mins, self.hivemind.eda_maxs)
                 eda_2d = eda_norm[:, np.newaxis]
                 self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer, eda_2d, axis=1)
                 self.hivemind.eda_buffer = np.delete(self.hivemind.eda_buffer, 0, axis=1)
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
-                eeg = []
                 eeg = self.eeg_board.read(1)
                 logging.debug(f"eeg data raw = {eeg}")
                 eeg_norm = scaler(eeg, self.hivemind.eeg_mins, self.hivemind.eeg_maxs)
