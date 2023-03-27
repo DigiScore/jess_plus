@@ -215,13 +215,14 @@ class Conducter:
 
                         # LOW
                     elif thought_train <= 0.2:
-                        logging.info('interrupt LOW ----------- move Y')
+                        logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
                             else:
-                                self.offpage(thought_train)
+                                sleep(0.1)
+                                # self.offpage(thought_train)
 
                     else:
                         # MID response
@@ -433,8 +434,9 @@ class Conducter:
         """
         move to a random x, y position
         """
-        # self.drawbot.clear_commands()
-        self.drawbot.return_to_coord()
+        self.drawbot.clear_commands()
+        # self.drawbot.return_to_coord()
+        sleep(0.1)
 
     def terminate(self):
         """

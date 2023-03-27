@@ -42,12 +42,14 @@ class Drawbot(Dobot):
                  continuous_line
                  ):
 
+        # own a hive mind
+        self.hivemind = DataBorg()
+
+        # init and inherit the Dobot library
         super().__init__(port, verbose)
 
         self.continuous_line = continuous_line
 
-        # own a hive mind
-        self.hivemind = DataBorg()
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
@@ -330,11 +332,31 @@ class Drawbot(Dobot):
         self.move_to(x, y, z, r, wait)
 
     def clear_commands(self):
-        self._set_queued_cmd_stop_exec()
+        # self.force_queued_stop()
         self._set_queued_cmd_clear()
+        # self._set_queued_cmd_start_exec()
+
+    def force_queued_stop(self):
+        """
+        Uses the 242 code to force stop a command
+        :return: stop command via message send
+        """
+        msg = Message()
+        msg.id = 242
+        msg.ctrl = ControlValues.ONE
+        return self._send_command(msg)
 
     def get_pose(self):
         return self.pose()
+
+    def _send_message(self, msg):
+        sleep(0.1)
+        if self.verbose:
+            print('pydobot: >>', msg)
+        # if self.hivemind.interrupt_bang:
+        self.ser.write(msg.bytes())
+        # else:
+        #     self.clear_commands()
 
     def _send_command(self, msg, wait=False):
         self.lock.acquire()

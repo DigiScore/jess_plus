@@ -23,7 +23,7 @@ from modules.bitalino import BITalino
 
 
 # import Nebula modules
-from nebula.ai_factory import AIFactory, AIFactoryRework
+from nebula.ai_factory import AIFactoryRework
 from modules.listener import Listener
 import config
 from modules.brainbit import BrainbitReader
@@ -122,7 +122,7 @@ class Nebula(Listener,
         Listens to live human input
         :return:
         """
-        while time() <= self.endtime:
+        while self.hivemind.running:  #  time() <= self.endtime:
             # read data from bitalino
             if self.BITALINO_CONNECTED:
                 eda_data = self.eda.read()
@@ -130,7 +130,7 @@ class Nebula(Listener,
                 # rescale for hivemind
                 raw_eda = eda_data[0][-1]
                 # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-                eda_rescale = ((raw_eda - 0) / (300 - 0)) * (1 - 0) + 0
+                eda_rescale = ((raw_eda - 0) / (400 - 0)) * (1 - 0) + 0
 
                 if eda_rescale > 1:
                     eda_rescale = 1
@@ -164,7 +164,7 @@ class Nebula(Listener,
 
     def terminate(self):
         # self.affect.quit()
-        self.AI_factory.quit()
-        # self.eeg_board.terminate()
-        # self.eda.close()
+        # self.AI_factory.quit()
+        self.eeg_board.terminate()
+        self.eda.close()
         self.running = False

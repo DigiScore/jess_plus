@@ -3,6 +3,7 @@ from random import random
 import numpy as np
 import pyaudio
 from scipy import signal
+from time import time
 
 #  import local methods
 from nebula.hivemind import DataBorg
@@ -60,6 +61,11 @@ class Listener:
 
         print("Starting mic listening stream & thread")
         data_buffer = np.empty(0)
+
+        # set silence listener to 10 seconds in future
+        silence_listener = time() + 10
+
+        # main loop
         while self.hivemind.running:
 
             # get amplitude from mic input
@@ -85,7 +91,10 @@ class Listener:
 
             if peak > 1000:
                 bars = "#" * int(50 * peak / 2 ** 16)
-                logging.debug("MIC LISTENER: %05d %s" % (peak, bars))
+                logging.info("MIC LISTENER: %05d %s" % (peak, bars))
+
+                # reset the silence listener
+                silence_listener = time() + 5
 
             # normalise it for range 0.0 - 1.0
             normalised_peak = ((peak - 0) / (20000 - 0)) * (1 - 0) + 0
@@ -102,7 +111,12 @@ class Listener:
                     self.hivemind.randomiser()
                     print("-----------------------------MICROPHONE INTERRUPT----------------------------")
 
+            # check human musician induced ending (wait for 5 secs)
+            if time() >= silence_listener:
+                self.hivemind.running = False
+
         logging.info('quitting listener thread')
+        self.terminate()
 
     def terminate(self):
         self.stream.stop_stream()

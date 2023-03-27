@@ -1,6 +1,6 @@
 # [HARDWARE]
-robot = False
-eeg_live = True
+robot = True
+eeg_live = False
 eda_live = False
 
 """
