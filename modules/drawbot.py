@@ -5,6 +5,7 @@ import logging
 import struct
 import math
 import numpy as np
+from threading import Thread
 
 # install dobot modules
 from pydobot import Dobot
@@ -50,7 +51,6 @@ class Drawbot(Dobot):
 
         self.continuous_line = continuous_line
 
-
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
         self.draw_position = [250, 0, 0, 0]
@@ -70,6 +70,11 @@ class Drawbot(Dobot):
 
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
+
+        # create a command loist and start process thread
+        self.command_list = []
+        list_thread = Thread(target=self.process_command_list)
+        list_thread.start()
 
         self.last_shape_group = None
 
@@ -156,6 +161,25 @@ class Drawbot(Dobot):
             self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+
+
+    ######################
+    # Command Q control
+    ######################
+    def list_set_ptp_cmd(self, x, y, z, r, mode, wait):
+        msg_item = (x, y, z, r, mode, wait)
+        self.command_list.append(msg_item)
+
+    def process_command_list(self):
+        while self.hivemind.running:
+            if not self.hivemind.interrupt_bang:
+                self.command_list.clear()
+            elif self.command_list:
+                msg = self.command_list.pop()
+                x, y, z, r, mode, wait = msg[:]
+                self._set_ptp_cmd(x, y, z, r, mode, wait)
+            else:
+                sleep(0.01)
 
     ######################
     # DIGIBOT FUNCTIONS
@@ -282,12 +306,12 @@ class Drawbot(Dobot):
 
     def jump_to(self, x, y, z, r, wait=True):
         """Lifts pen up, and moves directly to defined coordinates (x, y, z, r)"""
-        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
+        self.list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     def move_to_relative(self, x, y, z, r, wait=True):
         """moves to new position defined in relatives coordinates to current position.
         Delta/ relative movement is x, y, z, r from current position"""
-        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
+        self.list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
 
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """moves specific joints direct to new angles."""
@@ -393,18 +417,18 @@ class Drawbot(Dobot):
     def go(self, x, y, z, wait=True):
         """Go to an x, y, z position"""
         self.coords.append((x, y))
-        self._set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        self.list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
         self.coords.append((x, y))
         # if self.hivemind.interrupt_bang:
-        self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        self.list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
         self.coords.append((x, y))
-        self._set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
+        self.list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     #-- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -416,7 +440,7 @@ class Drawbot(Dobot):
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2)," y:", round(y,2))
-        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
+        self.list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
 
     def go_random_draw_up(self):   #goes to random positon on page with pen above page then back on
         """Lift the pen, move to a random position within the x and y extents, then lower the pen to draw position."""
@@ -427,7 +451,7 @@ class Drawbot(Dobot):
 
         self.coords.append((x, y))
         print("Random draw pos above page x:",x," y:",y)
-        self._set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
+        self.list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
 
     #-- move by functions --#
     def position_move_by(self, x, y, z, wait=True):
@@ -449,7 +473,7 @@ class Drawbot(Dobot):
             z = 0
 
         self.coords.append(newPose[:2])
-        self._set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
+        self.list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
 
     def joint_move_by(self, _j1, _j2, _j3, wait=True):
         """moves specific joints by an amount."""
@@ -464,7 +488,7 @@ class Drawbot(Dobot):
         _j2 += j2
         _j3 -= j3
         # ]
-        self._set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
+        self.list_set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
     #-- shape drawing functions --#
     def draw_square(self, size):      # draws a square at the robots current position with a size and angle (in degrees)
