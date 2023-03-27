@@ -112,6 +112,7 @@ class Listener:
                     self.hivemind.randomiser()
                     print("-----------------------------MICROPHONE INTERRUPT----------------------------")
 
+
             # check human musician induced ending (wait for 5 secs)
             if config.silence_listener:
                 if time() >= silence_timer:

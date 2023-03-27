@@ -1,10 +1,8 @@
 # install python modules
-from time import time, sleep
-from random import random, randrange, getrandbits, uniform
+from time import sleep, time
+from random import getrandbits, random, randrange, uniform
 import logging
 from enum import Enum
-from serial.tools import list_ports
-import platform
 from threading import Thread
 
 # import project modules
@@ -41,18 +39,6 @@ class Conducter:
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
         if ROBOT_CONNECTED:
-            # # find available ports and locate Dobot (-1)
-            # available_ports = list_ports.comports()
-            # print(f'available ports: {[x.device for x in available_ports]}')
-            # if PLATFORM == "darwin":
-            #     port = available_ports[-1].device
-            # elif PLATFORM == "Windows":
-            #     port = available_ports[0].device
-            # elif PLATFORM == "Linux":
-            #     port = available_ports[-1].device
-            # else:
-            #     port = None
-
             self.drawbot = Drawbot(
                 port=port,
                 verbose=verbose,
@@ -83,6 +69,9 @@ class Conducter:
             self.drawbot.go_position_ready()
 
     def main_loop(self):
+        """
+        starts the main thread for the gesture manager
+        """
         robot_thread = Thread(target=self.gesture_manager)
         robot_thread.start()
 
@@ -120,7 +109,7 @@ class Conducter:
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
             # TODO: is robot MID response always random?
-            robot_mode = randrange(3)
+            robot_mode = randrange(4)
 
             while time() < phrase_loop_end:
                 print('================')
@@ -162,12 +151,10 @@ class Conducter:
                 # Rhythm-level gesture gate: .5-2 seconds
                 # THis streams the chosen data
                 #############################
-                # rhythmic loop 0.5-2 (or 1-4) secs, unless interrupt bang
                 rhythm_loop = time() + (randrange(500, 2000) / 1000)
                 logging.debug(f'end time = {rhythm_loop}')
 
                 # speed for this phrase
-                # arm_speed = (((self_awareness - 1) * (300 - 50)) / (10 - 1)) + 50
                 arm_speed = randrange(30, 500)
                 if self.drawbot:
                     self.drawbot.speed(velocity=arm_speed,
@@ -187,18 +174,11 @@ class Conducter:
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 
-                    # TODO: 3. modify speed and accel through self awareness
-                    # # calc rhythmic intensity based on self-awareness factor & global speed
-                    # self_awareness = getattr(self.hivemind, 'self_awareness')
-                    # logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
-
                     ######################################
                     #
                     # Makes a response to chosen thought stream
                     #
                     ######################################
-
-                    # todo - can this be farmed off as an emission to a seperate thread? Need to be careful with over-run/ repeats of "HIGH"
 
                     if thought_train > 0.8 or not self.hivemind.interrupt_bang:
                         logging.info('interrupt > HIGH !!!!!!!!!')
@@ -246,35 +226,10 @@ class Conducter:
                                     print("Modification/ Cardew Mode")
                                     self.cardew_inspiration(thought_train)
 
-                                # case 4:
-                                #     # random movements off the page, balletic movements above the page
-                                #     print("OffPage Mode")
-                                #     self.offpage(thought_train)
-                                #
-                                # case 5:
-                                #     # large, repetitive movements
-                                #     print("Repetition Mode")
-                                #     self.repetition(thought_train)
-                                #
-                                # case 6:
-                                #     # random shapes inspired by Wolff's 1, 2, 3
-                                #     print("Inspiration/ Wollf Mode")
-                                #     self.wolff_inspiration(thought_train)
-                                #
-                                # case 7:
-                                #     # random shapes inspired by Wolff's 1, 2, 3
-                                #     print("Inspiration/ Wollf Mode")
-                                #     self.wolff_inspiration(thought_train)
-                                #
-                                # case 8:
-                                #     # random shapes inspired by Cardews "Treatise"
-                                #     print("Modification/ Cardew Mode")
-                                #     self.cardew_inspiration(thought_train)
-                                #
-                                # case 9:
-                                #     # random shapes inspired by Cardews "Treatise"
-                                #     print("Modification/ Cardew Mode")
-                                #     self.cardew_inspiration(thought_train)
+                                case 3:
+                                    # random movements off the page, balletic movements above the page
+                                    print("OffPage Mode")
+                                    self.offpage(thought_train)
 
                 # get new position for hivemind
                 if self.drawbot:
@@ -437,8 +392,8 @@ class Conducter:
         """
         move to a random x, y position
         """
-        self.drawbot.clear_commands()
-        # self.drawbot.return_to_coord()
+        # self.drawbot.clear_commands()
+        self.drawbot.return_to_coord()
         sleep(0.1)
 
     def terminate(self):
