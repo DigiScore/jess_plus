@@ -339,7 +339,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     True)
+                                     False)
 
             case 1:
                 logging.info('Wolff: random character')
@@ -351,7 +351,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     True)
+                                     False)
 
             case 3:
                 logging.info('Wolff: note head')
@@ -366,7 +366,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     True)
+                                     False)
 
             case 5:
                 logging.info('Wolff: dot')
