@@ -163,8 +163,11 @@ class Nebula(Listener,
     #     return eeg_normalised
 
     def terminate(self):
-        # self.affect.quit()
-        # self.AI_factory.quit()
-        self.eeg_board.terminate()
-        self.eda.close()
+        """
+        Terminate threads and connections like a grownup
+        """
+        if self.BRAINBIT_CONNECTED:
+            self.eeg_board.terminate()
+        if self.BITALINO_CONNECTED:
+            self.eda.close()
         self.running = False
