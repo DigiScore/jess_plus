@@ -82,7 +82,10 @@ class Drawbot(Dobot):
         self.start_time = time()
 
     def get_normalised_position(self):
-        pose = self.get_pose()[:3]
+        original_pose = self.get_pose()[:3]
+
+        # do a safety position check
+        pose = self.safety_position_check(original_pose)
 
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
@@ -100,6 +103,31 @@ class Drawbot(Dobot):
         self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
         logging.info(f'current x,y,z normalised  = {norm_xyz}')
+
+    def safety_position_check(self, pose):
+        if pose[0] < self.x_extents[0]:     # check x posiion
+            x = self.x_extents[0]
+        elif pose[0] > self.x_extents[1]:
+            x = self.x_extents[1]
+        else:
+            x = pose[0]
+
+        if pose[1] < self.y_extents[0]:  # check y posiion
+            y = self.y_extents[0]
+        elif pose[1] > self.y_extents[1]:
+            y = self.y_extents[1]
+        else:
+            y = pose[1]
+
+        if pose[2] < self.z_extents[0]:  # check x posiion
+            z = self.z_extents[0]
+        elif pose[2] > self.z_extents[1]:
+            z = self.z_extents[1]
+        else:
+            z = pose[2]
+
+        return_pose = (x, y, z)
+        return return_pose
 
     def rnd(self, power_of_command: int) -> int:
         """Returns a randomly generated + or - integer,
@@ -169,11 +197,13 @@ class Drawbot(Dobot):
     def list_set_ptp_cmd(self, x, y, z, r, mode, wait):
         msg_item = (x, y, z, r, mode, wait)
         self.command_list.append(msg_item)
+        # print(len(self.command_list))
 
     def process_command_list(self):
         while self.hivemind.running:
             if not self.hivemind.interrupt_bang:
                 self.command_list.clear()
+                sleep(0.1)
             elif self.command_list:
                 msg = self.command_list.pop()
                 x, y, z, r, mode, wait = msg[:]
@@ -422,8 +452,8 @@ class Drawbot(Dobot):
     def go_draw(self, x, y, wait=True):
         """Go to an x and y position with the pen touching the paper"""
         self.coords.append((x, y))
-        # if self.hivemind.interrupt_bang:
-        self.list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        if self.hivemind.interrupt_bang:
+            self.list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw_up(self, x, y, wait=True):
         """Lift the pen up, go to an x and y position, then lower the pen"""
