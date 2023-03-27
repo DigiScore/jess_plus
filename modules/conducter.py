@@ -119,6 +119,7 @@ class Conducter:
 
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
+            # TODO: is robot MID response always random?
             robot_mode = randrange(3)
 
             while time() < phrase_loop_end:
@@ -183,10 +184,10 @@ class Conducter:
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 
-                    # 3. modify speed and accel through self awareness
-                    # calc rhythmic intensity based on self-awareness factor & global speed
-                    self_awareness = getattr(self.hivemind, 'self_awareness')
-                    logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
+                    # TODO: 3. modify speed and accel through self awareness
+                    # # calc rhythmic intensity based on self-awareness factor & global speed
+                    # self_awareness = getattr(self.hivemind, 'self_awareness')
+                    # logging.debug(f'////////////////////////   self_awareness =  {self_awareness}')
 
                     ######################################
                     #
@@ -272,7 +273,8 @@ class Conducter:
                                 #     self.cardew_inspiration(thought_train)
 
                 # get new position for hivemind
-                self.drawbot.get_normalised_position()
+                if self.drawbot:
+                    self.drawbot.get_normalised_position()
 
                 # and wait for a cycle
                 sleep(rhythm_rate)

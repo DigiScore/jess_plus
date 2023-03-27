@@ -1,4 +1,5 @@
-from brainflow.board_shim import BoardShim, BrainFlowInputParams
+from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
+import numpy as np
 from time import sleep
 from random import random
 import logging
@@ -12,7 +13,8 @@ class BrainbitReader:
         self.params = BrainFlowInputParams()
 
         # Assign the BrainBit as the board
-        self.params.board_id = 7
+        self.params.board_id = BoardIds.BRAINBIT_BOARD
+        print(self.params.board_id)
 
         # set it logging
         BoardShim.enable_dev_board_logger()
@@ -25,7 +27,7 @@ class BrainbitReader:
     def start(self):
         # instantiate the board reading
         try:
-            self.board = BoardShim(7,
+            self.board = BoardShim(BoardIds.BRAINBIT_BOARD,
                                    self.params)
             self.board_id = self.board.get_board_id()
 
@@ -72,3 +74,10 @@ class BrainbitReader:
         self.board.release_session()
 
 
+if __name__ == "__main__":
+    bb = BrainbitReader()
+    bb.start()
+    while True:
+        data = bb.read(1)
+        print(data)
+        sleep(1)

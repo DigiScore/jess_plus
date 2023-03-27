@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import numpy as np
+import pickle
 from random import random, randrange
 
 
@@ -31,29 +32,46 @@ class DataBorg:
             """Net that has some self awareness - ???"""
 
             ######################
+            # Outputs from NNets in AI Factory rework
+            ######################
+            self.eeg2flow: float = random()
+            self.eeg2flow_2d: np.array = np.random.uniform(size=(1, 50))
+
+            self.flow2core: float = random()
+            self.flow2core_2d: np.array = np.random.uniform(size=(2, 50))
+
+            self.core2flow: float = random()
+            self.core2flow_2d: np.array = np.random.uniform(size=(1, 50))
+
+            self.audio2core: float = random()
+            self.audio2core_2d: np.array = np.random.uniform(size=(2, 50))
+
+            self.audio2flow: float = random()
+            self.audio2flow_2d: np.array = np.random.uniform(size=(1, 50))
+
+            self.flow2audio: float = random()
+            self.flow2audio_2d: np.array = np.random.uniform(size=(1, 50))
+
+            ######################
             # Human inputs
             ######################
             self.mic_in: float = random()
             """Percept input stream from client e.g. live mic level"""
 
-            self.eeg: list = [
-                random(),
-                random(),
-                random(),
-                random()
-            ]
-            """Live data from brainbit"""
+            with open('./nebula/models/audio2core_minmax.pickle', 'rb') as f:
+                audio_mins, audio_maxs = pickle.load(f)
+            self.audio_mins: list = audio_mins
+            self.audio_maxs: list = audio_maxs
 
-            self.eeg_normalised: list = [
-                random(),
-                random(),
-                random(),
-                random()
-            ]
-            """normalised eeg output"""
+            self.audio_buffer: np.array = np.random.uniform(size=(1, 50))
 
-            self.eeg_single: float = random()
-            """pre-processed single data atom from eeg for thought train"""
+            with open('./nebula/models/eeg2flow_minmax.pickle', 'rb') as f:
+                eeg_mins, eeg_maxs = pickle.load(f)
+            self.eeg_mins: list = eeg_mins
+            self.eeg_maxs: list = eeg_maxs
+
+            self.eeg_buffer: np.array = np.random.uniform(size=(4, 50))
+            """Live 5 sec buffered data from brainbit"""
 
             self.eda: int = 0
             """Live data from Bitalino"""
@@ -81,7 +99,12 @@ class DataBorg:
             self.current_robot_x_y_z: tuple = (0, 0, 0)
             """Actual cartesian coords reported by Dobot"""
 
+            self.current_robot_x_y: np.array = np.zeros((2, 50))
+            """Actual cartesian coords reported by Dobot"""
+
             self.current_nnet_x_y_z: tuple = (0, 0, 0)
+            # TODO: 2 first elements could be assigned based on the nnets out
+            # eg. flow2core or audio2core
             """Generated output of robot movement from NNets"""
 
             ######################
@@ -99,16 +122,36 @@ class DataBorg:
 
     def randomiser(self):
         """ Blitz's the DataBorg dict with random numbers"""
-        self.move_rnn = random()
-        self.affect_rnn = random()
-        self.move_affect_conv2 = random()
-        self.affect_move_conv2 = random()
+        # self.move_rnn = random()
+        # self.affect_rnn = random()
+        # self.move_affect_conv2 = random()
+        # self.affect_move_conv2 = random()
         self.master_stream = random()
         self.mic_in = random()
         self.rnd_poetry = random()
         # self.affect_net = random()
-        self.self_awareness = random()
+        # self.self_awareness = random()
         # self.affect_decision = ""
         self.rhythm_rate = randrange(30, 100) / 100
         # self.rnd_stream = ""
-        self.eeg_single = random()
+        self.eeg_buffer = np.random.uniform(size=(4, 50))
+
+        self.audio_buffer = np.random.uniform(size=(1, 50))
+
+        self.eeg2flow = random()
+        self.eeg2flow_2d = np.random.uniform(size=(1, 50))
+
+        self.flow2core = random()
+        self.flow2core_2d = np.random.uniform(size=(2, 50))
+
+        self.core2flow = random()
+        self.core2flow_2d = np.random.uniform(size=(1, 50))
+
+        self.audio2core = random()
+        self.audio2core_2d = np.random.uniform(size=(2, 50))
+
+        self.audio2flow = random()
+        self.audio2flow_2d = np.random.uniform(size=(1, 50))
+
+        self.flow2audio = random()
+        self.flow2audio_2d = np.random.uniform(size=(1, 50))

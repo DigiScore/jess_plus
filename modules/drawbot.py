@@ -85,9 +85,12 @@ class Drawbot(Dobot):
         norm_z = ((pose[2] - config.z_extents[0]) / (config.z_extents[1] - config.z_extents[0])) * (1 - 0) + 0
 
         norm_xyz = (norm_x, norm_y, norm_z)
-        norm_xyz = np.clip(norm_xyz, 0.0, 1.0)
+        norm_xyz = tuple(np.clip(norm_xyz, 0.0, 1.0))
+        norm_xy_2d = np.array(norm_xyz[:2])[:, np.newaxis]
 
         self.hivemind.current_robot_x_y_z = norm_xyz
+        self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
+        self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
         logging.info(f'current x,y,z normalised  = {norm_xyz}')
 

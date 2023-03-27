@@ -1,6 +1,6 @@
 # [HARDWARE]
-robot = True
-eeg_live = False
+robot = False
+eeg_live = True
 eda_live = False
 
 """
@@ -14,8 +14,7 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
-# ROBOT PARAMS
-robot1_port = 'COM4' # '/dev/ttyACM0'
+robot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10'
 robot2_port = '/dev/ttyXXXX'
 robot_verbose = False
 
@@ -45,11 +44,12 @@ staff_width = 20
 # [STREAMING]
 stream_list = ['mic_in',
                'rnd_poetry',
-               'move_rnn',
-               'affect_rnn',
-               'self_awareness',
-               'eda',
-               'eeg_single'
-               ]
+               'eeg2flow',
+               'flow2core',
+               'core2flow',
+               'audio2core',
+               'audio2flow',
+               'flow2audio']
+               # 'eda']
 
 all_nets_predicting = True
