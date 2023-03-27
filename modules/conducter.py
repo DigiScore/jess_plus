@@ -392,9 +392,9 @@ class Conducter:
         """
         move to a random x, y position
         """
-        # self.drawbot.clear_commands()
+        self.drawbot.clear_commands()
         self.drawbot.return_to_coord()
-        sleep(0.1)
+        # sleep(0.1)
 
     def terminate(self):
         """

@@ -302,9 +302,9 @@ class Drawbot(Dobot):
         msg.params.extend(bytearray(struct.pack('f', pos[3])))
         return self._send_command(msg, wait)
 
-    def follow_path(self, path):
-        for point in path:
-            queue_index = self.bot_move_to(point[0], point[1], point[2], 0)
+    # def follow_path(self, path):
+    #     for point in path:
+    #         queue_index = self.bot_move_to(point[0], point[1], point[2], 0)
 
     def continuous_trajectory(self, x, y, z, velocity = 50, wait = True):
         msg = Message()
@@ -318,7 +318,6 @@ class Drawbot(Dobot):
 
         return self._send_command(msg, wait)
 
-    # todo - continuous trajectory - test circle
     def go_position_ready(self):
         """moves directly to pre-defined position 'Ready Position'"""
         x, y, z, r = self.ready_position[:4]
@@ -387,8 +386,9 @@ class Drawbot(Dobot):
 
     def clear_commands(self):
         # self.force_queued_stop()
+        self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        # self._set_queued_cmd_start_exec()
+        self._set_queued_cmd_start_exec()
 
     def force_queued_stop(self):
         """
