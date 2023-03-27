@@ -359,10 +359,10 @@ class Drawbot(Dobot):
         #     self.clear_commands()
 
     def _send_command(self, msg, wait=False):
-        self.lock.acquire()
+        # self.lock.acquire()
         self._send_message(msg)
         response = self._read_message()
-        self.lock.release()
+        # self.lock.release()
 
         if not wait:
             return response

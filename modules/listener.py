@@ -7,6 +7,7 @@ from time import time
 
 #  import local methods
 from nebula.hivemind import DataBorg
+import config
 
 
 def buffer_scaler(in_feature, mins, maxs):
@@ -112,8 +113,9 @@ class Listener:
                     print("-----------------------------MICROPHONE INTERRUPT----------------------------")
 
             # check human musician induced ending (wait for 5 secs)
-            if time() >= silence_timer:
-                self.hivemind.running = False
+            if config.silence_listener:
+                if time() >= silence_timer:
+                    self.hivemind.running = False
 
         logging.info('quitting listener thread')
         self.terminate()

@@ -24,6 +24,7 @@ z_extents = [0, 150]
 irregular_shape_extents = 50
 
 # play params
+silence_listener = False
 duration_of_piece = 3600
 continuous_line = False
 speed = 5
@@ -42,7 +43,7 @@ mac_address = "98:D3:B1:FD:3D:1F"  #  "/dev/cu.BITalino-3F-AE"
 staff_width = 20
 
 # [STREAMING]
-stream_list = ['mic_in',
+stream_list = [#'mic_in',
                'rnd_poetry',
                'eeg2flow',
                'flow2core',

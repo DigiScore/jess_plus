@@ -149,8 +149,11 @@ class Conducter:
 
                 # randomly pick an input stream for this cycle
                 # either mic_in, random, net generation or self-awareness
-                rnd = randrange(stream_list_len)
-                rnd_stream = stream_list[rnd]
+                if random() < 0.36:
+                    rnd_stream = 'mic_in'
+                else:
+                    rnd = randrange(stream_list_len)
+                    rnd_stream = stream_list[rnd]
                 self.hivemind.thought_train_stream = rnd_stream
                 logging.info(f'Random stream choice = {rnd_stream}')
                 print(self.hivemind.thought_train_stream)
@@ -336,7 +339,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     False)
+                                     True)
 
             case 1:
                 logging.info('Wolff: random character')
@@ -348,7 +351,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     False)
+                                     True)
 
             case 3:
                 logging.info('Wolff: note head')
@@ -363,7 +366,7 @@ class Conducter:
                 self.drawbot.bot_move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
                                      z, 0,
-                                     False)
+                                     True)
 
             case 5:
                 logging.info('Wolff: dot')
