@@ -97,6 +97,7 @@ class Nebula(Listener,
 
             self.eda = BITalino(BITALINO_MAC_ADDRESS)
             self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
+            # TODO: maybe read one sample at a time instead of 10
             first_eda_data = self.eda.read(10)
             logging.info(f'Data from BITalino = {first_eda_data}')
 
@@ -125,17 +126,15 @@ class Nebula(Listener,
         while self.hivemind.running:  #  time() <= self.endtime:
             # read data from bitalino
             if self.BITALINO_CONNECTED:
-                eda_data = self.eda.read()
-
-                # rescale for hivemind
-                raw_eda = eda_data[0][-1]
-                # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-                eda_rescale = ((raw_eda - 0) / (400 - 0)) * (1 - 0) + 0
-
-                if eda_rescale > 1:
-                    eda_rescale = 1
-                logging.debug(f"eda  raw = {eda_rescale}")
-                self.hivemind.eda = eda_data[0][-1]
+                eda = []
+                eda = [self.eda.read()[0][-1]]
+                # TODO: to check, eda needs to be a list of length 1, the shape
+                # will depend on the number of samples read at a time
+                logging.debug(f"eda data raw = {eda}")
+                eda_norm = scaler(eda, self.hivemind.eda_mins, self.hivemind.eda_maxs)
+                eda_2d = eda_norm[:, np.newaxis]
+                self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer, eda_2d, axis=1)
+                self.hivemind.eda_buffer = np.delete(self.hivemind.eda_buffer, 0, axis=1)
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:

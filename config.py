@@ -50,7 +50,7 @@ stream_list = [#'mic_in',
                'core2flow',
                'audio2core',
                'audio2flow',
-               'flow2audio']
-               # 'eda']
+               'flow2audio',
+               'eda2flow']
 
 all_nets_predicting = True
