@@ -250,13 +250,19 @@ class AIFactoryRework:
                                model='nebula/models/flow2audio.pt',
                                in_feature='eeg2flow_2d'
                                )
+        print('NNetRework7 - EDA to flow initialization')
+        self.eda2flow = NNetRework(name="eda2flow",
+                             model='nebula/models/eda2flow.pt',
+                             in_feature='eda_buffer'
+                             )
 
         self.netlist = [self.eeg2flow,
                         self.flow2core,
                         self.core2flow,
                         self.audio2core,
                         self.audio2flow,
-                        self.flow2audio
+                        self.flow2audio,
+                        self.eda2flow
                         ]
 
     def make_data(self):
@@ -307,3 +313,5 @@ if __name__ == "__main__":
 # 5. Live sound (amplitude of envelope) -> predicted flow
 
 # 6. Predicted flow from EEG -> sound (amplitude of envelope)
+
+# 7. Live EDA -> predicted flow

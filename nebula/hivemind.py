@@ -52,6 +52,9 @@ class DataBorg:
             self.flow2audio: float = random()
             self.flow2audio_2d: np.array = np.random.uniform(size=(1, 50))
 
+            self.eda2flow: float = random()
+            self.eda2flow_2d: np.array = np.random.uniform(size=(1, 50))
+
             ######################
             # Human inputs
             ######################
@@ -73,8 +76,13 @@ class DataBorg:
             self.eeg_buffer: np.array = np.random.uniform(size=(4, 50))
             """Live 5 sec buffered data from brainbit"""
 
-            self.eda: int = 0
-            """Live data from Bitalino"""
+            with open('./nebula/models/eda2flow_minmax.pickle', 'rb') as f:
+                eda_mins, eda_maxs = pickle.load(f)
+            self.eda_mins: list = eda_mins
+            self.eda_maxs: list = eda_maxs
+
+            self.eda_buffer: np.array = np.random.uniform(size=(1, 50))
+            """Live 5 sec buffered data from bitalino"""
 
             ######################
             # Additional streams
@@ -155,3 +163,6 @@ class DataBorg:
 
         self.flow2audio = random()
         self.flow2audio_2d = np.random.uniform(size=(1, 50))
+
+        self.eda2flow = random()
+        self.eda2flow_2d = np.random.uniform(size=(1, 50))
