@@ -254,6 +254,8 @@ class Drawbot(XArmAPI):
         tool_move: will rotate the tool head/ pen holder
     """
 
+    # todo - something clever here that captures these 4 operational commands in its OWN Queue, then releases once the Xarm lock has returned self.get_moving???
+
     def arc(
             self,
             pose1=poses[1],
