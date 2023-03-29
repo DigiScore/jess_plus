@@ -7,12 +7,8 @@ import math
 import numpy as np
 from threading import Thread
 
-# install dobot modules
-from pydobot import Dobot
-from pydobot.enums import PTPMode
-from pydobot.message import Message
-from pydobot.enums.ControlValues import ControlValues
-from pydobot.enums.CommunicationProtocolIDs import CommunicationProtocolIDs
+# install xArm modules
+from xarm.wrapper.xarm_api import XArmAPI
 
 # install project modules
 import config
@@ -31,7 +27,7 @@ class Shapes(Enum):
 # DRAWBOT CONTROLS
 ######################
 
-class Drawbot(Dobot):
+class Drawbot(XArmAPI):
     """
     Translation class for digibot arm control
     and primitive commands of robot arm.
@@ -49,7 +45,11 @@ class Drawbot(Dobot):
         self.hivemind = DataBorg()
 
         # init and inherit the Dobot library
-        super().__init__(port, verbose)
+        super().__init__(port)
+
+        self.motion_enable(enable=True)
+        self.set_mode(0)
+        self.set_state(state=0)
 
         self.continuous_line = continuous_line
 
@@ -169,26 +169,17 @@ class Drawbot(Dobot):
         """
         clear the alarms log and LED
         """
-        msg = Message()
-        msg.id = 20 # this should be 21, but that doesnt work!!
-        msg.ctrl = 0x01
-        self._send_command(msg)  # empty response
+        self.reset()
 
     def clear_commands(self):
-        # self.force_queued_stop()
-        # self._set_queued_cmd_stop_exec()
-        self._set_queued_cmd_clear()
-        # self._set_queued_cmd_start_exec()
+       self.
 
     def force_queued_stop(self):
         """
         Uses the 242 code to force stop a command
         :return: stop command via message send
         """
-        msg = Message()
-        msg.id = 242
-        msg.ctrl = ControlValues.ONE
-        return self._send_command(msg)
+        self.emergency_stop()
 
     def get_pose(self):
         return self.pose()
