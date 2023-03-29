@@ -233,10 +233,11 @@ class Drawbot(Dobot):
         return response
 
     ######################
-    # DIGIBOT FUNCTIONS
+    # DIGIBOT CORE FUNCTIONS
     ######################
     """
-    Low level functions for communicating direct to the Dobot
+    Low level functions for communicating direct to Dobot primitives.
+    All of the notation functions ()below) need to call these here.
     """
 
     def arc(self, x, y, z, r, cir_x, cir_y, cir_z, cir_r, wait=False):
@@ -280,41 +281,6 @@ class Drawbot(Dobot):
         msg.params.extend(bytearray(struct.pack('f', pos[2])))
         msg.params.extend(bytearray(struct.pack('f', pos[3])))
         return self._send_command(msg, wait)
-
-    def draw_stave(self, staves: int = 1):
-        """
-        Draws a  line across the middle of an A3 paper, symbolising a stave.
-        Has optional function to draw multiple staves.
-        Starts at right hand edge centre, and moves directly left.
-        Args:
-            staves: number of lines to draw. Default = 1
-        """
-
-        stave_gap = 2
-        x = 250 - ((staves * stave_gap) / 2)
-        y_start = 175
-        y_end = -175
-        z = 0
-        r = 0
-
-        # goto start position for line draw, without pen
-        self.bot_move_to(x, y_start, z, r)
-        input('place pen on paper, then press enter')
-
-        if staves >= 1:
-            # draw a line/ stave
-            for stave in range(staves):
-                print(f'drawing stave {stave + 1} out of {staves}')
-                self.bot_move_to(x, y_end, z, r)
-
-                if staves > 1:
-                    # reset to RH and draw the rest
-                    x += stave_gap
-
-                    if (stave + 1) < staves:
-                        self.jump_to(x, y_start, z, r)
-        else:
-            self.jump_to(x, y_end, z, r)
 
     def move_y(self):
         """
@@ -371,24 +337,6 @@ class Drawbot(Dobot):
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
 
-    def squiggle(self, arc_list: list):
-        """
-        accepts a list of tuples that define a sequence of
-        x, y deltas to create a sequence of arcs that define a squiggle.
-        list (circumference point, end point x, end point y):
-            circumference point: size of arc in pixels across x axis
-            end point x, end point y: distance from last/ previous position
-        """
-        [x, y, z, r] = self.get_pose()[0:4]
-        self.coords.append((x, y))
-        for arc in arc_list:
-            # if self.hivemind.interrupt_bang:
-            circumference, dx, dy = arc[0], arc[1], arc[2]
-            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
-            x += dx
-            y += dy
-            sleep(0.2)
-
     def go_position_ready(self):
         """
         moves directly to pre-defined position 'Ready Position'
@@ -431,34 +379,8 @@ class Drawbot(Dobot):
         msg.ctrl = ControlValues.THREE
         return self._send_command(msg, wait=True)
 
-    def dot(self):
-        """
-        draws a small dot at current position
-        """
-        self.note_head(1)
-
-    def note_head(self, size: float = 5):
-        """
-        draws a circle at the current position.
-        Default is 5 pixels diameter.
-        Args:
-            size: radius in pixels
-            drawing: True = pen on paper
-            wait: True = wait till sequence finished
-            """
-
-        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-        self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
-
     def bot_move_to(self, x, y, z, r, wait=False):
         self.move_to(x, y, z, r, wait)
-
-    #----- NEW FUNCTIONS -----#
-    #-- go to position functions --#
-    # def go(self, x, y, z, wait=True):
-    #     """Go to an x, y, z position"""
-    #     self.coords.append((x, y))
-    #     self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
 
     def go_draw(self, x, y, wait=True):
         """
@@ -473,6 +395,7 @@ class Drawbot(Dobot):
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
+        # TODO - Adam - this needs organising better. We have multiple funcs that are calling Dobot API primitives when we should be controlling all of those with a single command here e.g. def.send_ptp_jump and def send_ptp_movej
         self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     #-- creative go to position functions --#
@@ -513,7 +436,7 @@ class Drawbot(Dobot):
 
         pose = self.get_pose()[:3]
 
-        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking 
+        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking
 
         # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
         if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
@@ -543,6 +466,86 @@ class Drawbot(Dobot):
     #     _j3 -= j3
     #     # ]
     #     self.add_to_list_set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
+
+    ######################
+    # DIGIBOT NOTATION FUNCTIONS
+    ######################
+    """
+      Mid level functions for drawing the shapes of the notation.
+      All of these notation functions need to call the Low level functions above.
+      DO NOT CALL DOBOT PRIMATIVES DIRECTY!!
+      """
+    def draw_stave(self, staves: int = 1):
+        """
+        Draws a  line across the middle of an A3 paper, symbolising a stave.
+        Has optional function to draw multiple staves.
+        Starts at right hand edge centre, and moves directly left.
+        Args:
+            staves: number of lines to draw. Default = 1
+        """
+
+        stave_gap = 2
+        x = 250 - ((staves * stave_gap) / 2)
+        y_start = 175
+        y_end = -175
+        z = 0
+        r = 0
+
+        # goto start position for line draw, without pen
+        self.bot_move_to(x, y_start, z, r)
+        input('place pen on paper, then press enter')
+
+        if staves >= 1:
+            # draw a line/ stave
+            for stave in range(staves):
+                print(f'drawing stave {stave + 1} out of {staves}')
+                self.bot_move_to(x, y_end, z, r)
+
+                if staves > 1:
+                    # reset to RH and draw the rest
+                    x += stave_gap
+
+                    if (stave + 1) < staves:
+                        self.jump_to(x, y_start, z, r)
+        else:
+            self.jump_to(x, y_end, z, r)
+
+    def squiggle(self, arc_list: list):
+        """
+        accepts a list of tuples that define a sequence of
+        x, y deltas to create a sequence of arcs that define a squiggle.
+        list (circumference point, end point x, end point y):
+            circumference point: size of arc in pixels across x axis
+            end point x, end point y: distance from last/ previous position
+        """
+        [x, y, z, r] = self.get_pose()[0:4]
+        self.coords.append((x, y))
+        for arc in arc_list:
+            # if self.hivemind.interrupt_bang:
+            circumference, dx, dy = arc[0], arc[1], arc[2]
+            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
+            x += dx
+            y += dy
+            sleep(0.2)
+
+    def dot(self):
+        """
+        draws a small dot at current position
+        """
+        self.note_head(1)
+
+    def note_head(self, size: float = 5):
+        """
+        draws a circle at the current position.
+        Default is 5 pixels diameter.
+        Args:
+            size: radius in pixels
+            drawing: True = pen on paper
+            wait: True = wait till sequence finished
+            """
+
+        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
+        self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
 
     #-- shape drawing functions --#
     def draw_square(self, size):      # draws a square at the robots current position with a size and angle (in degrees)
@@ -694,9 +697,11 @@ class Drawbot(Dobot):
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
+            # todo Adam - this needs to call a dobot mid level func (above)
             self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         # if self.hivemind.interrupt_bang:
+        # todo Adam - this needs to call a dobot mid level func (above)
         self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         self.irregulars.append(vertices)
@@ -812,7 +817,8 @@ class Drawbot(Dobot):
 
             if jump_num != -1:                      # for characters that need a jump
                 if i == jump_num: self.go_draw_up(next_pos[0], next_pos[1])
-                else: self.go_draw(next_pos[0], next_pos[1], wait=True)
+                else:
+                    self.go_draw(next_pos[0], next_pos[1], wait=True)
 
             else:                                   # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
