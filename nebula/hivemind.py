@@ -14,24 +14,6 @@ class DataBorg:
             DataBorg.__hivemind = self.__dict__
 
             ######################
-            # Outputs from NNets in AI Factory
-            ######################
-            self.move_rnn: float = random()
-            """Net 1 raw emission"""
-
-            self.affect_rnn: float = random()
-            """Net 2 raw emission"""
-
-            self.move_affect_conv2: float = random()
-            """Net 3 raw emission"""
-
-            self.affect_move_conv2: float = random()
-            """Net 4 raw emission"""
-
-            self.self_awareness: float = random()
-            """Net that has some self awareness - ???"""
-
-            ######################
             # Outputs from NNets in AI Factory rework
             ######################
             self.eeg2flow: float = random()
@@ -130,18 +112,10 @@ class DataBorg:
 
     def randomiser(self):
         """ Blitz's the DataBorg dict with random numbers"""
-        # self.move_rnn = random()
-        # self.affect_rnn = random()
-        # self.move_affect_conv2 = random()
-        # self.affect_move_conv2 = random()
         self.master_stream = random()
         self.mic_in = random()
         self.rnd_poetry = random()
-        # self.affect_net = random()
-        # self.self_awareness = random()
-        # self.affect_decision = ""
         self.rhythm_rate = randrange(30, 100) / 100
-        # self.rnd_stream = ""
         self.eeg_buffer = np.random.uniform(size=(4, 50))
 
         self.audio_buffer = np.random.uniform(size=(1, 50))

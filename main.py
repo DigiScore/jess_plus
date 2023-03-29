@@ -20,15 +20,10 @@ class Main:
         speed: int the dynamic tempo of the all processes. 1 = slow, 10 = fast
         pen: bool - True for pen, false for pencil
     """
-    def __init__(self,
-                 # continuous_line: bool = True,
-                 # speed: int = 5,
-                 # staves: int = 1,
-                 # pen: bool = True
-                 ):
+    def __init__(self):
 
         # logging for all modules
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.CRITICAL)
 
         # build initial dataclass fill with random numbers
         self.hivemind = DataBorg()
@@ -50,15 +45,6 @@ class Main:
         # start Nebula AI Factory here after affect starts data moving
         robot1.main_loop()
         nebula.main_loop()
-
-    # def terminate(self):
-    #     """Smart collapse of all threads and comms"""
-    #     print('TERMINATING')
-    #     self.hivemind.running = False
-    #     # self.digibot.home()
-    #     # self.digibot.close()
-    #     # self.eeg_board.terminate()
-    #     # self.eda.close()
 
 
 if __name__ == "__main__":
