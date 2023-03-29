@@ -14,6 +14,7 @@ may need
 sudo chmod 666 /dev/ttyACM0
 """
 
+# [DOBOT]
 robot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
 robot2_port = '/dev/ttyXXXX'
 robot_verbose = False
@@ -22,6 +23,15 @@ x_extents = [160, 350]
 y_extents = [-150, 150]
 z_extents = [0, 150]
 irregular_shape_extents = 50
+
+# [XARM]
+xarm1_port = '192.168.1.222'
+xarm2_port = '192.168.1.222''
+
+xarm_x_extents = [160, 350]
+xarm_y_extents = [-150, 150]
+xarm_z_extents = [0, 150]
+xarm_irregular_shape_extents = 50
 
 # play params
 silence_listener = False

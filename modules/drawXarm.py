@@ -7,7 +7,7 @@ import math
 import numpy as np
 from threading import Thread
 
-# install xArm modules
+# install Xarm modules
 from xarm.wrapper.xarm_api import XArmAPI
 
 # install project modules
@@ -22,6 +22,7 @@ class Shapes(Enum):
     Irregular = 3
     Circle = 4
     Line = 5
+
 
 ######################
 # DRAWBOT CONTROLS
@@ -50,18 +51,20 @@ class Drawbot(XArmAPI):
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
+        self.set_collision_sensitivity(value=5) # todo I think 5 is very sensitive??
 
         self.continuous_line = continuous_line
 
         # make a shared list/ dict
+        # todo - make new ones
         self.ready_position = [250, 0, 20, 0]
         self.draw_position = [250, 0, 0, 0]
         self.end_position = (250, 0, 50, 0)
 
-        self.x_extents = config.x_extents
-        self.y_extents = config.y_extents
-        self.z_extents = config.z_extents
-        self.irregular_shape_extents = config.irregular_shape_extents
+        self.x_extents = config.xarm_x_extents
+        self.y_extents = config.xarm_y_extents
+        self.z_extents = config.xarm_z_extents
+        self.irregular_shape_extents = config.xarm_irregular_shape_extents
 
         self.squares = []
         self.sunbursts = []
@@ -71,7 +74,7 @@ class Drawbot(XArmAPI):
         self.chars = []
 
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
-        self.coords = []        # list of coordinates drawn
+        self.coords = []  # list of coordinates drawn
 
         # create a command loist and start process thread
         self.command_list = []
@@ -127,7 +130,7 @@ class Drawbot(XArmAPI):
         logging.info(f'current x,y,z normalised  = {norm_xyz}')
 
     def safety_position_check(self, pose):
-        if pose[0] < self.x_extents[0]:     # check x posiion
+        if pose[0] < self.x_extents[0]:  # check x posiion
             x = self.x_extents[0]
         elif pose[0] > self.x_extents[1]:
             x = self.x_extents[1]
@@ -165,25 +168,39 @@ class Drawbot(XArmAPI):
         logging.debug(f'Rnd result = {result}')
         return result
 
-
     def clear_alarms(self) -> None:
         """
-        clear the alarms log and LED
+        clear the alarms log and LED.
+        clean warning
         """
-        self.reset()
+        if self.has_warn:
+            self.clean_warn()
+        if self.has_error:
+            self.clean_error()
+            self.motion_enable(enable=True)
+            self.set_state(state=0)
+            self.last_used_position()  # go to safe place (last used position?
 
     def clear_commands(self):
-       self.
+        # self.force_queued_stop()
+        # self._set_queued_cmd_stop_exec()
+        # self._set_queued_cmd_clear()
+        # self._set_queued_cmd_start_exec()
+        # todo - clear command lst ???
+        self.set_counter_reset() # a guess!!
+
+    def world_offset(self):
+        # self.set_world_offset([x, y, z, roll, pitch, yaw],
+        pass
 
     def force_queued_stop(self):
         """
-        Uses the 242 code to force stop a command
-        :return: stop command via message send
+        emergancy stop
         """
         self.emergency_stop()
 
     def get_pose(self):
-        return self.pose()
+        return self.get_position()
 
     # def _send_message(self, msg):
     #     sleep(0.1)
@@ -225,88 +242,75 @@ class Drawbot(XArmAPI):
         return response
 
     ######################
-    # DIGIBOT FUNCTIONS
+    # drawXarm BASE FUNCTIONS
     ######################
     """
-    Low level functions for communicating direct to the Dobot
+    Low level functions for communicating direct to Dobot primitives.
+    All of the notation functions ()below) need to call these here.
+    Only 4 are required:
+        arc: make an arc (inc circle)
+        move_to: draw a line of move to in a linear way to another coord
+        jump_to: will arc between coords lifting z an amount (arc radius)
+        tool_move: will rotate the tool head/ pen holder
     """
 
-    def arc(self, x, y, z, r, cir_x, cir_y, cir_z, cir_r, wait=False):
+    def arc(
+            self,
+            pose1=poses[1],
+            pose2=poses[2],
+            percent=200,
+            speed=200,
+            mvacc=1000,
+            wait=True):
         """
-        Draws an arc defined by a) circumference of arc (x, y, z, r),
-        with b) a finishing coordinates (cirx, ciry, cirz, cirr.
+        Calls xarm move_circle.
+        pose = [x, y, z, roll, tilt, yaw] e.g. [300,  0,   100, -180, 0, 0]
+        from current position, in cartesian coords
+
+        #pose1, pose2, percent, speed=None, mvacc=None, mvtime=None, is_radian=None,
+                    wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
-        msg = Message()
-        msg.id = 101
-        msg.ctrl = 0x03
-        msg.params = bytearray([])
-        msg.params.extend(bytearray(struct.pack('f', x)))
-        msg.params.extend(bytearray(struct.pack('f', y)))
-        msg.params.extend(bytearray(struct.pack('f', z)))
-        msg.params.extend(bytearray(struct.pack('f', r)))
-        msg.params.extend(bytearray(struct.pack('f', cir_x)))
-        msg.params.extend(bytearray(struct.pack('f', cir_y)))
-        msg.params.extend(bytearray(struct.pack('f', cir_z)))
-        msg.params.extend(bytearray(struct.pack('f', cir_r)))
-        return self._send_command(msg, wait)
+        logging.info('circle')
+        self.move_circle(pose1=poses[1], pose2=poses[2], percent=200, speed=200, mvacc=1000, wait=True)
 
-    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
+    def move_to(self, x=None, y=None, z=None, roll=None, pitch=None, yaw=None, radius=None,
+                     speed=None, mvacc=None, mvtime=None, relative=False, is_radian=None,
+                     wait=False, timeout=None,):
         """
-        Simplified arc function for drawing 2D arcs on the xy axis.
-        apex_x and y determine
-        the coordinates of the apex of the curve.
-        target_x and y determine the end point of the curve
+        the main move to function for mid level comms to Xarm_API
+
+        :param x:
+        :param y:
+        :param z:
+        :param roll:
+        :param pitch:
+        :param yaw:
+        :param radius:
+        :param speed:
+        :param mvacc:
+        :param mvtime:
+        :param relative:
+        :param is_radian:
+        :param wait:
+        :param timeout:
+        :return:
         """
-        pos = self.get_pose()
-        self.coords.append(pos[:2])
-        msg = Message()
-        msg.id = 101
-        msg.ctrl = 0x03
-        msg.params = bytearray([])
-        msg.params.extend(bytearray(struct.pack('f', apex_x)))
-        msg.params.extend(bytearray(struct.pack('f', apex_y)))
-        msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        msg.params.extend(bytearray(struct.pack('f', target_x)))
-        msg.params.extend(bytearray(struct.pack('f', target_y)))
-        msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        return self._send_command(msg, wait)
+        self.set_position(x, y, z, r, wait)
 
-    def draw_stave(self, staves: int = 1):
-        """
-        Draws a  line across the middle of an A3 paper, symbolising a stave.
-        Has optional function to draw multiple staves.
-        Starts at right hand edge centre, and moves directly left.
-        Args:
-            staves: number of lines to draw. Default = 1
-        """
+    def jump_to(self):
+        # self.move_arc_lines(paths, is_radian=None, times=1, first_pause_time=0.1, repeat_pause_time=0,
+        #                        automatic_calibration=True, speed=None, mvacc=None, mvtime=None, wait=False)
+        pass
 
-        stave_gap = 2
-        x = 250 - ((staves * stave_gap) / 2)
-        y_start = 175
-        y_end = -175
-        z = 0
-        r = 0
+    def tool_move(self):
+        # self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=0,
+        #                           speed=None, mvacc=None, mvtime=None, is_radian=None,
+        #                           wait=False, timeout=None, radius=None)
+        pass
 
-        # goto start position for line draw, without pen
-        self.bot_move_to(x, y_start, z, r)
-        input('place pen on paper, then press enter')
-
-        if staves >= 1:
-            # draw a line/ stave
-            for stave in range(staves):
-                print(f'drawing stave {stave + 1} out of {staves}')
-                self.bot_move_to(x, y_end, z, r)
-
-                if staves > 1:
-                    # reset to RH and draw the rest
-                    x += stave_gap
-
-                    if (stave + 1) < staves:
-                        self.jump_to(x, y_start, z, r)
-        else:
-            self.jump_to(x, y_end, z, r)
+    ######################
+    # drawXarm ANCILLARY FUNCTIONS
+    ######################
 
     def move_y(self):
         """
@@ -317,26 +321,16 @@ class Drawbot(XArmAPI):
         elapsed = time() - self.start_time
 
         # get current y-value
-        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
+        x, y, z = self.get_pose()[3]
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
         logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # check x-axis is in range
-        if x <= 200 or x >= 300:
-            x = 250
+        if x <= self.x_extents[0] or x >= self.x_extents[1]:
+            x = (self.x_extents[1] - self.x_extents[0]) / 2
 
-        # move z (pen head) a little
-        # if getrandbits(1):
-        #     z = 0
-        # else:
-        #     z = randrange(-2, 2)
-
-        # which mode
-        # if self.continuous_line:
         self.bot_move_to(x, newy, z, r, True)
-        # else:
-        #     self.jump_to(x, newy, z, r, True)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
@@ -362,24 +356,6 @@ class Drawbot(XArmAPI):
             self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
         else:
             self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-
-    def squiggle(self, arc_list: list):
-        """
-        accepts a list of tuples that define a sequence of
-        x, y deltas to create a sequence of arcs that define a squiggle.
-        list (circumference point, end point x, end point y):
-            circumference point: size of arc in pixels across x axis
-            end point x, end point y: distance from last/ previous position
-        """
-        [x, y, z, r] = self.get_pose()[0:4]
-        self.coords.append((x, y))
-        for arc in arc_list:
-            # if self.hivemind.interrupt_bang:
-            circumference, dx, dy = arc[0], arc[1], arc[2]
-            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
-            x += dx
-            y += dy
-            sleep(0.2)
 
     def go_position_ready(self):
         """
@@ -423,35 +399,6 @@ class Drawbot(XArmAPI):
         msg.ctrl = ControlValues.THREE
         return self._send_command(msg, wait=True)
 
-    def dot(self):
-        """
-        draws a small dot at current position
-        """
-        self.note_head(1)
-
-    def note_head(self, size: float = 5):
-        """
-        draws a circle at the current position.
-        Default is 5 pixels diameter.
-        Args:
-            size: radius in pixels
-            drawing: True = pen on paper
-            wait: True = wait till sequence finished
-            """
-
-        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-        self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
-
-    def bot_move_to(self, x, y, z, r, wait=False):
-        self.move_to(x, y, z, r, wait)
-
-    #----- NEW FUNCTIONS -----#
-    #-- go to position functions --#
-    # def go(self, x, y, z, wait=True):
-    #     """Go to an x, y, z position"""
-    #     self.coords.append((x, y))
-    #     self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
-
     def go_draw(self, x, y, wait=True):
         """
         Go to an x and y position with the pen touching the paper
@@ -465,38 +412,39 @@ class Drawbot(XArmAPI):
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
+        # TODO - Adam - this needs organising better. We have multiple funcs that are calling Dobot API primitives when we should be controlling all of those with a single command here e.g. def.send_ptp_jump and def send_ptp_movej
         self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
-    #-- creative go to position functions --#
+    # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
         """
         Move to a random position within the x and y
         extents with the pen touching the page.
         """
-        x = uniform(self.x_extents[0],self.x_extents[1])
+        x = uniform(self.x_extents[0], self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
         z = self.draw_position[2]
         r = 0
 
         self.coords.append((x, y))
-        print("Random draw pos x:", round(x, 2)," y:", round(y,2))
+        print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
         self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
 
-    def go_random_draw_up(self):   #goes to random positon on page with pen above page then back on
+    def go_random_draw_up(self):  # goes to random positon on page with pen above page then back on
         """
         Lift the pen, move to a random position within the x and y extents,
         then lower the pen to draw position
         """
-        x = uniform(self.x_extents[0],self.x_extents[1])
+        x = uniform(self.x_extents[0], self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
         z = self.draw_position[2]
         r = 0
 
         self.coords.append((x, y))
-        print("Random draw pos above page x:",x," y:",y)
+        print("Random draw pos above page x:", x, " y:", y)
         self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
 
-    #-- move by functions --#
+    # -- move by functions --#
     def position_move_by(self, x, y, z, wait=True):
         """
         Increment the robot cartesian position by x, y, z.
@@ -505,16 +453,16 @@ class Drawbot(XArmAPI):
 
         pose = self.get_pose()[:3]
 
-        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking 
+        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]  # calulate new position, used for checking
 
         # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
+        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:  # check x posiion
             print("delta x reset to 0")
             x = 0
-        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:     # check y position
+        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:  # check y position
             print("delta y reset to 0")
             y = 0
-        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:      # check z height
+        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:  # check z height
             print("delta z reset to 0")
             z = 0
 
@@ -536,8 +484,89 @@ class Drawbot(XArmAPI):
     #     # ]
     #     self.add_to_list_set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
-    #-- shape drawing functions --#
-    def draw_square(self, size):      # draws a square at the robots current position with a size and angle (in degrees)
+    ######################
+    # drawXarm NOTATION FUNCTIONS
+    ######################
+    """
+      Mid level functions for drawing the shapes of the notation.
+      All of these notation functions need to call the Low level functions above.
+      DO NOT CALL DOBOT PRIMATIVES DIRECTY!!
+      """
+
+    def draw_stave(self, staves: int = 1):
+        """
+        Draws a  line across the middle of an A3 paper, symbolising a stave.
+        Has optional function to draw multiple staves.
+        Starts at right hand edge centre, and moves directly left.
+        Args:
+            staves: number of lines to draw. Default = 1
+        """
+
+        stave_gap = 2
+        x = 250 - ((staves * stave_gap) / 2)
+        y_start = 175
+        y_end = -175
+        z = 0
+        r = 0
+
+        # goto start position for line draw, without pen
+        self.bot_move_to(x, y_start, z, r)
+        input('place pen on paper, then press enter')
+
+        if staves >= 1:
+            # draw a line/ stave
+            for stave in range(staves):
+                print(f'drawing stave {stave + 1} out of {staves}')
+                self.bot_move_to(x, y_end, z, r)
+
+                if staves > 1:
+                    # reset to RH and draw the rest
+                    x += stave_gap
+
+                    if (stave + 1) < staves:
+                        self.jump_to(x, y_start, z, r)
+        else:
+            self.jump_to(x, y_end, z, r)
+
+    def squiggle(self, arc_list: list):
+        """
+        accepts a list of tuples that define a sequence of
+        x, y deltas to create a sequence of arcs that define a squiggle.
+        list (circumference point, end point x, end point y):
+            circumference point: size of arc in pixels across x axis
+            end point x, end point y: distance from last/ previous position
+        """
+        [x, y, z, r] = self.get_pose()[0:4]
+        self.coords.append((x, y))
+        for arc in arc_list:
+            # if self.hivemind.interrupt_bang:
+            circumference, dx, dy = arc[0], arc[1], arc[2]
+            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
+            x += dx
+            y += dy
+            sleep(0.2)
+
+    def dot(self):
+        """
+        draws a small dot at current position
+        """
+        self.note_head(1)
+
+    def note_head(self, size: float = 5):
+        """
+        draws a circle at the current position.
+        Default is 5 pixels diameter.
+        Args:
+            size: radius in pixels
+            drawing: True = pen on paper
+            wait: True = wait till sequence finished
+            """
+
+        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
+        self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
+
+    # -- shape drawing functions --#
+    def draw_square(self, size):  # draws a square at the robots current position with a size and angle (in degrees)
         """
         Draw a square from the pen's current position.
         Start from top left vertex and draw anti-clockwise.
@@ -574,12 +603,12 @@ class Drawbot(XArmAPI):
         and uses the size parameter to determine the size.
         For irregular triangles, use draw_irregular(3).
         """
-        pos = self.get_pose()[:2]     # x, y
+        pos = self.get_pose()[:2]  # x, y
         triangle = []
 
-        rand_type = randrange(0,2)
+        rand_type = randrange(0, 2)
         if rand_type == 0:
-            #right angle triangle
+            # right angle triangle
             local_pos = [
                 (0, 0),
                 (-size, 0),
@@ -587,7 +616,7 @@ class Drawbot(XArmAPI):
             ]
 
         elif rand_type == 1:
-            #isosceles triangle
+            # isosceles triangle
             local_pos = [
                 (0, 0),
                 (-size * 2, - size / 2),
@@ -596,7 +625,7 @@ class Drawbot(XArmAPI):
 
         for i in range(len(local_pos)):
             # if self.hivemind.interrupt_bang:
-            next_pos = [                    # next vertex to go to in world space
+            next_pos = [  # next vertex to go to in world space
                 pos[0] + local_pos[i][0],
                 pos[1] + local_pos[i][1]
             ]
@@ -610,10 +639,11 @@ class Drawbot(XArmAPI):
             self.coords.append(next_pos)
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(pos[0], pos[1])     # go back to the first vertex to join up the shape
+        self.go_draw(pos[0], pos[1])  # go back to the first vertex to join up the shape
         self.triangles.append(triangle)
 
-    def draw_sunburst(self, r, randomAngle = True):    # draws a sunburst from the robots current position, r = size of lines, num = number of lines
+    def draw_sunburst(self, r,
+                      randomAngle=True):  # draws a sunburst from the robots current position, r = size of lines, num = number of lines
         """
         Draw a sunburst from the pens position. Will draw r number of
         lines coming from the centre point.
@@ -647,7 +677,7 @@ class Drawbot(XArmAPI):
                 (r * math.sin(40), r * math.cos(40))
             ]
 
-        sunburst = []  #saves all points in this sunburst then saves it to the list of drawn sunbursts
+        sunburst = []  # saves all points in this sunburst then saves it to the list of drawn sunbursts
         for i in range(len(local_pos)):
             # if self.hivemind.interrupt_bang:
             next_pos = [
@@ -657,8 +687,8 @@ class Drawbot(XArmAPI):
             sunburst.append(next_pos)
             self.coords.append(next_pos)
 
-            self.go_draw(next_pos[0], next_pos[1], wait=False)       #draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line
+            self.go_draw(next_pos[0], next_pos[1], wait=False)  # draw line from centre point outwards
+            self.go_draw(pos[0], pos[1], wait=False)  # return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -678,17 +708,19 @@ class Drawbot(XArmAPI):
         for i in range(num_vertices):
             x = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
             y = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
-            vertices.append((x,y))
-            self.coords.append((x,y))
+            vertices.append((x, y))
+            self.coords.append((x, y))
 
         for i in range(len(vertices)):
             # if self.hivemind.interrupt_bang:
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
+            # todo Adam - this needs to call a dobot mid level func (above)
             self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         # if self.hivemind.interrupt_bang:
+        # todo Adam - this needs to call a dobot mid level func (above)
         self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         self.irregulars.append(vertices)
@@ -703,9 +735,11 @@ class Drawbot(XArmAPI):
         pos = self.get_pose()[:4]
 
         if side == 0:  # side is used to draw figure 8 patterns
-            self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
+            self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
+                     wait=wait)
         elif side == 1:
-            self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
+            self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
+                     wait=wait)
 
         circle = []
         circle.append(pos)
@@ -723,22 +757,22 @@ class Drawbot(XArmAPI):
         lines are drawn in this function whereas
         letters with curves are drarn in their own respective functions.
         """
-        #print("Drawing letter: ", _char)
-        pos = self.get_pose()[:2]     # x, y
+        # print("Drawing letter: ", _char)
+        pos = self.get_pose()[:2]  # x, y
         char = []
         char.append(_char.upper())
 
-        jump_num = -1   # determines the characters that need a jump, cant be drawn continuously. If left as -1 then no jump is needed
+        jump_num = -1  # determines the characters that need a jump, cant be drawn continuously. If left as -1 then no jump is needed
 
-        #----Calculate local_pos for each char----#
+        # ----Calculate local_pos for each char----#
         if _char == "A" or _char == "a":
 
             local_pos = [
-                (0, 0),                     # bottom left
-                (size * 2, - size / 2),     # top
-                (0, - size),                # bottom right
-                (size, - size * 0.75),      # mid right
-                (size, - size * 0.25)       # mid left
+                (0, 0),  # bottom left
+                (size * 2, - size / 2),  # top
+                (0, - size),  # bottom right
+                (size, - size * 0.75),  # mid right
+                (size, - size * 0.25)  # mid left
             ]
         elif _char == "B" or _char == "b":
             print("B")
@@ -747,7 +781,7 @@ class Drawbot(XArmAPI):
 
         elif _char == "C" or _char == "c":  # for characters with curves, defer to specific functions
             self.draw_c(size=size, wait=wait)
-            return None                     # everything else is handled in draw_c, can exit function here
+            return None  # everything else is handled in draw_c, can exit function here
 
         elif _char == "D" or _char == "d":
             self.draw_d(size=size, wait=wait)
@@ -755,23 +789,23 @@ class Drawbot(XArmAPI):
 
         elif _char == "E" or _char == "e":
             local_pos = [
-                (0, 0),             # bottom right
-                (0, size),          # bottom left
-                (size * 2, size),   # top left
-                (size * 2, 0),      # top right
-                (size, 0),          # mid right (jump to here)
-                (size, size)        # mid left
+                (0, 0),  # bottom right
+                (0, size),  # bottom left
+                (size * 2, size),  # top left
+                (size * 2, 0),  # top right
+                (size, 0),  # mid right (jump to here)
+                (size, size)  # mid left
             ]
 
             jump_num = 4
 
         elif _char == "F" or _char == "f":
             local_pos = [
-                (0, 0),                 # bottom left
-                (size * 2, 0),          # top left
-                (size * 2, - size / 2), # top right
-                (size, - size / 2),     # mid right (jump to here)
-                (size, 0)               # mid left
+                (0, 0),  # bottom left
+                (size * 2, 0),  # top left
+                (size * 2, - size / 2),  # top right
+                (size, - size / 2),  # mid right (jump to here)
+                (size, 0)  # mid left
             ]
 
             jump_num = 3
@@ -780,9 +814,9 @@ class Drawbot(XArmAPI):
             self.draw_g(size=size, wait=wait)
             return None
 
-        elif _char == "P" or _char == "p":  
+        elif _char == "P" or _char == "p":
             self.draw_p(size=size, wait=wait)
-            return None                     
+            return None
 
         elif _char == "Z" or _char == "z":
             local_pos = [
@@ -796,23 +830,25 @@ class Drawbot(XArmAPI):
             print("Input: ", _char, " is not supported by draw_char")
             return None
 
-        #----Draw character----#
+        # ----Draw character----#
         for i in range(len(local_pos)):
             next_pos = [
                 pos[0] + local_pos[i][0], pos[1] + local_pos[i][1]  # calculate the next world position to draw
             ]
 
-            if jump_num != -1:                      # for characters that need a jump
-                if i == jump_num: self.go_draw_up(next_pos[0], next_pos[1])
-                else: self.go_draw(next_pos[0], next_pos[1], wait=True)
+            if jump_num != -1:  # for characters that need a jump
+                if i == jump_num:
+                    self.go_draw_up(next_pos[0], next_pos[1])
+                else:
+                    self.go_draw(next_pos[0], next_pos[1], wait=True)
 
-            else:                                   # the rest of the letters can be drawn in a continuous line
+            else:  # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
 
-            char.append(next_pos)     # append the current position to the letter
+            char.append(next_pos)  # append the current position to the letter
             self.coords.append(next_pos)
 
-        self.chars.append(char)          # add the completed character to the characters list
+        self.chars.append(char)  # add the completed character to the characters list
 
     def draw_p(self, size, wait=True):
         """
@@ -825,10 +861,10 @@ class Drawbot(XArmAPI):
         char.append("P")
 
         local_pos = [
-            (0, 0),                 # bottom of letter
-            (size * 2, 0),          # top of letter
-            (size * 0.75, -size * 0.85),   # peak of curve
-            (size * 1.2, 0)               # middle of letter
+            (0, 0),  # bottom of letter
+            (size * 2, 0),  # top of letter
+            (size * 0.75, -size * 0.85),  # peak of curve
+            (size * 1.2, 0)  # middle of letter
         ]
 
         world_pos = [
@@ -859,11 +895,11 @@ class Drawbot(XArmAPI):
         char.append("B")
 
         local_pos = [
-            (0, 0),                 # 0 bottom left
-            (size * 2, 0),          # 1 top right
-            (size * 1.5, -size),    # 2 peak of top curve
-            (size, 0),              # 3 mid left
-            (size * 0.5, -size)     # 4 peak of bottom curve
+            (0, 0),  # 0 bottom left
+            (size * 2, 0),  # 1 top right
+            (size * 1.5, -size),  # 2 peak of top curve
+            (size, 0),  # 3 mid left
+            (size * 0.5, -size)  # 4 peak of bottom curve
         ]
 
         world_pos = [
@@ -893,9 +929,9 @@ class Drawbot(XArmAPI):
         char.append("C")
 
         local_pos = [
-            (size * 0.3 , 0),      # 0 bottom of curve
-            (size       , size),      # 1 middle of curve
-            (size * 1.7 , 0)       # 2 top of curve
+            (size * 0.3, 0),  # 0 bottom of curve
+            (size, size),  # 1 middle of curve
+            (size * 1.7, 0)  # 2 top of curve
         ]
 
         world_pos = [
@@ -921,9 +957,9 @@ class Drawbot(XArmAPI):
         char.append("D")
 
         local_pos = [
-            (0, 0),                 # 0 bottom left
-            (size * 2, 0),          # 1 top left
-            (size, -size)           # 2 peak of curve
+            (0, 0),  # 0 bottom left
+            (size * 2, 0),  # 1 top left
+            (size, -size)  # 2 peak of curve
         ]
 
         world_pos = [
@@ -952,10 +988,10 @@ class Drawbot(XArmAPI):
         char.append("G")
 
         local_pos = [
-            (0, 0),                  # 0 top right
-            (- size, size),     # 1 peak of curve
-            (- size * 2, 0),        # 2 bottom right
-            (-size, 0),        # 3 mid right
+            (0, 0),  # 0 top right
+            (- size, size),  # 1 peak of curve
+            (- size * 2, 0),  # 2 bottom right
+            (-size, 0),  # 3 mid right
             (-size, size / 2)  # 4 center point
 
         ]
@@ -993,75 +1029,80 @@ class Drawbot(XArmAPI):
         """
 
         print("creating a shape")
-        pos = self.get_pose()[:3]       # position of the group
-        shapes_num = randrange(2, 4)     # number of shapes in this group
-        shape_group = []                # stores the current shape group
-        
-        for i in range(shapes_num):
-            type = Shapes(randrange(6))                    # generate random shape type
+        pos = self.get_pose()[:3]  # position of the group
+        shapes_num = randrange(2, 4)  # number of shapes in this group
+        shape_group = []  # stores the current shape group
 
-            if type == Shapes.Line:                                     # if it's a line, add the type and x and y target position
-                local_target_pos = uniform(-20, 20), uniform(-20, 20)   # random change in position (is added to pos to get world_pos)
-                shape_group.append((type, local_target_pos))          # add the shape type and its local_pos to the group
+        for i in range(shapes_num):
+            type = Shapes(randrange(6))  # generate random shape type
+
+            if type == Shapes.Line:  # if it's a line, add the type and x and y target position
+                local_target_pos = uniform(-20, 20), uniform(-20,
+                                                             20)  # random change in position (is added to pos to get world_pos)
+                shape_group.append((type, local_target_pos))  # add the shape type and its local_pos to the group
 
             else:
                 size = uniform(10, 30)
-                shape_group.append((type, size))         # add the shape type and its size to the group
+                shape_group.append((type, size))  # add the shape type and its size to the group
 
-        shape_group.append((pos[0], pos[1]))           # add the group x and y position to the last index of the shape_group object
+        shape_group.append(
+            (pos[0], pos[1]))  # add the group x and y position to the last index of the shape_group object
         # if self.hivemind.interrupt_bang:
-        self.draw_shape_group(shape_group, 0)              # draw the group with 0 variation of size
+        self.draw_shape_group(shape_group, 0)  # draw the group with 0 variation of size
 
     def draw_shape_group(self, group, variation=0):
         """
         Takes a shape group list and draws all the shapes within it. Also adds it to the
         list of shape groups and sets the last drawn shape group to this one.
         """
-        pos = group[len(group) - 1]     # group pos is stored in the last index of the shape group list
+        pos = group[len(group) - 1]  # group pos is stored in the last index of the shape group list
 
-        for i in range(len(group) - 1):     # last element in group is the position
+        for i in range(len(group) - 1):  # last element in group is the position
             # if self.hivemind.interrupt_bang:
-            match group[i][0]:              # [i][0] = shape type
+            match group[i][0]:  # [i][0] = shape type
                 case Shapes.Square:
-                    self.draw_square(group[i][1] + variation)     # [i][1] = size (when shape isn't a line)
+                    self.draw_square(group[i][1] + variation)  # [i][1] = size (when shape isn't a line)
                 case Shapes.Triangle:
-                    self.draw_triangle(group[i][1] + variation)   # size variation can be added when group is re-drawn
+                    self.draw_triangle(group[i][1] + variation)  # size variation can be added when group is re-drawn
                 case Shapes.Sunburst:
                     self.draw_sunburst(group[i][1] + variation)
                 case Shapes.Irregular:
-                    self.draw_irregular_shape(randrange(3,8))     # irregular shape will always be random
+                    self.draw_irregular_shape(randrange(3, 8))  # irregular shape will always be random
                 case Shapes.Circle:
                     self.draw_circle(group[i][1] + variation)
                 case Shapes.Line:
-                    local_target = group[i][1]                    # [i][1] = local_target_pos (when shape is a line)
-                    self.go_draw(pos[0] + local_target[0], pos[1] + local_target[1])    # draw the line then go back to original group position
+                    local_target = group[i][1]  # [i][1] = local_target_pos (when shape is a line)
+                    self.go_draw(pos[0] + local_target[0],
+                                 pos[1] + local_target[1])  # draw the line then go back to original group position
                     self.go_draw(pos[0], pos[1])
 
-            self.shape_groups.append(group)                     # add shape_group object to list
-            self.last_shape_group = group                       # set most recent shape group to this one, is used in repeat_shape_group
+            self.shape_groups.append(group)  # add shape_group object to list
+            self.last_shape_group = group  # set most recent shape group to this one, is used in repeat_shape_group
 
     def repeat_shape_group(self):
         """
         Repeats the last drawn shape group with a random offset
         position and slight variation to shape sizes.
         """
-        shape_group = self.last_shape_group         # get the last drawn shape group
+        shape_group = self.last_shape_group  # get the last drawn shape group
 
-        old_pos = shape_group[len(shape_group) - 1]     # get the position of the previous shape group ( last index in list )
+        old_pos = shape_group[
+            len(shape_group) - 1]  # get the position of the previous shape group ( last index in list )
 
-        new_pos = [                                 # point at a random distance from the previous shape group
-            old_pos[0] + uniform(-20, 20),          # new position at random distance from old position
+        new_pos = [  # point at a random distance from the previous shape group
+            old_pos[0] + uniform(-20, 20),  # new position at random distance from old position
             old_pos[1] + uniform(-20, 20)
         ]
 
-        shape_group[len(shape_group) - 1] = new_pos     # set the shape group position to the new pos with offset
+        shape_group[len(shape_group) - 1] = new_pos  # set the shape group position to the new pos with offset
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(new_pos[0], new_pos[1])    # go to new position
-        self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
+        self.go_draw(new_pos[0], new_pos[1])  # go to new position
+        self.draw_shape_group(shape_group, uniform(-3,
+                                                   3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
 
-    #-- return to shape functions --#
-    def return_to_square(self):     # returns to a random pre-existing square and does something
+    # -- return to shape functions --#
+    def return_to_square(self):  # returns to a random pre-existing square and does something
         """
         Randomly chooses a square from the 'squares' list and
         randomly chooses a behaviour to do with it.
@@ -1074,20 +1115,22 @@ class Drawbot(XArmAPI):
 
             rand = uniform(0, 1)
 
-            if rand == 0:              # move to a random corner on the square and draw a new square with a random size
-                randCorner = uniform(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
-                self.draw_square(uniform(20,29), True)
-            else:                       # draw a cross in the square
+            if rand == 0:  # move to a random corner on the square and draw a new square with a random size
+                randCorner = uniform(0, 3)
+                self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2],
+                                square[randCorner][3],
+                                wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                self.draw_square(uniform(20, 29), True)
+            else:  # draw a cross in the square
                 self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
                 self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
                 self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
                 self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
 
-                #device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
-            #device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-            #device.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
-            #device.move_to(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
+                # device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
+            # device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
+            # device.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
+            # device.move_to(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
 
         else:
             print("cannot return to square, no squares in list")
@@ -1102,16 +1145,16 @@ class Drawbot(XArmAPI):
             sunburst = self.sunbursts[int(uniform(0, sunbursts_length))]
             print(sunburst)
 
-            rand = uniform(0,1)      #randomly choose between two behaviours
+            rand = uniform(0, 1)  # randomly choose between two behaviours
 
-            if rand == 0:                  #join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True) 
+            if rand == 0:  # join up the ends of the sunburst lines
+                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True)
                 self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=True)
                 self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
                 self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=True)
                 self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=True)
-            else:                           # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)  
+            else:  # go to the end of one of the sunburst lines and draw another sunburst
+                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
                 self.draw_sunburst(20, True)
 
         else:
@@ -1126,13 +1169,13 @@ class Drawbot(XArmAPI):
         if irregulars_length > 0:
             irregular = self.irregulars[randrange(0, irregulars_length)]
 
-            #rand = random.uniform(0,1)     #add random choice of behaviours
-            #if(rand == 0):
+            # rand = random.uniform(0,1)     #add random choice of behaviours
+            # if(rand == 0):
 
-            rand_vertex = irregular[randrange(0,len(irregular))]
+            rand_vertex = irregular[randrange(0, len(irregular))]
             # if self.hivemind.interrupt_bang:
             self.go_draw(rand_vertex[0], rand_vertex[1])
-            self.draw_irregular_shape(randrange(3,8))
+            self.draw_irregular_shape(randrange(3, 8))
 
         else:
             print("Cannot return to irregular, no irregulars in list")
@@ -1144,11 +1187,11 @@ class Drawbot(XArmAPI):
         """
         chars_length = int(len(self.chars))
         if chars_length > 0:
-            char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
+            char = self.chars[randrange(0, chars_length)]  # pick a char at random, do something with it
 
         else:
             print("Cannot return to char, no chars in list")
-    
+
     def return_to_coord(self):
         """
         Randomly choose a coordinate from the list of coords and move the pen to it.
