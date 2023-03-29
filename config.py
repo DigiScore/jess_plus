@@ -25,7 +25,7 @@ irregular_shape_extents = 50
 
 # play params
 silence_listener = False
-duration_of_piece = 3600
+duration_of_piece = 360
 continuous_line = False
 speed = 5
 staves = 0

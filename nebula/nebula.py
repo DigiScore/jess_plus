@@ -122,7 +122,9 @@ class Nebula(Listener,
         Listens to live human input
         :return:
         """
-        while self.hivemind.running:  #  time() <= self.endtime:
+        while self.hivemind.running:
+            if time() <= self.endtime:
+                break
             # read data from bitalino
             if self.BITALINO_CONNECTED:
                 eda_raw = [self.eda.read(1)[0][0]]
@@ -166,4 +168,3 @@ class Nebula(Listener,
             self.eeg_board.terminate()
         if self.BITALINO_CONNECTED:
             self.eda.close()
-        self.running = False

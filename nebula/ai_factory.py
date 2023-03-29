@@ -69,7 +69,6 @@ class AIFactoryRework:
         self.net_logging = False
         self.hivemind = DataBorg()
         self.global_speed = speed
-        # self.running = True
 
         # instantiate nets as objects and make models
         print('NNetRework1 - EEG to flow initialization')
