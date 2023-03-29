@@ -165,6 +165,7 @@ class Drawbot(XArmAPI):
         logging.debug(f'Rnd result = {result}')
         return result
 
+
     def clear_alarms(self) -> None:
         """
         clear the alarms log and LED
