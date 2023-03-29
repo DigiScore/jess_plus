@@ -123,7 +123,7 @@ class Nebula(Listener,
         :return:
         """
         while self.hivemind.running:
-            if time() <= self.endtime:
+            if time() >= self.endtime:
                 break
             # read data from bitalino
             if self.BITALINO_CONNECTED:

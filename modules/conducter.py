@@ -24,7 +24,7 @@ class Conducter:
 
     def __init__(self,
                  port: str,
-                 continuous_line: bool = True,
+                 continuous_line: bool = False,
                  speed: int = 5,
                  staves: int = 0,
                  ):
@@ -103,8 +103,7 @@ class Conducter:
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
             phrase_loop_end = time() + phrase_length
 
-            logging.debug('\t\t\t\t\t\t\t\t=========AFFECT - Daddy cycle started ===========')
-            logging.debug(f"                 interrupt_listener: started! Duration =  {phrase_length} seconds")
+            logging.debug(f"=========AFFECT - Daddy cycle started ===========interrupt_listener: started! Duration =  {phrase_length} seconds")
 
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
@@ -161,13 +160,11 @@ class Conducter:
                                        acceleration=arm_speed)
 
                 while time() < rhythm_loop:
-                    logging.debug('\t\t\t\t\t\t\t\t=========Hello - baby cycle 2 ===========')
-
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
                     # thought_train = self.hivemind.rnd_stream
-                    logging.info(f'######################           Affect stream output {rnd_stream} == {thought_train}')
+                    logging.info(f'=========Hello - baby cycle 2 ===========Affect stream output {rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
                     # setattr(self.hivemind, 'master_stream', thought_train)
@@ -393,7 +390,7 @@ class Conducter:
         move to a random x, y position
         """
         self.drawbot.clear_commands()
-        self.drawbot.return_to_coord()
+        # self.drawbot.return_to_coord()
         # sleep(0.1)
 
     def terminate(self):
