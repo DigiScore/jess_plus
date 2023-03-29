@@ -390,6 +390,7 @@ class Conducter:
         move to a random x, y position
         """
         self.drawbot.clear_commands()
+        # self.drawbot.go_random_draw()
         # self.drawbot.return_to_coord()
         # sleep(0.1)
 

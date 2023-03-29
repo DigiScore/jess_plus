@@ -23,7 +23,7 @@ class Main:
     def __init__(self):
 
         # logging for all modules
-        logging.basicConfig(level=logging.CRITICAL)
+        logging.basicConfig(level=logging.INFO)
 
         # build initial dataclass fill with random numbers
         self.hivemind = DataBorg()
