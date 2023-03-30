@@ -1,5 +1,5 @@
 # [HARDWARE]
-robot = True
+robot = False
 eeg_live = False
 eda_live = False
 
