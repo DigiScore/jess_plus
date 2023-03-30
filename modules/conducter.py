@@ -239,7 +239,7 @@ class Conducter:
         self.terminate()
 
     def repetition(self, peak):
-        self.drawbot.go_random_draw_up()
+        self.drawbot.go_random_jump()
         self.drawbot.create_shape_group()  # create a new shape group
         for i in range(randrange(1, 2)):  # repeat the shape group a random number of times
             logging.debug("repetition of shape")
@@ -278,7 +278,7 @@ class Conducter:
         logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
-        self.drawbot.go_random_draw_up()
+        self.drawbot.go_random_jump()
         # self.drawbot.move_y_random()
 
         # randomly choose from the following choices

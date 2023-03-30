@@ -25,10 +25,10 @@ class Shapes(Enum):
 
 
 ######################
-# DRAWBOT CONTROLS
+# XArm CONTROLS
 ######################
 
-class Drawbot(XArmAPI):
+class DrawXarm(XArmAPI):
     """
     Translation class for digibot arm control
     and primitive commands of robot arm.
@@ -38,7 +38,6 @@ class Drawbot(XArmAPI):
 
     def __init__(self,
                  port,
-                 verbose,
                  continuous_line
                  ):
 
@@ -46,12 +45,17 @@ class Drawbot(XArmAPI):
         self.hivemind = DataBorg()
 
         # init and inherit the Dobot library
-        super().__init__(port)
+        super().__init__(port,
+                         max_cmdnum = 1) # todo - is this the way to limit blind running?
 
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
         self.set_collision_sensitivity(value=5) # todo I think 5 is very sensitive??
+
+        # make self.z a class constant - to be amended by pen placement check
+        self.z = 0
+        self.wait = False  # global wait var
 
         self.continuous_line = continuous_line
 
@@ -76,7 +80,7 @@ class Drawbot(XArmAPI):
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []  # list of coordinates drawn
 
-        # create a command loist and start process thread
+        # create a command list and start process thread
         self.command_list = []
         list_thread = Thread(target=self.process_command_list)
         list_thread.start()
@@ -86,23 +90,56 @@ class Drawbot(XArmAPI):
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
 
+        # calculate the world offset
+        self.calc_world_offset()
+        self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
+
+    def calc_world_offset(self):
+        """
+        go to start position. Fix pen, and record
+        :return:
+        """
+        pass
+
     ######################
     # Command Q control & safety checks
     ######################
-    def add_to_list_set_ptp_cmd(self, x, y, z, r, mode, wait):
-        msg_item = (x, y, z, r, mode, wait)
-        self.command_list.append(msg_item)
+    def add_to_command_list(self,
+                            command: str,
+                            arg_list: list):
+
+        package = (command, arg_list)
+
+        self.command_list.append(package)
         # print(len(self.command_list))
 
+    # todo - this might not be neccesary if the API is better and allows seamless interrupt
     def process_command_list(self):
         while self.hivemind.running:
+
+            # interrupt? clear list
             if not self.hivemind.interrupt_bang:
                 self.command_list.clear()
                 sleep(0.1)
-            elif self.command_list:
-                msg = self.command_list.pop()
-                x, y, z, r, mode, wait = msg[:]
-                self._set_ptp_cmd(x, y, z, r, mode, wait)
+                logging.info('Clearing command list')
+
+            # is the arm still moving????
+            elif not self.get_is_moving():
+
+            # and there is a command on list
+                elif self.command_list:
+                    command, arg_list = self.command_list.pop()
+
+                    match command:
+                        case "move_circle":
+                            self.move_circle(arg_list)
+
+                        case "move_to":
+                            self.move_circle(arg_list)
+
+                        case "jump_to":
+                            self.move_circle(arg_list)
+
             else:
                 sleep(0.01)
 
@@ -151,7 +188,7 @@ class Drawbot(XArmAPI):
         else:
             z = pose[2]
 
-        self.move_to(x, y, z, 0, False)
+        self.move_to(x, y, z, self.wait)
 
         return_pose = (x, y, z)
         return return_pose
@@ -164,7 +201,7 @@ class Drawbot(XArmAPI):
         pos = 1
         if getrandbits(1):
             pos = -1
-        result = (randrange(1, 5) + randrange(power_of_command)) * pos
+        result = (uniform(1, 10) + randrange(power_of_command)) * pos
         logging.debug(f'Rnd result = {result}')
         return result
 
@@ -190,12 +227,15 @@ class Drawbot(XArmAPI):
         self.set_counter_reset() # a guess!!
 
     def world_offset(self):
+        """
+        Used to set the home position to take account for the pen
+        """
         # self.set_world_offset([x, y, z, roll, pitch, yaw],
         pass
 
     def force_queued_stop(self):
         """
-        emergancy stop
+        emergency stop
         """
         self.emergency_stop()
 
@@ -211,6 +251,7 @@ class Drawbot(XArmAPI):
     #     else:
     #         self.clear_commands()
 
+    # todo - how to use Queue to stop sending too much to the xArm
     def _send_command(self, msg, wait=False):
         self.lock.acquire()
         self._send_message(msg)
@@ -256,14 +297,14 @@ class Drawbot(XArmAPI):
 
     # todo - something clever here that captures these 4 operational commands in its OWN Queue, then releases once the Xarm lock has returned self.get_moving???
 
-    def arc(
-            self,
-            pose1=poses[1],
-            pose2=poses[2],
-            percent=200,
-            speed=200,
-            mvacc=1000,
-            wait=True):
+    def arc(self,
+            pose1: list = None,
+            pose2: list = None,
+            percent: int = 50,
+            speed: int = 200,
+            mvacc: int = 1000,
+            wait: bool = False
+            ):
         """
         Calls xarm move_circle.
         pose = [x, y, z, roll, tilt, yaw] e.g. [300,  0,   100, -180, 0, 0]
@@ -272,43 +313,105 @@ class Drawbot(XArmAPI):
         #pose1, pose2, percent, speed=None, mvacc=None, mvtime=None, is_radian=None,
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
-        logging.info('circle')
-        self.move_circle(pose1=poses[1], pose2=poses[2], percent=200, speed=200, mvacc=1000, wait=True)
+        logging.info('arc/ circle')
+        self.move_circle(pose1=pose1,
+                         pose2=pose2,
+                         percent=percent,
+                         speed=speed,
+                         mvacc=mvacc,
+                         wait=wait
+                         )
 
-    def move_to(self, x=None, y=None, z=None, roll=None, pitch=None, yaw=None, radius=None,
-                     speed=None, mvacc=None, mvtime=None, relative=False, is_radian=None,
-                     wait=False, timeout=None,):
+    def move_to(self,
+                x: float = None,
+                y: float = None,
+                z: float = None,
+                speed: float = None,
+                mvacc: float = None,
+                wait: bool = False
+                ):
         """
-        the main move to function for mid level comms to Xarm_API
+        the main move to function for mid-level comms to Xarm_API
 
         :param x:
         :param y:
         :param z:
-        :param roll:
-        :param pitch:
-        :param yaw:
+        :param speed:
+        :param mvacc:
+        :param wait:
+        :return:
+        """
+
+        x += self.offsetx
+        y += self.offsety
+        z += self.offsetz
+
+        logging.info('move to')
+
+        self.add_to_command_list(command="move_to",
+                                 arg_list=[x, y, z, speed, mvacc, wait]
+                                 )
+
+        # self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=None,
+        #              speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
+        #              wait=wait, timeout=None)
+
+    def jump_to(self,
+                x: float = None,
+                y: float = None,
+                z: float = None,
+                radius: float = 20,
+                speed: float = None,
+                mvacc: float = None,
+                wait: bool = False
+                ):
+        """
+        Jump to a cartesian coord. Jump default is 20.
+        :param x:
+        :param y:
+        :param z:
         :param radius:
         :param speed:
         :param mvacc:
-        :param mvtime:
-        :param relative:
-        :param is_radian:
         :param wait:
-        :param timeout:
         :return:
         """
-        self.set_position(x, y, z, r, wait)
 
-    def jump_to(self):
-        # self.move_arc_lines(paths, is_radian=None, times=1, first_pause_time=0.1, repeat_pause_time=0,
-        #                        automatic_calibration=True, speed=None, mvacc=None, mvtime=None, wait=False)
-        pass
+        x += self.offsetx
+        y += self.offsety
+        z += self.offsetz
 
-    def tool_move(self):
-        # self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=0,
-        #                           speed=None, mvacc=None, mvtime=None, is_radian=None,
-        #                           wait=False, timeout=None, radius=None)
-        pass
+        logging.info('jump to')
+        self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=radius,
+                          speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
+                          wait=wait, timeout=None)
+
+
+
+
+
+    def tool_move(self,
+                  colour: str = None,
+                  ):
+        """
+        Moves the tool head to align a specific colour pen to the page.
+
+        :param colour: "red", "blue", "black", "green"
+        """
+
+        if colour == "black":
+            yaw = 0
+        elif colour == "blue":
+            yaw = 90
+        elif colour == "red":
+            yaw = 180
+        else:
+            yaw = 270
+
+        logging.info('tool move %c', colour)
+        self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=yaw,
+                                  speed=None, mvacc=None, mvtime=None, is_radian=None,
+                                  wait=False, timeout=None, radius=None)
 
     ######################
     # drawXarm ANCILLARY FUNCTIONS
@@ -325,97 +428,93 @@ class Drawbot(XArmAPI):
         # get current y-value
         x, y, z = self.get_pose()[3]
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
-        logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+        newy = (((elapsed - 0) * (self.y_extents[1] - self.y_extents[0])) / (self.duration_of_piece - 0)) + self.y_extents[1]
+        logging.debug(f'x:{x} y:{y} z:{z}')
 
         # check x-axis is in range
         if x <= self.x_extents[0] or x >= self.x_extents[1]:
             x = (self.x_extents[1] - self.x_extents[0]) / 2
 
-        self.bot_move_to(x, newy, z, r, True)
+        # todo - need to make self.z a class constant
+        self.move_to(x, newy, self.z, wait=self.wait)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
-    def move_y_random(self):
-        """
-        Moves x and y pen position to nearly the true Y point.
-        """
-        # How far into the piece
-        elapsed = time() - self.start_time
-
-        # get current y-value
-        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
-        logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
-
-        # check x-axis is in range
-        if x <= 200 or x >= 300:
-            x = 250
-
-        # which mode
-        if self.continuous_line:
-            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-        else:
-            self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+    # def move_y_random(self):
+    #     """
+    #     Moves x and y pen position to nearly the true Y point.
+    #     """
+    #     # How far into the piece
+    #     elapsed = time() - self.start_time
+    #
+    #     # get current y-value
+    #     (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
+    #     # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+    #     newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
+    #     logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+    #
+    #     # check x-axis is in range
+    #     if x <= 200 or x >= 300:
+    #         x = 250
+    #
+    #     # which mode
+    #     if self.continuous_line:
+    #         self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+    #     else:
+    #         self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
 
     def go_position_ready(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
-        x, y, z, r = self.ready_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        x, y, z = self.ready_position[:3]
+        self.move_to(x, y, z, wait=self.wait)
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
-        x, y, z, r = self.draw_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        x, y, z = self.draw_position[:3]
+        self.move_to(x, y, z, wait=self.wait)
 
     def go_position_end(self):
         """
         moves directly to pre-defined position 'end position'
         """
-        x, y, z, r = self.end_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        x, y, z = self.end_position[:3]
+        self.move_to(x, y, z, wait=self.wait)
 
-    def jump_to(self, x, y, z, r, wait=True):
-        """
-        Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
-        """
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
+    # def jump_to(self, x, y, z, r, wait=True):
+    #     """
+    #     Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
+    #     """
+    #     self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
 
-    def joint_move_to(self, j1, j2, j3, j4, wait=True):
-        """
-        moves specific joints direct to new angles.
-        """
-        self.joint_move_to(j1, j2, j3, j4, wait)
+    # def joint_move_to(self, j1, j2, j3, j4, wait=True):
+    #     """
+    #     moves specific joints direct to new angles.
+    #     """
+    #     self.joint_move_to(j1, j2, j3, j4, wait)
 
     def home(self):
         """
         Go directly to the home position 0, 0, 0, 0
         """
-        msg = Message()
-        msg.id = CommunicationProtocolIDs.SET_HOME_CMD
-        msg.ctrl = ControlValues.THREE
-        return self._send_command(msg, wait=True)
+        self.move_gohome()
 
-    def go_draw(self, x, y, wait=True):
+    def go_draw(self, x, y, wait=False):
         """
         Go to an x and y position with the pen touching the paper
         """
         self.coords.append((x, y))
-        if self.hivemind.interrupt_bang:
-            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        self.move_to(x, y, self.z, wait=self.wait)
 
     def go_draw_up(self, x, y, wait=True):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        # TODO - Adam - this needs organising better. We have multiple funcs that are calling Dobot API primitives when we should be controlling all of those with a single command here e.g. def.send_ptp_jump and def send_ptp_movej
-        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
+        self.jump_to(x, y, self.z, wait=self.wait)
 
     # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -425,26 +524,23 @@ class Drawbot(XArmAPI):
         """
         x = uniform(self.x_extents[0], self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
-        z = self.draw_position[2]
-        r = 0
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
+        self.move_to(x, y, self.z, wait=self.wait)
 
-    def go_random_draw_up(self):  # goes to random positon on page with pen above page then back on
+    def go_random_jump(self):  # goes to random positon on page with pen above page then back on
         """
         Lift the pen, move to a random position within the x and y extents,
         then lower the pen to draw position
         """
         x = uniform(self.x_extents[0], self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
-        z = self.draw_position[2]
-        r = 0
+        z = randrange(100)
 
         self.coords.append((x, y))
         print("Random draw pos above page x:", x, " y:", y)
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
+        self.jump_to(x, y, z, wait=self.wait)
 
     # -- move by functions --#
     def position_move_by(self, x, y, z, wait=True):
@@ -530,7 +626,8 @@ class Drawbot(XArmAPI):
         else:
             self.jump_to(x, y_end, z, r)
 
-    def squiggle(self, arc_list: list):
+    def squiggle(self,
+                 arc_list: list):
         """
         accepts a list of tuples that define a sequence of
         x, y deltas to create a sequence of arcs that define a squiggle.
@@ -538,7 +635,7 @@ class Drawbot(XArmAPI):
             circumference point: size of arc in pixels across x axis
             end point x, end point y: distance from last/ previous position
         """
-        [x, y, z, r] = self.get_pose()[0:4]
+        x, y, z = self.get_pose()[3]
         self.coords.append((x, y))
         for arc in arc_list:
             # if self.hivemind.interrupt_bang:
@@ -594,7 +691,7 @@ class Drawbot(XArmAPI):
             self.coords.append(next_pos)
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(pos[0], pos[1], wait=False)
+        self.go_draw(pos[0], pos[1], wait=self.wait)
 
         self.squares.append(square)
 
@@ -632,7 +729,7 @@ class Drawbot(XArmAPI):
                 pos[1] + local_pos[i][1]
             ]
             # if shape_interrupt == False:
-            self.go_draw(next_pos[0], next_pos[1], wait=True)
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
             # else:
             #     shape_interrupt = False
             #     return None
@@ -689,8 +786,8 @@ class Drawbot(XArmAPI):
             sunburst.append(next_pos)
             self.coords.append(next_pos)
 
-            self.go_draw(next_pos[0], next_pos[1], wait=False)  # draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=False)  # return to centre point to then draw another line
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)  # draw line from centre point outwards
+            self.go_draw(pos[0], pos[1], wait=self.wait)  # return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -738,10 +835,10 @@ class Drawbot(XArmAPI):
 
         if side == 0:  # side is used to draw figure 8 patterns
             self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
-                     wait=wait)
+                     wait=self.wait)
         elif side == 1:
             self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
-                     wait=wait)
+                     wait=self.wait)
 
         circle = []
         circle.append(pos)
