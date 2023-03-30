@@ -7,7 +7,7 @@ from threading import Thread
 
 # import project modules
 from nebula.hivemind import DataBorg
-from modules.drawbot import Drawbot
+from modules.drawDobot import Drawbot
 import config
 
 class RobotMode(Enum):

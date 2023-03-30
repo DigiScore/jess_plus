@@ -127,8 +127,9 @@ class DrawXarm(XArmAPI):
             elif not self.get_is_moving():
 
             # and there is a command on list
-                elif self.command_list:
-                    command, arg_list = self.command_list.pop()
+                if self.command_list:
+                    msg = self.command_list.pop()
+                    command, arg_list = msg[:]
 
                     match command:
                         case "move_circle":
