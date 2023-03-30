@@ -26,7 +26,7 @@ irregular_shape_extents = 50
 
 # [XARM]
 xarm1_port = '192.168.1.222'
-xarm2_port = '192.168.1.222''
+xarm2_port = '192.168.1.223'
 
 xarm_x_extents = [160, 350]
 xarm_y_extents = [-150, 150]
