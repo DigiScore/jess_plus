@@ -224,8 +224,14 @@ class DrawXarm(XArmAPI):
         # self._set_queued_cmd_stop_exec()
         # self._set_queued_cmd_clear()
         # self._set_queued_cmd_start_exec()
-        # todo - clear command lst ???
+        # todo - clear command lst ??? - looks like self.set_state(4) is key here - emergancy stop may well do it.
         self.set_counter_reset() # a guess!!
+
+    def force_queued_stop(self):
+        """
+        Emergency stop (set_state(4) -> motion_enable(True) -> set_state(0))
+        """
+        self.emergency_stop()
 
     def world_offset(self):
         """
@@ -233,12 +239,6 @@ class DrawXarm(XArmAPI):
         """
         # self.set_world_offset([x, y, z, roll, pitch, yaw],
         pass
-
-    def force_queued_stop(self):
-        """
-        emergency stop
-        """
-        self.emergency_stop()
 
     def get_pose(self):
         return self.get_position()
