@@ -241,12 +241,12 @@ class Conducter:
                                     print("Repetition Mode")
                                     self.repetition(thought_train)
 
-                # get new position for hivemind
-                #if self.drawbot:
-                    #self.drawbot.get_normalised_position()
+                    # get new position for hivemind
+                    #if self.drawbot:
+                        #self.drawbot.get_normalised_position()
 
-                # and wait for a cycle
-                sleep(rhythm_rate)
+                    # and wait for a cycle
+                    sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
         self.terminate()
