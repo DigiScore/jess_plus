@@ -1,5 +1,5 @@
 # [HARDWARE]
-robot = False
+robot = True
 eeg_live = True
 eda_live = True
 
@@ -34,7 +34,7 @@ xarm_z_extents = [0, 150]
 xarm_irregular_shape_extents = 50
 
 # play params
-silence_listener = False
+silence_listener = True
 duration_of_piece = 360
 continuous_line = False
 speed = 5
