@@ -8,6 +8,7 @@ from threading import Thread
 # import project modules
 from nebula.hivemind import DataBorg
 from modules.drawDobot import Drawbot
+from modules.drawXarm import DrawXarm
 import config
 
 class RobotMode(Enum):
@@ -23,27 +24,34 @@ class Conducter:
     """
 
     def __init__(self,
-                 port: str,
+                 # port: str,
                  continuous_line: bool = False,
                  speed: int = 5,
                  staves: int = 0,
                  ):
 
         # PLATFORM = platform.system()
-        ROBOT_CONNECTED = config.robot
-        verbose = config.robot_verbose
+        DOBOT_CONNECTED = config.dobot_connected
+        verbose = config.dobot_verbose
+
+        XARM_CONNECTED = config.xarm_connected
 
         ############################
         # Robot
         ############################
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
-        if ROBOT_CONNECTED:
+        if DOBOT_CONNECTED:
+            port = config.dobot1_port
             self.drawbot = Drawbot(
                 port=port,
                 verbose=verbose,
                 continuous_line=continuous_line
             )
+        elif XARM_CONNECTED:
+            port = config.xarm1_port
+            self.drawbot = DrawXarm(port)
+
         else:
             self.drawbot = None
 

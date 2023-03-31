@@ -1,5 +1,6 @@
 # [HARDWARE]
-robot = False
+dobot_connected = False
+xarm_connected = True
 eeg_live = False
 eda_live = False
 
@@ -15,9 +16,8 @@ sudo chmod 666 /dev/ttyACM0
 """
 
 # [DOBOT]
-robot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
-robot2_port = '/dev/ttyXXXX'
-robot_verbose = False
+dobot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
+dobot_verbose = False
 
 x_extents = [160, 350]
 y_extents = [-150, 150]
@@ -28,9 +28,12 @@ irregular_shape_extents = 50
 xarm1_port = '192.168.1.222'
 xarm2_port = '192.168.1.223'
 
-xarm_x_extents = [160, 350]
-xarm_y_extents = [-150, 150]
-xarm_z_extents = [0, 150]
+xarm_x_extents = [200, 600]
+xarm_y_extents = [-360, 360]
+xarm_z_extents = [80, 250]
+xarm_ballet_x_extents = [375, 375]
+xarm_ballet_y_extents = [-360, 360]
+xarm_ballet_z_extents = [150, 550]
 xarm_irregular_shape_extents = 50
 
 # play params

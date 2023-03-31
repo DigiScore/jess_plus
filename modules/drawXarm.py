@@ -37,8 +37,8 @@ class DrawXarm(XArmAPI):
     """
 
     def __init__(self,
-                 port,
-                 continuous_line
+                 port: str,
+                 continuous_line: bool = False,
                  ):
 
         # own a hive mind
@@ -46,12 +46,14 @@ class DrawXarm(XArmAPI):
 
         # init and inherit the Dobot library
         super().__init__(port,
-                         max_cmdnum = 1) # todo - is this the way to limit blind running?
+                         max_cmdnum=1
+                         ) # todo - is this the way to limit blind running?
 
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        self.set_collision_sensitivity(value=5) # todo I think 5 is very sensitive??
+        self.move_gohome()
+        # self.set_collision_sensitivity(value=5) # todo I think 5 is very sensitive??
 
         # make self.z a class constant - to be amended by pen placement check
         self.z = 0
@@ -82,8 +84,8 @@ class DrawXarm(XArmAPI):
 
         # create a command list and start process thread
         self.command_list = []
-        list_thread = Thread(target=self.process_command_list)
-        list_thread.start()
+        # list_thread = Thread(target=self.process_command_list)
+        # list_thread.start()
 
         self.last_shape_group = None
 
@@ -91,8 +93,8 @@ class DrawXarm(XArmAPI):
         self.start_time = time()
 
         # calculate the world offset
-        self.calc_world_offset()
-        self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
+        # self.calc_world_offset()
+        # self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
 
     def calc_world_offset(self):
         """
@@ -217,7 +219,7 @@ class DrawXarm(XArmAPI):
             self.clean_error()
             self.motion_enable(enable=True)
             self.set_state(state=0)
-            self.last_used_position()  # go to safe place (last used position?
+            # self.last_used_position()  # go to safe place (last used position?
 
     def clear_commands(self):
         # self.force_queued_stop()
@@ -225,11 +227,13 @@ class DrawXarm(XArmAPI):
         # self._set_queued_cmd_clear()
         # self._set_queued_cmd_start_exec()
         # todo - clear command lst ??? - looks like self.set_state(4) is key here - emergancy stop may well do it.
-        self.set_counter_reset() # a guess!!
+        self.set_state(4)
+        sleep(0.1)
+        self.set_state(0)
 
     def force_queued_stop(self):
         """
-        Emergency stop (set_state(4) -> motion_enable(True) -> set_state(0))
+        Emergency stop (set_state(4) -> motion_enable(True) -> set_state(0)). Return to ZERO
         """
         self.emergency_stop()
 

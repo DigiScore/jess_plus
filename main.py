@@ -46,7 +46,6 @@ class Main:
 
         # init Conducter & Gesture management (controls Drawbot)
         robot1 = Conducter(
-            port=config.robot1_port,
             continuous_line=config.continuous_line,
             speed=config.speed,
             staves=config.staves,
