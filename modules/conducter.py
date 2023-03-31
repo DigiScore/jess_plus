@@ -77,6 +77,11 @@ class Conducter:
         robot_thread = Thread(target=self.gesture_manager)
         robot_thread.start()
 
+        # normalised position thread
+        if self.drawbot:
+            position_thread = Thread(target=self.drawbot.get_normalised_position)
+            position_thread.start()
+
     def gesture_manager(self):
         """
         Listens to the realtime incoming signal and calculates
@@ -235,8 +240,8 @@ class Conducter:
                                     self.repetition(thought_train)
 
                 # get new position for hivemind
-                if self.drawbot:
-                    self.drawbot.get_normalised_position()
+                #if self.drawbot:
+                    #self.drawbot.get_normalised_position()
 
                 # and wait for a cycle
                 sleep(rhythm_rate)
