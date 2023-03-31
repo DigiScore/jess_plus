@@ -139,11 +139,11 @@ class Conducter:
                     if self.continuous_line:
                         self.drawbot.move_y()
 
-                # generate rhythm rate here
-                rhythm_rate = (randrange(10,
-                                         80) / 100) #* self.global_speed
-                self.hivemind.rhythm_rate = rhythm_rate
-                logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
+                # # generate rhythm rate here
+                # rhythm_rate = (randrange(10,
+                #                          80) / 100) #* self.global_speed
+                # self.hivemind.rhythm_rate = rhythm_rate
+                # logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
 
                 #############################
@@ -170,6 +170,11 @@ class Conducter:
                     # setattr(self.hivemind, 'master_stream', thought_train)
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
+
+                    # generate rhythm rate here
+                    rhythm_rate = 1 - self.hivemind.core2flow + 0.05  # (randrange(10, 80) / 100) #* self.global_speed
+                    self.hivemind.rhythm_rate = rhythm_rate
+                    logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
 
                     ######################################
                     #
@@ -228,12 +233,12 @@ class Conducter:
                                     print("OffPage Mode")
                                     self.offpage(thought_train)
 
-                # get new position for hivemind
-                if self.drawbot:
-                    self.drawbot.get_normalised_position()
+                    # get new position for hivemind
+                    if self.drawbot:
+                        self.drawbot.get_normalised_position()
 
-                # and wait for a cycle
-                sleep(rhythm_rate)
+                    # and wait for a cycle
+                    sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
         self.terminate()
