@@ -43,7 +43,7 @@ print('set_position, ret: {}'.format(ret))
 ret = drawbot.move_circle(pose1=poses[1], pose2=poses[2], percent=200, speed=200, mvacc=1000, wait=False)
 print('move_circle, ret: {}'.format(ret))
 
-sleep(5)
+sleep(4)
 drawbot.clear_commands()
 
 
