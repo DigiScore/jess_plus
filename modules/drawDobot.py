@@ -6,6 +6,7 @@ import struct
 import math
 import numpy as np
 from threading import Thread
+import json
 
 # install dobot modules
 from pydobot import Dobot
@@ -69,9 +70,10 @@ class Drawbot(Dobot):
         self.circles = []
         self.triangles = []
         self.chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
-
+        
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
+        self.positions = []
 
         # create a command loist and start process thread
         self.command_list = []
@@ -126,32 +128,47 @@ class Drawbot(Dobot):
             self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
             self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
-            logging.info(f'current x,y,z normalised  = {norm_xyz}')
+            self.positions.append(norm_xyz)
+
+            #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)
+        
+        json_str = json.dumps(self.positions)
+        json_file = open("position_data.json", "w")
+        json_file.write(json_str)
+        json_file.close()
 
     def safety_position_check(self, pose):
-        if pose[0] < self.x_extents[0]:     # check x posiion
-            x = self.x_extents[0]
-        elif pose[0] > self.x_extents[1]:
-            x = self.x_extents[1]
+        pos_changed = False
+        if pose[0] < config.x_extents[0]:     # check x posiion
+            x = config.x_extents[0]
+            pos_changed = True
+        elif pose[0] > config.x_extents[1]:
+            x = config.x_extents[1]
+            pos_changed = True
         else:
             x = pose[0]
 
-        if pose[1] < self.y_extents[0]:  # check y posiion
-            y = self.y_extents[0]
-        elif pose[1] > self.y_extents[1]:
-            y = self.y_extents[1]
+        if pose[1] < config.y_extents[0]:  # check y posiion
+            y = config.y_extents[0]
+            pos_changed = True
+        elif pose[1] > config.y_extents[1]:
+            y = config.y_extents[1]
+            pos_changed = True
         else:
             y = pose[1]
 
-        if pose[2] < self.z_extents[0]:  # check x posiion
-            z = self.z_extents[0]
-        elif pose[2] > self.z_extents[1]:
-            z = self.z_extents[1]
+        if pose[2] < config.z_extents[0]:  # check x posiion
+            z = config.z_extents[0]
+            pos_changed = True
+        elif pose[2] > config.z_extents[1]:
+            z = config.z_extents[1]
+            pos_changed = True
         else:
             z = pose[2]
 
-        self.move_to(x, y, z, 0, False)
+        if pos_changed:
+            self.move_to(x, y, z, 0, False)
 
         return_pose = (x, y, z)
         return return_pose
@@ -438,17 +455,17 @@ class Drawbot(Dobot):
         """
 
         pose = self.get_pose()[:3]
-
+        print(pose)
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking
 
         # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
+        if newPose[0] < config.x_extents[0] or newPose[0] > config.x_extents[1]:     # check x posiion
             print("delta x reset to 0")
             x = 0
-        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:     # check y position
+        if newPose[1] < config.y_extents[0] or newPose[1] > config.y_extents[1]:     # check y position
             print("delta y reset to 0")
             y = 0
-        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:      # check z height
+        if newPose[2] < config.z_extents[0] or newPose[2] > config.z_extents[1]:      # check z height
             print("delta z reset to 0")
             z = 0
 

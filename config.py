@@ -15,7 +15,7 @@ sudo chmod 666 /dev/ttyACM0
 """
 
 # [DOBOT]
-robot1_port = 'COM10' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
+robot1_port = 'COM6' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
 robot2_port = '/dev/ttyXXXX'
 robot_verbose = False
 

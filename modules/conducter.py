@@ -67,7 +67,7 @@ class Conducter:
             self.drawbot.home()
             input('remove pen lid, then press enter')
 
-            self.drawbot.draw_stave(staves=staves)
+            #self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
     def main_loop(self):
@@ -75,12 +75,14 @@ class Conducter:
         starts the main thread for the gesture manager
         """
         robot_thread = Thread(target=self.gesture_manager)
-        robot_thread.start()
 
         # normalised position thread
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
+        
+        robot_thread.start()
+
 
     def gesture_manager(self):
         """
@@ -131,10 +133,10 @@ class Conducter:
             # robot_mode = RobotMode(randrange(5))
             # set random mode and data source for continuous mode
             # TODO: is robot MID response always random?
-            robot_mode = randrange(4)
+            robot_mode = RobotMode(randrange(4))
             if robot_mode == RobotMode.Continuous:         # randomise continuous settings
-                self.continuous_mode = randrange(0,1)      # 0 == on page, 1 == above page
-                self.continuous_source = randrange(0,2)    # 0 == random, 1 == NN, 2 == peak
+                self.continuous_mode = randrange(2)      # 0 == on page, 1 == above page
+                self.continuous_source = randrange(2)    # 0 == random, 1 == NN
 
             while time() < phrase_loop_end:
                 print('================')
@@ -273,13 +275,9 @@ class Conducter:
                         move_y = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = self.hivemind.audio2core * self.joint_inc
-                        move_y = self.hivemind.flow2core * self.joint_inc
-
-                    case 2:     # peak
-                        move_var = (peak * 10) * self.joint_inc
-                        move_x = uniform(-move_var, move_var)
-                        move_y = uniform(-move_var, move_var)
+                        move_x = uniform(self.hivemind.audio2core_2d[0], -self.hivemind.audio2core_2d[0]) * self.joint_inc
+                        move_y = uniform(self.hivemind.audio2core_2d[1], -self.hivemind.audio2core_2d[1]) * self.joint_inc
+                        
                 
                 self.drawbot.position_move_by(move_x, move_y, 0, wait=True)
                 
@@ -288,22 +286,15 @@ class Conducter:
                 match self.continuous_source:
                     case 0:     # random data
                         move_x = uniform(-self.joint_inc, self.joint_inc)
-                        move_y = uniform(-self.joint_inc, self.joint_inc)
+                        #move_y = uniform(-self.joint_inc, self.joint_inc)
                         move_z = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = self.hivemind.audio2core * self.joint_inc
-                        move_y = self.hivemind.flow2core * self.joint_inc
-                        move_z = self.hivemind.eeg2flow * self.joint_inc    # using eeg2flow for z axis, could be changed
+                        move_x = uniform(self.hivemind.flow2core_2d[0], -self.hivemind.flow2core_2d[0]) * self.joint_inc
+                        #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
+                        move_z = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
 
-                        pass
-                    case 2:     # peak
-                        move_var = (peak * 10) * self.joint_inc
-                        move_x = uniform(-move_var, move_var)
-                        move_y = uniform(-move_var, move_var)
-                        move_z = uniform(-move_var, move_var)
-
-                self.drawbot.position_move_by(move_x, move_y, move_z, wait=False)
+                self.drawbot.position_move_by(move_x, 0, move_z, wait=False)
 
     #def continuous(self, peak):
     #    # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
