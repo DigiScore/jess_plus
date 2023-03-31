@@ -68,7 +68,7 @@ class Drawbot(Dobot):
         self.irregulars = []
         self.circles = []
         self.triangles = []
-        self.chars = []
+        self.chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
 
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
@@ -993,9 +993,9 @@ class Drawbot(Dobot):
             self.coords.append(world_pos[i])
 
     def draw_random_char(self, size=1, wait=True):
-        chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
+        
 
-        rand_char = chars[randrange(0, len(chars))]
+        rand_char = self.chars[randrange(0, len(self.chars))]
 
         self.draw_char(rand_char, size, wait)
 
@@ -1082,27 +1082,34 @@ class Drawbot(Dobot):
         """
         square_length = int(len(self.squares))
         if square_length > 0:
-            # if self.hivemind.interrupt_bang:
             square = self.squares[int(uniform(0, square_length))]
             print(square)
 
-            rand = uniform(0, 1)
+            rand = randrange(0, 3)
 
             if rand == 0:              # move to a random corner on the square and draw a new square with a random size
-                randCorner = uniform(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                randCorner = randrange(0,3)
+                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
                 self.draw_square(uniform(20,29), True)
-            else:                       # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
-                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
-
-                #device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
-            #device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-            #device.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
-            #device.move_to(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-
+            elif rand == 1:                       # draw a cross in the square
+                self.go_draw_up(square[0][0], square[0][1], wait=True)
+                self.move_to(square[2][0], square[2][1], wait=True)
+                self.go_draw_up(square[1][0], square[1][1], wait=True)
+                self.move_to(square[3][0], square[3][1], wait=True)
+            elif rand == 2:                 # pick a random number of points within the square and scribble inside of it
+                point_num = randrange(3,10)
+                randCorner = randrange(0,3)
+                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                for i in range(point_num):
+                    rand_point = [
+                        uniform(square[0][0], square[1][0]), uniform(square[0][1], square[3][1])    # random point inside square bounds
+                    ]
+                    self.go_draw(rand_point[0], rand_point[1], wait=True)
+            elif rand == 3:                 # redraw the square from top right corner anti-clockwise
+                self.go_draw(square[1][0], square[1][1], wait=True)  
+                self.go_draw(square[2][0], square[2][1], wait=True)
+                self.go_draw(square[3][0], square[3][1], wait=True)
+                self.go_draw(square[0][0], square[0][1], wait=True)
         else:
             print("cannot return to square, no squares in list")
 
@@ -1113,19 +1120,19 @@ class Drawbot(Dobot):
         """
         sunbursts_length = int(len(self.sunbursts))
         if sunbursts_length > 0:
-            sunburst = self.sunbursts[int(uniform(0, sunbursts_length))]
+            sunburst = self.sunbursts[int(randrange(0, sunbursts_length))]
             print(sunburst)
 
-            rand = uniform(0,1)      #randomly choose between two behaviours
+            rand = randrange(0,1)      #randomly choose between two behaviours
 
             if rand == 0:                  #join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True) 
-                self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=True)
-                self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
-                self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=True)
-                self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=True)
+                self.go_draw_up(sunburst[0][0], sunburst[0][1], wait=True) 
+                self.go_draw(sunburst[1][0], sunburst[1][1], wait=True)
+                self.go_draw(sunburst[2][0], sunburst[2][1], wait=True)
+                self.go_draw(sunburst[3][0], sunburst[3][1], wait=True)
+                self.go_draw(sunburst[4][0], sunburst[4][1], wait=True)
             else:                           # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)  
+                self.go_draw_up(sunburst[2][0], sunburst[2][1], wait=True)  
                 self.draw_sunburst(20, True)
 
         else:
@@ -1154,12 +1161,15 @@ class Drawbot(Dobot):
     def return_to_char(self):
         """
         Randomly chooses a character from the 'chars' list and
-        randomly chooses a behaviour to do with it. (NOT FINISHED)
+        randomly chooses a behaviour to do with it. 
         """
         chars_length = int(len(self.chars))
         if chars_length > 0:
             char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
+            rand_point = randrange(0, len(char))
 
+            self.go_draw_up(char[rand_point][0], char[rand_point][1], wait=True)   # go to a random point on the character
+            self.draw_random_char(uniform(5,20), wait=True)
         else:
             print("Cannot return to char, no chars in list")
     
