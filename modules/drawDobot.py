@@ -993,7 +993,9 @@ class Drawbot(Dobot):
             self.coords.append(world_pos[i])
 
     def draw_random_char(self, size=1, wait=True):
-        
+        """
+        Draws a random character from the list of available characters.
+        """
 
         rand_char = self.chars[randrange(0, len(self.chars))]
 

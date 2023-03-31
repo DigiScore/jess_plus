@@ -254,9 +254,8 @@ class Conducter:
     def continuous(self, peak):
         """
         Performs continuous movement in 2 different modes and from 3 different data sources, all randomised when the mode is randomised.
-        If mode == 0, the movement will be on just the x and y axis, drawing on the page.
-        If mode == 1, the movement will be in all axis and above the page.
-        Data sources - 1 = random data, 2 = NN data, 3 = peak (mic input)
+        Modes: 0 == on page drawing (xy), 1 == above page (xyz)
+        Data sources: 1 = random data, 2 = NN data, 3 = peak (mic input)
         """
         move_x = 0
         move_y = 0
@@ -363,10 +362,7 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.bot_move_to(x + self.rnd(peak),
-                                     y + self.rnd(peak),
-                                     z, 0,
-                                     False)
+                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=False)    # draw small line from note head
 
             case 5:
                 logging.info('Wolff: dot')
@@ -387,7 +383,7 @@ class Conducter:
         self.drawbot.move_y()
 
         # randomly choose from the following choices
-        randchoice = randrange(7)
+        randchoice = randrange(6)
         logging.debug(f'randchoice CARDEW == {randchoice}')
 
         match randchoice:
@@ -432,10 +428,6 @@ class Conducter:
                                           randrange(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
-            case 6:
-                # continuous movement on page from NN
-
-                pass
 
     def high_energy_response(self):
         """
