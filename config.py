@@ -1,7 +1,7 @@
 # [HARDWARE]
 robot = True
-eeg_live = False
-eda_live = False
+eeg_live = True
+eda_live = True
 
 """
 to check available ports run the following code:
@@ -15,7 +15,7 @@ sudo chmod 666 /dev/ttyACM0
 """
 
 # [DOBOT]
-robot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
+robot1_port = 'COM10' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
 robot2_port = '/dev/ttyXXXX'
 robot_verbose = False
 
@@ -34,7 +34,7 @@ xarm_z_extents = [0, 150]
 xarm_irregular_shape_extents = 50
 
 # play params
-silence_listener = False
+silence_listener = True
 duration_of_piece = 360
 continuous_line = False
 speed = 5

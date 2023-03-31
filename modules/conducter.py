@@ -105,6 +105,21 @@ class Conducter:
 
             logging.debug(f"=========AFFECT - Daddy cycle started ===========interrupt_listener: started! Duration =  {phrase_length} seconds")
 
+            ##################################################################
+            # choose thought stream from data streams from Nebula/ live inputs
+            ##################################################################
+
+            # randomly pick an input stream for this cycle
+            # either mic_in, random, net generation or self-awareness
+            if random() < 0.36:
+                rnd_stream = 'mic_in'
+            else:
+                rnd = randrange(stream_list_len)
+                rnd_stream = stream_list[rnd]
+            self.hivemind.thought_train_stream = rnd_stream
+            logging.info(f'Random stream choice = {rnd_stream}')
+            print(self.hivemind.thought_train_stream)
+
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
             # TODO: is robot MID response always random?
@@ -130,21 +145,6 @@ class Conducter:
                 self.hivemind.rhythm_rate = rhythm_rate
                 logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
-
-                ##################################################################
-                # choose thought stream from data streams from Nebula/ live inputs
-                ##################################################################
-
-                # randomly pick an input stream for this cycle
-                # either mic_in, random, net generation or self-awareness
-                if random() < 0.36:
-                    rnd_stream = 'mic_in'
-                else:
-                    rnd = randrange(stream_list_len)
-                    rnd_stream = stream_list[rnd]
-                self.hivemind.thought_train_stream = rnd_stream
-                logging.info(f'Random stream choice = {rnd_stream}')
-                print(self.hivemind.thought_train_stream)
 
                 #############################
                 # Rhythm-level gesture gate: .5-2 seconds
