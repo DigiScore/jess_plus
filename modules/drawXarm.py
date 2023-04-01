@@ -67,7 +67,7 @@ class DrawXarm(XArmAPI):
         self.yaw = 0
         self.wait = False  # global wait var
         self.speed = 100
-        self.accel = 100
+        self.mvacc = 100
 
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
@@ -253,6 +253,10 @@ class DrawXarm(XArmAPI):
         print(f"pose = {pose}")
         return pose
 
+    def set_speed(self, arm_speed):
+        self.speed = arm_speed
+        self.mvacc = arm_speed
+
     # def _send_message(self, msg):
     #     sleep(0.1)
     #     if self.verbose:
@@ -262,7 +266,6 @@ class DrawXarm(XArmAPI):
     #     else:
     #         self.clear_commands()
     #
-    # # todo - how to use Queue to stop sending too much to the xArm
     # def _send_command(self, msg, wait=False):
     #     self.lock.acquire()
     #     self._send_message(msg)
@@ -305,8 +308,6 @@ class DrawXarm(XArmAPI):
         jump_to: will arc between coords lifting z an amount (arc radius)
         tool_move: will rotate the tool head/ pen holder
     """
-
-    # todo - something clever here that captures these 4 operational commands in its OWN Queue, then releases once the Xarm lock has returned self.get_moving???
 
     def arc(self,
             pose1: list = None,
@@ -413,8 +414,8 @@ class DrawXarm(XArmAPI):
 
         logging.info('tool move %c', colour)
         self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=yaw,
-                                  speed=self.speed, mvacc=self.accel, mvtime=None, is_radian=None,
-                                  wait=False, timeout=None, radius=None)
+                               speed=self.speed, mvacc=self.mvacc, mvtime=None, is_radian=None,
+                               wait=False, timeout=None, radius=None)
 
     ######################
     # drawXarm ANCILLARY FUNCTIONS
@@ -442,7 +443,7 @@ class DrawXarm(XArmAPI):
                      y=newy,
                      z=self.z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -456,7 +457,7 @@ class DrawXarm(XArmAPI):
                      y=y,
                      z=self.z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -469,7 +470,7 @@ class DrawXarm(XArmAPI):
                      y=y,
                      z=self.z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -489,7 +490,7 @@ class DrawXarm(XArmAPI):
                      y=y,
                      z=self.z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -503,7 +504,7 @@ class DrawXarm(XArmAPI):
                      z=self.z,
                      radius=100,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -522,7 +523,7 @@ class DrawXarm(XArmAPI):
                      y=y,
                      z=self.z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -542,7 +543,7 @@ class DrawXarm(XArmAPI):
                      z=self.z,
                      radius=radius,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -574,7 +575,7 @@ class DrawXarm(XArmAPI):
                      y=y,
                      z=z,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -656,7 +657,7 @@ class DrawXarm(XArmAPI):
                      pose2=[x + dx, y + dy, self.z, self.rool, self.pitch, self.yaw],
                      percent=100,
                      speed=self.speed,
-                     mvacc=self.accel,
+                     mvacc=self.mvacc,
                      wait=self.wait
                      )
 
@@ -686,7 +687,7 @@ class DrawXarm(XArmAPI):
                  pose2=[x, y + size, self.z, self.rool, self.pitch, self.yaw],
                  percent=100,
                  speed=self.speed,
-                 mvacc=self.accel,
+                 mvacc=self.mvacc,
                  wait=self.wait
                  )
 
@@ -712,7 +713,7 @@ class DrawXarm(XArmAPI):
                  pose2=pose2,
                  percent=rnd_percent,
                  speed=self.speed,
-                 mvacc=self.accel,
+                 mvacc=self.mvacc,
                  wait=self.wait
                  )
 
@@ -918,7 +919,7 @@ class DrawXarm(XArmAPI):
                  pose2=pose2,
                  percent=100,
                  speed=self.speed,
-                 mvacc=self.accel,
+                 mvacc=self.mvacc,
                  wait=self.wait
                  )
 

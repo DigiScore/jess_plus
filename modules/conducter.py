@@ -162,11 +162,8 @@ class Conducter:
 
                 # speed for this phrase
                 arm_speed = randrange(30, 500)
-                if self.DOBOT_CONNECTED:
-                    self.drawbot.speed(arm_speed)
-                elif self.XARM_CONNECTED:
-                    self.drawbot.speed = arm_speed
-                    self.drawbot.accel = arm_speed
+                if self.DOBOT_CONNECTED or self.XARM_CONNECTED:
+                    self.drawbot.set_speed(arm_speed)
 
                 while time() < rhythm_loop:
                     # make the master output the current value of the affect stream
@@ -408,9 +405,6 @@ class Conducter:
         move to a random x, y position
         """
         self.drawbot.clear_commands()
-        # self.drawbot.go_random_draw()
-        # self.drawbot.return_to_coord()
-        # sleep(0.1)
 
     def terminate(self):
         """

@@ -259,7 +259,7 @@ class Drawbot(Dobot):
         msg.params.extend(bytearray(struct.pack('f', cir_r)))
         return self._send_command(msg, wait)
 
-    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
+    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=False):
         """
         Simplified arc function for drawing 2D arcs on the xy axis.
         apex_x and y determine
@@ -308,7 +308,7 @@ class Drawbot(Dobot):
 
         # which mode
         # if self.continuous_line:
-        self.bot_move_to(x, newy, z, r, True)
+        self.bot_move_to(x, newy, z, r, False)
         # else:
         #     self.jump_to(x, newy, z, r, True)
 
@@ -333,9 +333,9 @@ class Drawbot(Dobot):
 
         # which mode
         if self.continuous_line:
-            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
         else:
-            self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+            self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
 
     def go_position_ready(self):
         """
