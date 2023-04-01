@@ -7,8 +7,6 @@ from threading import Thread
 
 # import project modules
 from nebula.hivemind import DataBorg
-from modules.drawDobot import Drawbot
-from modules.drawXarm import DrawXarm
 import config
 
 class RobotMode(Enum):
@@ -42,6 +40,8 @@ class Conducter:
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
         if DOBOT_CONNECTED:
+            from modules.drawDobot import Drawbot
+
             port = config.dobot1_port
             self.drawbot = Drawbot(
                 port=port,
@@ -49,6 +49,7 @@ class Conducter:
                 continuous_line=continuous_line
             )
         elif XARM_CONNECTED:
+            from modules.drawXarm import DrawXarm
             port = config.xarm1_port
             self.drawbot = DrawXarm(port)
 
@@ -71,9 +72,9 @@ class Conducter:
         if self.drawbot:
             print('locating home')
             self.drawbot.home()
-            input('remove pen lid, then press enter')
+            # input('remove pen lid, then press enter')
 
-            self.drawbot.draw_stave(staves=staves)
+            # self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
     def main_loop(self):
@@ -236,18 +237,18 @@ class Conducter:
                                     print("OffPage Mode")
                                     self.offpage(thought_train)
 
-                # get new position for hivemind
-                if self.drawbot:
-                    self.drawbot.get_normalised_position()
+                    # get new position for hivemind
+                    if self.drawbot:
+                        self.drawbot.get_normalised_position()
 
-                # and wait for a cycle
-                sleep(rhythm_rate)
+                    # and wait for a cycle
+                    sleep(rhythm_rate)
 
         logging.info('quitting dobot director thread')
         self.terminate()
 
     def repetition(self, peak):
-        self.drawbot.go_random_draw_up()
+        self.drawbot.go_random_jump()
         self.drawbot.create_shape_group()  # create a new shape group
         for i in range(randrange(1, 2)):  # repeat the shape group a random number of times
             logging.debug("repetition of shape")
@@ -282,11 +283,11 @@ class Conducter:
         jumps to a random spot and makes a mark inspired by Wolff
         """
         # get the current position
-        (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
-        logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+        # (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
+        # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
-        self.drawbot.go_random_draw_up()
+        self.drawbot.go_random_jump()
         # self.drawbot.move_y_random()
 
         # randomly choose from the following choices

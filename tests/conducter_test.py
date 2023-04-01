@@ -6,16 +6,16 @@ import config
 
 def main(mode=999):
 
-    test = Conducter(config.robot1_port)
+    test = Conducter()
 
     while True:
         rnd = random()
         print(rnd)
         arm_speed = randrange(20, 200)
-        test.drawbot.speed(
-            velocity=arm_speed,
-            acceleration=arm_speed
-        )
+        # test.drawbot.speed(
+        #     velocity=arm_speed,
+        #     acceleration=arm_speed
+        # )
 
         match mode:
             case 1:
@@ -51,4 +51,4 @@ def main(mode=999):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main(6)
+    main(4)

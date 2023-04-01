@@ -27,30 +27,38 @@ class RobotMode(Enum):
 port = config.xarm1_port
 drawbot = DrawXarm(port)
 
+# x, y, z, roll, pitch, yaw
+
+rl = -180
+pt = 0
+yw= 0
 
 poses = [
-    [300,  0,   100, -180, 0, 0],
-    [300,  100, 100, -180, 0, 0],
-    [400,  100, 100, -180, 0, 0],
-    [400, -100, 100, -180, 0, 0],
-    [300,  0,   300, -180, 0, 0]
+    [300,  0,   80, rl, pt, yw],
+    [400,  100, 80, rl, pt, yw],
+    [300,  100, 80, rl, pt, yw],
+    [400, -100, 80, rl, pt, yw],
+    [300,  0,   80, rl, pt, yw]
 ]
 
-ret = drawbot.set_position(*poses[0], speed=50, mvacc=100, wait=False)
+# for p in poses:
+
+ret = drawbot.set_position(*poses[1], speed=50, mvacc=100, wait=True)
 print('set_position, ret: {}'.format(ret))
 
+#
+drawbot.note_head()
+# ret = drawbot.move_circle(pose1=poses[1], pose2=poses[2], percent=100, speed=200, mvacc=1000, wait=True)
+# print('move_circle, ret: {}'.format(ret))
+#
+# # sleep(10)
+# # drawbot.clear_commands()
+#
+#
+# ret = drawbot.move_circle(pose1=poses[3], pose2=poses[4], percent=100, speed=200, mvacc=1000, wait=True)
+# print('move_circle, ret: {}'.format(ret))
 
-ret = drawbot.move_circle(pose1=poses[1], pose2=poses[2], percent=200, speed=200, mvacc=1000, wait=False)
-print('move_circle, ret: {}'.format(ret))
-
-sleep(4)
-drawbot.clear_commands()
-
-
-ret = drawbot.move_circle(pose1=poses[3], pose2=poses[4], percent=100, speed=200, mvacc=1000, wait=True)
-print('move_circle, ret: {}'.format(ret))
-
-drawbot.reset(wait=True)
+# drawbot.reset(wait=True)
 drawbot.disconnect()
 #
 # ###---Device default positions---###

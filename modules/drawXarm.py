@@ -38,7 +38,6 @@ class DrawXarm(XArmAPI):
 
     def __init__(self,
                  port: str,
-                 continuous_line: bool = False,
                  ):
 
         # own a hive mind
@@ -46,25 +45,39 @@ class DrawXarm(XArmAPI):
 
         # init and inherit the Dobot library
         super().__init__(port,
-                         max_cmdnum=1
+                         # max_cmdnum=1
                          ) # todo - is this the way to limit blind running?
 
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        self.move_gohome()
-        # self.set_collision_sensitivity(value=5) # todo I think 5 is very sensitive??
+        self.move_gohome(wait=True)
+        boundary_limits = [config.xarm_x_extents[1], config.xarm_x_extents[0],
+                           config.xarm_y_extents[1], config.xarm_y_extents[0],
+                           config.xarm_z_extents[1], config.xarm_z_extents[0]
+                           ]
+        self.set_reduced_tcp_boundary(boundary_limits)
+        self.set_world_offset([0, 0, 100, 0, 0, 0])
+        # self.set_collision_sensitivity(value=0) # todo I think 5 is very sensitive??
 
         # make self.z a class constant - to be amended by pen placement check
         self.z = 0
+        self.roll = -180
+        self.pitch = 0
+        self.yaw = 0
         self.wait = False  # global wait var
 
-        self.continuous_line = continuous_line
 
         # make a shared list/ dict
         # todo - make new ones
-        self.ready_position = [250, 0, 20, 0]
-        self.draw_position = [250, 0, 0, 0]
+        self.ready_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
+                               0,
+                               self.z + 20
+                                ]
+        self.draw_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
+                               0,
+                               self.z
+                                ]
         self.end_position = (250, 0, 50, 0)
 
         self.x_extents = config.xarm_x_extents
@@ -222,11 +235,9 @@ class DrawXarm(XArmAPI):
             # self.last_used_position()  # go to safe place (last used position?
 
     def clear_commands(self):
-        # self.force_queued_stop()
-        # self._set_queued_cmd_stop_exec()
-        # self._set_queued_cmd_clear()
-        # self._set_queued_cmd_start_exec()
-        # todo - clear command lst ??? - looks like self.set_state(4) is key here - emergancy stop may well do it.
+        """
+        Clears the command cache waits for next
+        """
         self.set_state(4)
         sleep(0.1)
         self.set_state(0)
@@ -245,7 +256,9 @@ class DrawXarm(XArmAPI):
         pass
 
     def get_pose(self):
-        return self.get_position()
+        pose = self.get_position()[1]
+        print(f"pose = {pose}")
+        return pose
 
     # def _send_message(self, msg):
     #     sleep(0.1)
@@ -305,8 +318,8 @@ class DrawXarm(XArmAPI):
     def arc(self,
             pose1: list = None,
             pose2: list = None,
-            percent: int = 50,
-            speed: int = 200,
+            percent: int = 100,
+            speed: int = 100,
             mvacc: int = 1000,
             wait: bool = False
             ):
@@ -347,9 +360,9 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        x += self.offsetx
-        y += self.offsety
-        z += self.offsetz
+        # x += self.offsetx
+        # y += self.offsety
+        # z += self.offsetz
 
         logging.info('move to')
 
@@ -382,9 +395,9 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        x += self.offsetx
-        y += self.offsety
-        z += self.offsetz
+        # x += self.offsetx
+        # y += self.offsety
+        # z += self.offsetz
 
         logging.info('jump to')
         self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=radius,
@@ -555,6 +568,7 @@ class DrawXarm(XArmAPI):
         """
 
         pose = self.get_pose()[:3]
+        print(pose)
 
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]  # calulate new position, used for checking
 
@@ -570,7 +584,8 @@ class DrawXarm(XArmAPI):
             z = 0
 
         self.coords.append(newPose[:2])
-        self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
+        # self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
+        self.jump_to(x, y, z, wait=self.wait)
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
     #     """moves specific joints by an amount."""
@@ -629,7 +644,7 @@ class DrawXarm(XArmAPI):
                     if (stave + 1) < staves:
                         self.jump_to(x, y_start, z, r)
         else:
-            self.jump_to(x, y_end, z, r)
+            self.jump_to(x, y_end, z)
 
     def squiggle(self,
                  arc_list: list):
@@ -666,8 +681,9 @@ class DrawXarm(XArmAPI):
             wait: True = wait till sequence finished
             """
 
-        (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-        self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
+        x, y, z = self.get_pose()[:3]
+        self.arc([x+2, y, z, -180, 0, 0], [x, y+2, z, -180, 0, 0], 100)
+        # self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
 
     # -- shape drawing functions --#
     def draw_square(self, size):  # draws a square at the robots current position with a size and angle (in degrees)
