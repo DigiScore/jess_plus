@@ -264,8 +264,8 @@ class Conducter:
         Modes: 0 == on page drawing (xy), 1 == above page (xyz)
         Data sources: 1 = random data, 2 = NN data, 3 = peak (mic input)
         """
-        move_x = 0
-        move_y = 0
+        # move_x = 0
+        # move_y = 0
 
         match self.continuous_mode:
             case 0:     # on page (z axis at draw height)
@@ -275,14 +275,13 @@ class Conducter:
                         move_y = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = uniform(self.hivemind.audio2core_2d[0], -self.hivemind.audio2core_2d[0]) * self.joint_inc
-                        move_y = uniform(self.hivemind.audio2core_2d[1], -self.hivemind.audio2core_2d[1]) * self.joint_inc
-                        
-                
+                        move_x = uniform(self.hivemind.audio2core_2d[0], - self.hivemind.audio2core_2d[0]) * self.joint_inc
+                        move_y = uniform(self.hivemind.audio2core_2d[1], - self.hivemind.audio2core_2d[1]) * self.joint_inc
+
                 self.drawbot.position_move_by(move_x, move_y, 0, wait=True)
                 
             case 1:     # above page (z axis affected by data)
-                move_z = 0
+                # move_z = 0
                 match self.continuous_source:
                     case 0:     # random data
                         move_x = uniform(-self.joint_inc, self.joint_inc)
@@ -290,9 +289,9 @@ class Conducter:
                         move_z = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = uniform(self.hivemind.flow2core_2d[0], -self.hivemind.flow2core_2d[0]) * self.joint_inc
+                        move_x = uniform(self.hivemind.flow2core_2d[0], - self.hivemind.flow2core_2d[0]) * self.joint_inc
                         #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
-                        move_z = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
+                        move_z = uniform(self.hivemind.flow2core_2d[1], + self.hivemind.flow2core_2d[1]) * self.joint_inc
 
                 self.drawbot.position_move_by(move_x, 0, move_z, wait=False)
 
