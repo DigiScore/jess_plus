@@ -78,7 +78,7 @@ class DrawXarm(XArmAPI):
                                0,
                                self.z
                                 ]
-        self.end_position = (250, 0, 50, 0)
+        # self.end_position = (250, 0, 50, 0)
 
         self.x_extents = config.xarm_x_extents
         self.y_extents = config.xarm_y_extents
@@ -183,6 +183,7 @@ class DrawXarm(XArmAPI):
         logging.info(f'current x,y,z normalised  = {norm_xyz}')
 
     def safety_position_check(self, pose):
+        # todo -  hopefully this is now redundent because of def.reduced_tcp_limits()
         if pose[0] < self.x_extents[0]:  # check x posiion
             x = self.x_extents[0]
         elif pose[0] > self.x_extents[1]:
@@ -248,15 +249,8 @@ class DrawXarm(XArmAPI):
         """
         self.emergency_stop()
 
-    def world_offset(self):
-        """
-        Used to set the home position to take account for the pen
-        """
-        # self.set_world_offset([x, y, z, roll, pitch, yaw],
-        pass
-
     def get_pose(self):
-        pose = self.get_position()[1]
+        pose = self.position()
         print(f"pose = {pose}")
         return pose
 
@@ -332,13 +326,18 @@ class DrawXarm(XArmAPI):
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
         logging.info('arc/ circle')
-        self.move_circle(pose1=pose1,
-                         pose2=pose2,
-                         percent=percent,
-                         speed=speed,
-                         mvacc=mvacc,
-                         wait=wait
-                         )
+
+        self.add_to_command_list(command="move_circel",
+                                 arg_list=[pose1, pose2, percent, speed, mvacc, wait]
+                                 )
+
+        # self.move_circle(pose1=pose1,
+        #                  pose2=pose2,
+        #                  percent=percent,
+        #                  speed=speed,
+        #                  mvacc=mvacc,
+        #                  wait=wait
+        #                  )
 
     def move_to(self,
                 x: float = None,
@@ -400,11 +399,14 @@ class DrawXarm(XArmAPI):
         # z += self.offsetz
 
         logging.info('jump to')
-        self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=radius,
-                          speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
-                          wait=wait, timeout=None)
 
+        self.add_to_command_list(command="jump_to",
+                                 arg_list=[x, y, z, radius, speed, mvacc, wait]
+                                 )
 
+        # self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=radius,
+        #                   speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
+        #                   wait=wait, timeout=None)
 
 
 
@@ -447,13 +449,11 @@ class DrawXarm(XArmAPI):
         x, y, z = self.get_pose()[3]
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         newy = (((elapsed - 0) * (self.y_extents[1] - self.y_extents[0])) / (self.duration_of_piece - 0)) + self.y_extents[1]
-        logging.debug(f'x:{x} y:{y} z:{z}')
 
         # check x-axis is in range
         if x <= self.x_extents[0] or x >= self.x_extents[1]:
             x = (self.x_extents[1] - self.x_extents[0]) / 2
 
-        # todo - need to make self.z a class constant
         self.move_to(x, newy, self.z, wait=self.wait)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
@@ -485,22 +485,22 @@ class DrawXarm(XArmAPI):
         """
         moves directly to pre-defined position 'Ready Position'
         """
-        x, y, z = self.ready_position[:3]
+        x, y, z = self.ready_position
         self.move_to(x, y, z, wait=self.wait)
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
-        x, y, z = self.draw_position[:3]
+        x, y, z = self.draw_position
         self.move_to(x, y, z, wait=self.wait)
 
-    def go_position_end(self):
-        """
-        moves directly to pre-defined position 'end position'
-        """
-        x, y, z = self.end_position[:3]
-        self.move_to(x, y, z, wait=self.wait)
+    # def go_position_end(self):
+    #     """
+    #     moves directly to pre-defined position 'end position'
+    #     """
+    #     x, y, z = self.end_position
+    #     self.move_to(x, y, z, wait=self.wait)
 
     # def jump_to(self, x, y, z, r, wait=True):
     #     """
@@ -516,7 +516,8 @@ class DrawXarm(XArmAPI):
 
     def home(self):
         """
-        Go directly to the home position 0, 0, 0, 0
+        Go directly to the home position 0, 0, 0, 0.
+        Hopefully this accounts for world offset and gripper
         """
         self.move_gohome()
 
@@ -525,14 +526,14 @@ class DrawXarm(XArmAPI):
         Go to an x and y position with the pen touching the paper
         """
         self.coords.append((x, y))
-        self.move_to(x, y, self.z, wait=self.wait)
+        self.move_to(x, y, self.z, wait=wait)
 
-    def go_draw_up(self, x, y, wait=True):
+    def go_draw_up(self, x, y, wait=False):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        self.jump_to(x, y, self.z, wait=self.wait)
+        self.jump_to(x, y, 100, wait=wait)
 
     # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -540,8 +541,8 @@ class DrawXarm(XArmAPI):
         Move to a random position within the x and y
         extents with the pen touching the page.
         """
-        x = uniform(self.x_extents[0], self.x_extents[1])
-        y = uniform(self.y_extents[0], self.y_extents[1])
+        x = uniform(self.xarm_x_extents[0], self.xarm_x_extents[1])
+        y = uniform(self.xarm_y_extents[0], self.xarm_y_extents[1])
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
@@ -552,40 +553,39 @@ class DrawXarm(XArmAPI):
         Lift the pen, move to a random position within the x and y extents,
         then lower the pen to draw position
         """
-        x = uniform(self.x_extents[0], self.x_extents[1])
-        y = uniform(self.y_extents[0], self.y_extents[1])
-        z = randrange(100)
+        x = uniform(self.xarm_x_extents[0], self.xarm_x_extents[1])
+        y = uniform(self.xarm_y_extents[0], self.xarm_y_extents[1])
+        radius = randrange(100)
 
         self.coords.append((x, y))
         print("Random draw pos above page x:", x, " y:", y)
-        self.jump_to(x, y, z, wait=self.wait)
+        self.jump_to(x, y, radius, wait=self.wait)
 
     # -- move by functions --#
-    def position_move_by(self, x, y, z, wait=True):
+    def position_move_by(self, x, y, z, wait=False):
         """
         Increment the robot cartesian position by x, y, z.
         Check that the arm isn't going out of x, y, z extents
         """
 
         pose = self.get_pose()[:3]
-        print(pose)
 
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]  # calulate new position, used for checking
 
-        # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:  # check x posiion
-            print("delta x reset to 0")
-            x = 0
-        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:  # check y position
-            print("delta y reset to 0")
-            y = 0
-        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:  # check z height
-            print("delta z reset to 0")
-            z = 0
+        # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
+        # if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:  # check x posiion
+        #     print("delta x reset to 0")
+        #     x = 0
+        # if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:  # check y position
+        #     print("delta y reset to 0")
+        #     y = 0
+        # if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:  # check z height
+        #     print("delta z reset to 0")
+        #     z = 0
 
         self.coords.append(newPose[:2])
         # self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
-        self.jump_to(x, y, z, wait=self.wait)
+        self.jump_to(x, y, z, wait=wait)
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
     #     """moves specific joints by an amount."""
@@ -611,40 +611,40 @@ class DrawXarm(XArmAPI):
       DO NOT CALL DOBOT PRIMATIVES DIRECTY!!
       """
 
-    def draw_stave(self, staves: int = 1):
-        """
-        Draws a  line across the middle of an A3 paper, symbolising a stave.
-        Has optional function to draw multiple staves.
-        Starts at right hand edge centre, and moves directly left.
-        Args:
-            staves: number of lines to draw. Default = 1
-        """
-
-        stave_gap = 2
-        x = 250 - ((staves * stave_gap) / 2)
-        y_start = 175
-        y_end = -175
-        z = 0
-        r = 0
-
-        # goto start position for line draw, without pen
-        self.bot_move_to(x, y_start, z, r)
-        input('place pen on paper, then press enter')
-
-        if staves >= 1:
-            # draw a line/ stave
-            for stave in range(staves):
-                print(f'drawing stave {stave + 1} out of {staves}')
-                self.bot_move_to(x, y_end, z, r)
-
-                if staves > 1:
-                    # reset to RH and draw the rest
-                    x += stave_gap
-
-                    if (stave + 1) < staves:
-                        self.jump_to(x, y_start, z, r)
-        else:
-            self.jump_to(x, y_end, z)
+    # def draw_stave(self, staves: int = 1):
+    #     """
+    #     Draws a  line across the middle of an A3 paper, symbolising a stave.
+    #     Has optional function to draw multiple staves.
+    #     Starts at right hand edge centre, and moves directly left.
+    #     Args:
+    #         staves: number of lines to draw. Default = 1
+    #     """
+    #
+    #     stave_gap = 2
+    #     x = 250 - ((staves * stave_gap) / 2)
+    #     y_start = 175
+    #     y_end = -175
+    #     z = 0
+    #     r = 0
+    #
+    #     # goto start position for line draw, without pen
+    #     self.bot_move_to(x, y_start, z, r)
+    #     input('place pen on paper, then press enter')
+    #
+    #     if staves >= 1:
+    #         # draw a line/ stave
+    #         for stave in range(staves):
+    #             print(f'drawing stave {stave + 1} out of {staves}')
+    #             self.bot_move_to(x, y_end, z, r)
+    #
+    #             if staves > 1:
+    #                 # reset to RH and draw the rest
+    #                 x += stave_gap
+    #
+    #                 if (stave + 1) < staves:
+    #                     self.jump_to(x, y_start, z, r)
+    #     else:
+    #         self.jump_to(x, y_end, z)
 
     def squiggle(self,
                  arc_list: list):
