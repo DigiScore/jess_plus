@@ -359,20 +359,20 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Cardew: draw arc')
-                # range = peak * 10
-                self.drawbot.arc2D(x + randrange(-10, 10),
-                                   y + randrange(-10, 10),
-                                   x + randrange(-10, 10),
-                                   y + randrange(-10, 10),
+                are_range = peak * 10
+                self.drawbot.arc2D(x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range),
+                                   x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range),
                                    )
 
             case 1:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((randrange(-5, 5),
-                                          randrange(-5, 5),
-                                          randrange(-5, 5))
+                    squiggle_list.append((uniform(-5, 5),
+                                          uniform(-5, 5),
+                                          uniform(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
@@ -393,9 +393,9 @@ class Conducter:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((randrange(-5, 5),
-                                          randrange(-5, 5),
-                                          randrange(-5, 5))
+                    squiggle_list.append((uniform(-5, 5),
+                                          uniform(-5, 5),
+                                          uniform(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 

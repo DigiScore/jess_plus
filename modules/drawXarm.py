@@ -1,4 +1,4 @@
-from random import getrandbits, randrange, uniform
+from random import getrandbits, randrange, uniform, random
 from time import time, sleep
 from enum import Enum
 import logging
@@ -328,8 +328,8 @@ class DrawXarm(XArmAPI):
         self.move_circle(pose1=pose1,
                          pose2=pose2,
                          percent=percent,
-                         speed=self.speed,
-                         mvacc=self.accel,
+                         speed=speed,
+                         mvacc=mvacc,
                          wait=wait
                          )
 
@@ -337,8 +337,8 @@ class DrawXarm(XArmAPI):
                 x: float = None,
                 y: float = None,
                 z: float = None,
-                speed: float = None,
-                mvacc: float = None,
+                speed: int = 100,
+                mvacc: int = 1000,
                 wait: bool = False
                 ):
         """
@@ -357,8 +357,8 @@ class DrawXarm(XArmAPI):
         self.set_position(x=x,
                           y=y,
                           z=z,
-                          speed=self.speed,
-                          mvacc=self.accel,
+                          speed=speed,
+                          mvacc=mvacc,
                           wait=wait
                           )
 
@@ -367,8 +367,8 @@ class DrawXarm(XArmAPI):
                 y: float = None,
                 z: float = None,
                 radius: float = 20,
-                speed: float = None,
-                mvacc: float = None,
+                speed: int = 100,
+                mvacc: int = 1000,
                 wait: bool = False
                 ):
         """
@@ -388,8 +388,8 @@ class DrawXarm(XArmAPI):
                           y=y,
                           z=z,
                           radius=radius,
-                          speed=self.speed,
-                          mvacc=self.accel,
+                          speed=speed,
+                          mvacc=mvacc,
                           wait=wait
                           )
 
@@ -438,7 +438,13 @@ class DrawXarm(XArmAPI):
             x = (self.xarm_x_extents[1] - self.xarm_x_extents[0]) / 2
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
-        self.move_to(x, newy, self.z, wait=self.wait)
+        self.move_to(x=x,
+                     y=newy,
+                     z=self.z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
 
     def go_position_ready(self):
@@ -446,14 +452,26 @@ class DrawXarm(XArmAPI):
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.ready_position
-        self.move_to(x, y, z, wait=self.wait)
+        self.move_to(x=x,
+                     y=y,
+                     z=self.z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.draw_position
-        self.move_to(x, y, z, wait=self.wait)
+        self.move_to(x=x,
+                     y=y,
+                     z=self.z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     def home(self):
         """
@@ -467,14 +485,27 @@ class DrawXarm(XArmAPI):
         Go to an x and y position with the pen touching the paper
         """
         self.coords.append((x, y))
-        self.move_to(x, y, self.z, wait=wait)
+        self.move_to(x=x,
+                     y=y,
+                     z=self.z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     def go_draw_up(self, x, y, wait=False):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        self.jump_to(x, y, self.z, 100, wait=wait)
+        self.jump_to(x=x,
+                     y=y,
+                     z=self.z,
+                     radius=100,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -487,7 +518,13 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
-        self.move_to(x, y, self.z, wait=self.wait)
+        self.move_to(x=x,
+                     y=y,
+                     z=self.z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on
         """
@@ -500,7 +537,14 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print("Random draw pos above page x:", x, " y:", y)
-        self.jump_to(x, y, radius, wait=self.wait)
+        self.jump_to(x=x,
+                     y=y,
+                     z=self.z,
+                     radius=radius,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     # -- move by functions --#
     def position_move_by(self, x, y, z, wait=False):
@@ -526,7 +570,13 @@ class DrawXarm(XArmAPI):
 
         self.coords.append(newPose[:2])
         # self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
-        self.jump_to(x, y, z, wait=wait)
+        self.move_to(x=x,
+                     y=y,
+                     z=z,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
     #     """moves specific joints by an amount."""
@@ -598,8 +648,8 @@ class DrawXarm(XArmAPI):
         """
         x, y, z = self.get_pose()[3]
         self.coords.append((x, y))
+
         for arc in arc_list:
-            # if self.hivemind.interrupt_bang:
             circumference, dx, dy = arc[0], arc[1], arc[2]
             self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
             x += dx
@@ -623,10 +673,37 @@ class DrawXarm(XArmAPI):
             """
 
         x, y, z = self.get_pose()[:3]
-        self.arc(pose1=[x+size, y, self.z, self.roll, self.pitch, self.yaw],
-                 pose2=[x, y+size, self.z, self.pitch, self.yaw],
+        self.arc(pose1=[x + size, y, self.z, self.roll, self.pitch, self.yaw],
+                 pose2=[x, y + size, self.z, self.rool, self.pitch, self.yaw],
                  percent=100,
-                 speed=self.sp
+                 speed=self.speed,
+                 mvacc=self.accel,
+                 wait=self.wait
+                 )
+
+    def draw_arc2D(self,
+                   pose1_x,
+                   pose1_y,
+                   pose2_x,
+                   pose2_y
+                   ):
+        """
+        Draws an arc taking two new coords pose1 and pose2
+        :param new_x1:
+        :param new_y1:
+        :param new_x2:
+        :param new_y2:
+        :return:
+        """
+        pose1 = [pose1_x, pose1_y, self.z, self.roll, self.pitch, self.yaw]
+        pose2 = [pose2_x, pose2_y, self.z, self.roll, self.pitch, self.yaw]
+        rnd_percent = int(random() * 100)
+
+        self.arc(pose1=pose1,
+                 pose2=pose2,
+                 percent=rnd_percent,
+                 speed=self.speed,
+                 mvacc=self.accel,
                  wait=self.wait
                  )
 
@@ -637,7 +714,7 @@ class DrawXarm(XArmAPI):
         Start from top left vertex and draw anti-clockwise.
         Positions are saved to the squares array to be accessed by other functions.
         """
-        pos = self.get_pose()[:2]
+        x, y = self.get_pose()[:2]
         square = []
 
         local_pos = [
@@ -647,17 +724,22 @@ class DrawXarm(XArmAPI):
         ]
 
         for i in range(len(local_pos)):
-            # if self.hivemind.interrupt_bang:
             next_pos = [
-                pos[0] + local_pos[i][0],
-                pos[1] + local_pos[i][1]
+                x + local_pos[i][0],
+                y + local_pos[i][1]
             ]
-            self.go_draw(next_pos[0], next_pos[1])
+            self.go_draw(x=next_pos[0],
+                         y=next_pos[1],
+                         wait=self.wait
+                         )
+
             square.append(next_pos)
             self.coords.append(next_pos)
 
-        # if self.hivemind.interrupt_bang:
-        self.go_draw(pos[0], pos[1], wait=self.wait)
+        self.go_draw(x=x,
+                     y=y,
+                     wait=self.wait
+                     )
 
         self.squares.append(square)
 
@@ -695,7 +777,10 @@ class DrawXarm(XArmAPI):
                 pos[1] + local_pos[i][1]
             ]
             # if shape_interrupt == False:
-            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
+            self.go_draw(x=next_pos[0],
+                         y=next_pos[1],
+                         wait=self.wait
+                         )
             # else:
             #     shape_interrupt = False
             #     return None
@@ -704,7 +789,10 @@ class DrawXarm(XArmAPI):
             self.coords.append(next_pos)
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(pos[0], pos[1])  # go back to the first vertex to join up the shape
+        self.go_draw(x=pos[0],
+                     y=pos[1],
+                     wait=self.wait
+                     )  # go back to the first vertex to join up the shape
         self.triangles.append(triangle)
 
     def draw_sunburst(self, r,
@@ -752,8 +840,14 @@ class DrawXarm(XArmAPI):
             sunburst.append(next_pos)
             self.coords.append(next_pos)
 
-            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)  # draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=self.wait)  # return to centre point to then draw another line
+            self.go_draw(x=next_pos[0],
+                         y=next_pos[1],
+                         wait=self.wait
+                         )  # draw line from centre point outwards
+            self.go_draw(x=pos[0],
+                         y=pos[1],
+                         wait=self.wait
+                         )  # return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -781,12 +875,15 @@ class DrawXarm(XArmAPI):
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
-            # todo Adam - this needs to call a dobot mid level func (above)
-            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+            self.go_draw(x=x,
+                         y=y,
+                         wait=self.wait
+                         )
 
-        # if self.hivemind.interrupt_bang:
-        # todo Adam - this needs to call a dobot mid level func (above)
-        self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+        self.go_draw(x=pos[0],
+                     y=pos[1],
+                     wait=self.wait
+                     )  # return to centre point to then draw another line
 
         self.irregulars.append(vertices)
 
