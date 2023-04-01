@@ -97,7 +97,7 @@ class Nebula(Listener,
 
             self.eda = BITalino(BITALINO_MAC_ADDRESS)
             self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
-            first_eda_data = self.eda.read(1)
+            first_eda_data = self.eda.read(1)[0]
             logging.info(f'Data from BITalino = {first_eda_data}')
 
         # work out master timing then collapse hivemind.running
@@ -127,9 +127,7 @@ class Nebula(Listener,
                 break
             # read data from bitalino
             if self.BITALINO_CONNECTED:
-                eda_raw = [self.eda.read(1)[0][0]]
-                # TODO: to check, eda needs to be a list of length 1, the shape
-                # will depend on the number of samples read at a time
+                eda_raw = [self.eda.read(1)[0][-1]]
                 logging.debug(f"eda data raw = {eda_raw}")
                 eda_norm = scaler(eda_raw, self.hivemind.eda_mins, self.hivemind.eda_maxs)
                 eda_2d = eda_norm[:, np.newaxis]

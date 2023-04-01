@@ -8,3 +8,4 @@ torch~=2.0.0
 torchaudio~=2.0.1
 torchvision~=0.15.1
 scipy~=1.10.1
+PyBluez-bitalino~=0.30
