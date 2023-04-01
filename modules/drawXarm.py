@@ -912,7 +912,7 @@ class DrawXarm(XArmAPI):
 
         elif side == 1:
             pose1 = [x - size, y, self.z, self.roll, self.pitch, self.yaw]
-            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]add
+            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]
 
         self.arc(pose1=pose1,
                  pose2=pose2,
