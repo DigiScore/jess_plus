@@ -651,10 +651,19 @@ class DrawXarm(XArmAPI):
 
         for arc in arc_list:
             circumference, dx, dy = arc[0], arc[1], arc[2]
-            self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
+
+            self.arc(pose1=[x + circumference, y, self.z, self.roll, self.pitch, self.yaw],
+                     pose2=[x + dx, y + dy, self.z, self.rool, self.pitch, self.yaw],
+                     percent=100,
+                     speed=self.speed,
+                     mvacc=self.accel,
+                     wait=self.wait
+                     )
+
+            # self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
             x += dx
             y += dy
-            sleep(0.2)
+            sleep(0.1)
 
     def dot(self):
         """
@@ -903,7 +912,7 @@ class DrawXarm(XArmAPI):
 
         elif side == 1:
             pose1 = [x - size, y, self.z, self.roll, self.pitch, self.yaw]
-            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]
+            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]add
 
         self.arc(pose1=pose1,
                  pose2=pose2,

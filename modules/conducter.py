@@ -288,7 +288,7 @@ class Conducter:
         jumps to a random spot and makes a mark inspired by Wolff
         """
         # get the current position
-        # (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
+        x, y, z = self.drawbot.pose()[:3]
         # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
@@ -302,9 +302,9 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Wolff: draw line')
-                self.drawbot.bot_move_to(x + self.rnd(peak),
+                self.drawbot.move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
-                                     z, 0,
+                                     z,
                                      False)
 
             case 1:
@@ -314,9 +314,9 @@ class Conducter:
             case 2:
                 logging.info('Wolff: dot and line')
                 self.drawbot.dot()
-                self.drawbot.bot_move_to(x + self.rnd(peak),
+                self.drawbot.move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
-                                     z, 0,
+                                     z,
                                      False)
 
             case 3:
@@ -329,9 +329,9 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.bot_move_to(x + self.rnd(peak),
+                self.drawbot.move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
-                                     z, 0,
+                                     z,
                                      False)
 
             case 5:
@@ -346,8 +346,8 @@ class Conducter:
         """
         randomly chooses a shape inspired by Cardew
         """
-        (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
-        logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+        x, y, z = self.drawbot.pose()[:3]
+        # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # move Y along
         self.drawbot.move_y()
@@ -378,12 +378,16 @@ class Conducter:
 
             case 2:
                 logging.info('Cardew: draw circle')
-                self.drawbot.draw_circle(int(peak * 10))
+                side = randrange(2)
+                self.drawbot.draw_circle(int(peak * 10),
+                                         side
+                                         )
 
             case 3:
                 logging.info('Cardew: line')
                 self.drawbot.go_draw(x + self.rnd(peak * 10),
-                                     y + self.rnd(peak * 10))
+                                     y + self.rnd(peak * 10)
+                                     )
 
             case 4:
                 logging.info('Cardew: return to coord')
