@@ -887,31 +887,41 @@ class DrawXarm(XArmAPI):
 
         self.irregulars.append(vertices)
 
-    def draw_circle(self, size, side=0, wait=True):
+    def draw_circle(self, size, side=0, wait=False):
         """
         Draws a circle from the current pen position.
         'side' is used to determine which direction the circle is drawn relative
         to the pen position, allows for creation of figure-8 patterns.
         The start position, size, and side are saved to the circles list.
         """
-        pos = self.get_pose()[:4]
+        x, y, z = self.get_pose()[:3]
+        self.coords.append((x, y))
 
-        if side == 0:  # side is used to draw figure 8 patterns
-            self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
-                     wait=self.wait)
+        if side == 0:
+            pose1 = [x + size, y, self.z, self.roll, self.pitch, self.yaw]
+            pose2 = [x, y + size, self.z, self.roll, self.pitch, self.yaw]
+
         elif side == 1:
-            self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0] + 0.01, pos[1] + 0.01, pos[2], pos[3],
-                     wait=self.wait)
+            pose1 = [x - size, y, self.z, self.roll, self.pitch, self.yaw]
+            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]
 
-        circle = []
-        circle.append(pos)
-        circle.append(size)
-        circle.append(side)
-        self.coords.append(pos)
+        self.arc(pose1=pose1,
+                 pose2=pose2,
+                 percent=100,
+                 speed=self.speed,
+                 mvacc=self.accel,
+                 wait=self.wait
+                 )
 
-        self.circles.append(circle)
+        # circle = []
+        # circle.append(pos)
+        # circle.append(size)
+        # circle.append(side)
+        # self.coords.append(pos)
 
-    def draw_char(self, _char, size, wait=True):
+        # self.circles.append(circle)
+
+    def draw_char(self, _char, size, wait=False):
         """
         Draws a character (letter, number) on the pens current position.
         Supported characters are as follows:
@@ -1012,7 +1022,7 @@ class DrawXarm(XArmAPI):
 
         self.chars.append(char)  # add the completed character to the characters list
 
-    def draw_p(self, size, wait=True):
+    def draw_p(self, size, wait=False):
         """
         Draws the letter P at the pens current position.
         Seperate from the draw_char() function as it requires an arc.
@@ -1046,7 +1056,7 @@ class DrawXarm(XArmAPI):
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
-    def draw_b(self, size, wait=True):
+    def draw_b(self, size, wait=False):
         """
         Draws the letter B at the pens current position.
         Seperate from the draw_char() function as it requires an arc.
@@ -1080,7 +1090,7 @@ class DrawXarm(XArmAPI):
         self.chars.append(char)
         for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
-    def draw_c(self, size, wait=True):
+    def draw_c(self, size, wait=False):
         """
         Draws the letter C at the pens current position.
         Seperate from the draw_char() function as it requires an arc.
@@ -1108,7 +1118,7 @@ class DrawXarm(XArmAPI):
         self.chars.append(char)
         for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
-    def draw_d(self, size, wait=True):
+    def draw_d(self, size, wait=False):
         """
         Draws the letter D at the pens current position.
         Seperate from the draw_char() function as it requires an arc.
@@ -1139,7 +1149,7 @@ class DrawXarm(XArmAPI):
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
-    def draw_g(self, size, wait=True):
+    def draw_g(self, size, wait=False):
         """
         Draws the letter G at the pens current position.
         Seperate from the draw_char() function as it requires an arc.
@@ -1176,14 +1186,14 @@ class DrawXarm(XArmAPI):
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
-    def draw_random_char(self, size=1, wait=True):
+    def draw_random_char(self, size=1, wait=False):
         chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
 
         rand_char = chars[randrange(0, len(chars))]
 
         self.draw_char(rand_char, size, wait)
 
-    def create_shape_group(self, wait=True):
+    def create_shape_group(self, wait=False):
         """
         Function to create a new shape group, populates a list with shape
         group data and draws it using draw_shape_group().
@@ -1260,8 +1270,7 @@ class DrawXarm(XArmAPI):
 
         # if self.hivemind.interrupt_bang:
         self.go_draw(new_pos[0], new_pos[1])  # go to new position
-        self.draw_shape_group(shape_group, uniform(-3,
-                                                   3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
+        self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
 
     # -- return to shape functions --#
     def return_to_square(self):  # returns to a random pre-existing square and does something
@@ -1281,13 +1290,13 @@ class DrawXarm(XArmAPI):
                 randCorner = uniform(0, 3)
                 self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2],
                                 square[randCorner][3],
-                                wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                                wait=False)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
                 self.draw_square(uniform(20, 29), True)
             else:  # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
-                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
+                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=False)
+                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=False)
+                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=False)
+                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=False)
 
                 # device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
             # device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
@@ -1310,13 +1319,13 @@ class DrawXarm(XArmAPI):
             rand = uniform(0, 1)  # randomly choose between two behaviours
 
             if rand == 0:  # join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True)
-                self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=True)
-                self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
-                self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=True)
-                self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=True)
+                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=False)
+                self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=False)
+                self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
+                self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=False)
+                self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=False)
             else:  # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
+                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
                 self.draw_sunburst(20, True)
 
         else:
