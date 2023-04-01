@@ -29,17 +29,17 @@ class Conducter:
                  ):
 
         # PLATFORM = platform.system()
-        DOBOT_CONNECTED = config.dobot_connected
+        self.DOBOT_CONNECTED = config.dobot_connected
         verbose = config.dobot_verbose
 
-        XARM_CONNECTED = config.xarm_connected
+        self.XARM_CONNECTED = config.xarm_connected
 
         ############################
         # Robot
         ############################
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
-        if DOBOT_CONNECTED:
+        if self.DOBOT_CONNECTED:
             from modules.drawDobot import Drawbot
 
             port = config.dobot1_port
@@ -48,7 +48,7 @@ class Conducter:
                 verbose=verbose,
                 continuous_line=continuous_line
             )
-        elif XARM_CONNECTED:
+        elif self.XARM_CONNECTED:
             from modules.drawXarm import DrawXarm
             port = config.xarm1_port
             self.drawbot = DrawXarm(port)
@@ -130,8 +130,6 @@ class Conducter:
             print(self.hivemind.thought_train_stream)
 
             # define robot mode for this phase length
-            # robot_mode = RobotMode(randrange(5))
-            # TODO: is robot MID response always random?
             robot_mode = randrange(4)
 
             while time() < phrase_loop_end:
@@ -164,9 +162,11 @@ class Conducter:
 
                 # speed for this phrase
                 arm_speed = randrange(30, 500)
-                if self.drawbot:
-                    self.drawbot.speed(velocity=arm_speed,
-                                       acceleration=arm_speed)
+                if self.DOBOT_CONNECTED:
+                    self.drawbot.speed(arm_speed)
+                elif self.XARM_CONNECTED:
+                    self.drawbot.speed = arm_speed
+                    self.drawbot.accel = arm_speed
 
                 while time() < rhythm_loop:
                     # make the master output the current value of the affect stream

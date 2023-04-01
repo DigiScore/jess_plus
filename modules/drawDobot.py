@@ -382,6 +382,10 @@ class Drawbot(Dobot):
     def bot_move_to(self, x, y, z, r, wait=False):
         self.move_to(x, y, z, r, wait)
 
+    def set_speed(self, arm_speed: float = 100):
+        self.speed(velocity=arm_speed,
+                           acceleration=arm_speed)
+
     def go_draw(self, x, y, wait=True):
         """
         Go to an x and y position with the pen touching the paper

@@ -58,7 +58,7 @@ class DrawXarm(XArmAPI):
                            ]
         self.set_reduced_tcp_boundary(boundary_limits)
         self.set_world_offset([0, 0, 100, 0, 0, 0])
-        # self.set_collision_sensitivity(value=0) # todo I think 5 is very sensitive??
+        # self.set_collision_sensitivity(value=0)
 
         # make self.z a class constant - to be amended by pen placement check
         self.z = 0
@@ -66,10 +66,10 @@ class DrawXarm(XArmAPI):
         self.pitch = 0
         self.yaw = 0
         self.wait = False  # global wait var
-
+        self.speed = 100
+        self.accel = 100
 
         # make a shared list/ dict
-        # todo - make new ones
         self.ready_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
                                0,
                                self.z + 20
@@ -119,45 +119,44 @@ class DrawXarm(XArmAPI):
     ######################
     # Command Q control & safety checks
     ######################
-    def add_to_command_list(self,
-                            command: str,
-                            arg_list: list):
-
-        package = (command, arg_list)
-
-        self.command_list.append(package)
-        # print(len(self.command_list))
-
-    # todo - this might not be neccesary if the API is better and allows seamless interrupt
-    def process_command_list(self):
-        while self.hivemind.running:
-
-            # interrupt? clear list
-            if not self.hivemind.interrupt_bang:
-                self.command_list.clear()
-                sleep(0.1)
-                logging.info('Clearing command list')
-
-            # is the arm still moving????
-            elif not self.get_is_moving():
-
-            # and there is a command on list
-                if self.command_list:
-                    msg = self.command_list.pop()
-                    command, arg_list = msg[:]
-
-                    match command:
-                        case "move_circle":
-                            self.move_circle(arg_list)
-
-                        case "move_to":
-                            self.move_circle(arg_list)
-
-                        case "jump_to":
-                            self.move_circle(arg_list)
-
-            else:
-                sleep(0.01)
+    # def add_to_command_list(self,
+    #                         command: str,
+    #                         arg_list: list):
+    #
+    #     package = (command, arg_list)
+    #
+    #     self.command_list.append(package)
+    #     # print(len(self.command_list))
+    #
+    # def process_command_list(self):
+    #     while self.hivemind.running:
+    #
+    #         # interrupt? clear list
+    #         if not self.hivemind.interrupt_bang:
+    #             self.command_list.clear()
+    #             sleep(0.1)
+    #             logging.info('Clearing command list')
+    #
+    #         # is the arm still moving????
+    #         elif not self.get_is_moving():
+    #
+    #         # and there is a command on list
+    #             if self.command_list:
+    #                 msg = self.command_list.pop()
+    #                 command, arg_list = msg[:]
+    #
+    #                 match command:
+    #                     case "move_circle":
+    #                         self.move_circle(arg_list)
+    #
+    #                     case "move_to":
+    #                         self.move_circle(arg_list)
+    #
+    #                     case "jump_to":
+    #                         self.move_circle(arg_list)
+    #
+    #         else:
+    #             sleep(0.01)
 
     def get_normalised_position(self):
         original_pose = self.get_pose()[:3]
@@ -262,37 +261,37 @@ class DrawXarm(XArmAPI):
     #         self.ser.write(msg.bytes())
     #     else:
     #         self.clear_commands()
-
-    # todo - how to use Queue to stop sending too much to the xArm
-    def _send_command(self, msg, wait=False):
-        self.lock.acquire()
-        self._send_message(msg)
-        response = self._read_message()
-        self.lock.release()
-        #
-        # if not wait:
-        #     return response
-        #
-        # # if self.hivemind.interrupt_bang:
-        # try:
-        #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
-        #     if self.verbose:
-        #         print('pydobot: waiting for command', expected_idx)
-        #
-        #     while True:
-        #         current_idx = self._get_queued_cmd_current_index()
-        #
-        #         if current_idx != expected_idx:
-        #             sleep(0.1)
-        #             continue
-        #
-        #         if self.verbose:
-        #             print('pydobot: command %d executed' % current_idx)
-        #         break
-        # except:
-        #     print('pydobot -- command error')
-
-        return response
+    #
+    # # todo - how to use Queue to stop sending too much to the xArm
+    # def _send_command(self, msg, wait=False):
+    #     self.lock.acquire()
+    #     self._send_message(msg)
+    #     response = self._read_message()
+    #     self.lock.release()
+    #     #
+    #     # if not wait:
+    #     #     return response
+    #     #
+    #     # # if self.hivemind.interrupt_bang:
+    #     # try:
+    #     #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
+    #     #     if self.verbose:
+    #     #         print('pydobot: waiting for command', expected_idx)
+    #     #
+    #     #     while True:
+    #     #         current_idx = self._get_queued_cmd_current_index()
+    #     #
+    #     #         if current_idx != expected_idx:
+    #     #             sleep(0.1)
+    #     #             continue
+    #     #
+    #     #         if self.verbose:
+    #     #             print('pydobot: command %d executed' % current_idx)
+    #     #         break
+    #     # except:
+    #     #     print('pydobot -- command error')
+    #
+    #     return response
 
     ######################
     # drawXarm BASE FUNCTIONS
@@ -326,18 +325,13 @@ class DrawXarm(XArmAPI):
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
         logging.info('arc/ circle')
-
-        self.add_to_command_list(command="move_circel",
-                                 arg_list=[pose1, pose2, percent, speed, mvacc, wait]
-                                 )
-
-        # self.move_circle(pose1=pose1,
-        #                  pose2=pose2,
-        #                  percent=percent,
-        #                  speed=speed,
-        #                  mvacc=mvacc,
-        #                  wait=wait
-        #                  )
+        self.move_circle(pose1=pose1,
+                         pose2=pose2,
+                         percent=percent,
+                         speed=self.speed,
+                         mvacc=self.accel,
+                         wait=wait
+                         )
 
     def move_to(self,
                 x: float = None,
@@ -359,19 +353,14 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        # x += self.offsetx
-        # y += self.offsety
-        # z += self.offsetz
-
         logging.info('move to')
-
-        self.add_to_command_list(command="move_to",
-                                 arg_list=[x, y, z, speed, mvacc, wait]
-                                 )
-
-        # self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=None,
-        #              speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
-        #              wait=wait, timeout=None)
+        self.set_position(x=x,
+                          y=y,
+                          z=z,
+                          speed=self.speed,
+                          mvacc=self.accel,
+                          wait=wait
+                          )
 
     def jump_to(self,
                 x: float = None,
@@ -394,21 +383,15 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        # x += self.offsetx
-        # y += self.offsety
-        # z += self.offsetz
-
         logging.info('jump to')
-
-        self.add_to_command_list(command="jump_to",
-                                 arg_list=[x, y, z, radius, speed, mvacc, wait]
-                                 )
-
-        # self.set_position(x=x, y=y, z=z, roll=None, pitch=None, yaw=None, radius=radius,
-        #                   speed=speed, mvacc=mvacc, mvtime=None, relative=False, is_radian=None,
-        #                   wait=wait, timeout=None)
-
-
+        self.set_position(x=x,
+                          y=y,
+                          z=z,
+                          radius=radius,
+                          speed=self.speed,
+                          mvacc=self.accel,
+                          wait=wait
+                          )
 
     def tool_move(self,
                   colour: str = None,
@@ -430,7 +413,7 @@ class DrawXarm(XArmAPI):
 
         logging.info('tool move %c', colour)
         self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=yaw,
-                                  speed=None, mvacc=None, mvtime=None, is_radian=None,
+                                  speed=self.speed, mvacc=self.accel, mvtime=None, is_radian=None,
                                   wait=False, timeout=None, radius=None)
 
     ######################
@@ -451,35 +434,12 @@ class DrawXarm(XArmAPI):
         newy = (((elapsed - 0) * (self.y_extents[1] - self.y_extents[0])) / (self.duration_of_piece - 0)) + self.y_extents[1]
 
         # check x-axis is in range
-        if x <= self.x_extents[0] or x >= self.x_extents[1]:
-            x = (self.x_extents[1] - self.x_extents[0]) / 2
-
-        self.move_to(x, newy, self.z, wait=self.wait)
+        if x <= self.xarm_x_extents[0] or x >= self.xarm_x_extents[1]:
+            x = (self.xarm_x_extents[1] - self.xarm_x_extents[0]) / 2
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
+        self.move_to(x, newy, self.z, wait=self.wait)
 
-    # def move_y_random(self):
-    #     """
-    #     Moves x and y pen position to nearly the true Y point.
-    #     """
-    #     # How far into the piece
-    #     elapsed = time() - self.start_time
-    #
-    #     # get current y-value
-    #     (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-    #     # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-    #     newy = (((elapsed - 0) * (175 - -175)) / (self.duration_of_piece - 0)) + -175
-    #     logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
-    #
-    #     # check x-axis is in range
-    #     if x <= 200 or x >= 300:
-    #         x = 250
-    #
-    #     # which mode
-    #     if self.continuous_line:
-    #         self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-    #     else:
-    #         self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
 
     def go_position_ready(self):
         """
@@ -494,25 +454,6 @@ class DrawXarm(XArmAPI):
         """
         x, y, z = self.draw_position
         self.move_to(x, y, z, wait=self.wait)
-
-    # def go_position_end(self):
-    #     """
-    #     moves directly to pre-defined position 'end position'
-    #     """
-    #     x, y, z = self.end_position
-    #     self.move_to(x, y, z, wait=self.wait)
-
-    # def jump_to(self, x, y, z, r, wait=True):
-    #     """
-    #     Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
-    #     """
-    #     self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
-
-    # def joint_move_to(self, j1, j2, j3, j4, wait=True):
-    #     """
-    #     moves specific joints direct to new angles.
-    #     """
-    #     self.joint_move_to(j1, j2, j3, j4, wait)
 
     def home(self):
         """
@@ -533,7 +474,7 @@ class DrawXarm(XArmAPI):
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        self.jump_to(x, y, 100, wait=wait)
+        self.jump_to(x, y, self.z, 100, wait=wait)
 
     # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -671,7 +612,7 @@ class DrawXarm(XArmAPI):
         """
         self.note_head(1)
 
-    def note_head(self, size: float = 5):
+    def note_head(self, size: float = 3):
         """
         draws a circle at the current position.
         Default is 5 pixels diameter.
@@ -682,8 +623,12 @@ class DrawXarm(XArmAPI):
             """
 
         x, y, z = self.get_pose()[:3]
-        self.arc([x+2, y, z, -180, 0, 0], [x, y+2, z, -180, 0, 0], 100)
-        # self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
+        self.arc(pose1=[x+size, y, self.z, self.roll, self.pitch, self.yaw],
+                 pose2=[x, y+size, self.z, self.pitch, self.yaw],
+                 percent=100,
+                 speed=self.sp
+                 wait=self.wait
+                 )
 
     # -- shape drawing functions --#
     def draw_square(self, size):  # draws a square at the robots current position with a size and angle (in degrees)
