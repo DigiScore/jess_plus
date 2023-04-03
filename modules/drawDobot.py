@@ -895,7 +895,8 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_c(self, size, wait=True):
         """

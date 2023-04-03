@@ -160,6 +160,8 @@ class Conducter:
                                        acceleration=arm_speed)
 
                 while time() < rhythm_loop:
+                    print('-----------------')
+
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
@@ -404,6 +406,7 @@ class Conducter:
         Smart collapse of all threads and comms
         """
         print('TERMINATING')
+        self.drawbot.clear_commands()
         self.drawbot.home()
         self.drawbot.close()
 
