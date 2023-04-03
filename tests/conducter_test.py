@@ -11,7 +11,7 @@ def main(mode=999):
     while True:
         rnd = random()
         print(rnd)
-        arm_speed = randrange(20, 200)
+        arm_speed = randrange(100, 200)
         test.drawbot.speed(
             velocity=arm_speed,
             acceleration=arm_speed
@@ -51,4 +51,4 @@ def main(mode=999):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main(6)
+    main(4)

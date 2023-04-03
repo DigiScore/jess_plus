@@ -458,16 +458,16 @@ class Drawbot(Dobot):
         print(pose)
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking
 
-        # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        if newPose[0] < config.x_extents[0] or newPose[0] > config.x_extents[1]:     # check x posiion
-            print("delta x reset to 0")
-            x = 0
-        if newPose[1] < config.y_extents[0] or newPose[1] > config.y_extents[1]:     # check y position
-            print("delta y reset to 0")
-            y = 0
-        if newPose[2] < config.z_extents[0] or newPose[2] > config.z_extents[1]:      # check z height
-            print("delta z reset to 0")
-            z = 0
+        # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
+        # if newPose[0] < config.x_extents[0] or newPose[0] > config.x_extents[1]:     # check x posiion
+        #     print("delta x reset to 0")
+        #     x = 0
+        # if newPose[1] < config.y_extents[0] or newPose[1] > config.y_extents[1]:     # check y position
+        #     print("delta y reset to 0")
+        #     y = 0
+        # if newPose[2] < config.z_extents[0] or newPose[2] > config.z_extents[1]:      # check z height
+        #     print("delta z reset to 0")
+        #     z = 0
 
         self.coords.append(newPose[:2])
         self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
@@ -748,7 +748,11 @@ class Drawbot(Dobot):
 
         self.circles.append(circle)
 
-    def draw_char(self, _char, size, wait=True):
+    def draw_char(self,
+                  _char: str,
+                  size: float,
+                  wait=True
+                  ):
         """
         Draws a character (letter, number) on the pens current position.
         Supported characters are as follows:
@@ -756,10 +760,11 @@ class Drawbot(Dobot):
         lines are drawn in this function whereas
         letters with curves are drarn in their own respective functions.
         """
-        #print("Drawing letter: ", _char)
+        print("Drawing letter: ", _char)
         pos = self.get_pose()[:2]     # x, y
         char = []
-        char.append(_char.upper())
+        _char = _char.upper()
+        char.append(_char)
 
         jump_num = -1   # determines the characters that need a jump, cant be drawn continuously. If left as -1 then no jump is needed
 
