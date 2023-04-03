@@ -6,6 +6,7 @@ import time
 
 CLOSE_WINDOW = False
 
+
 class Visualiser():
 
     def __init__(self):
