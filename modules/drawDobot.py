@@ -848,6 +848,7 @@ class Drawbot(Dobot):
             else:                                   # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
 
+            # todo ADAM - here is your problem. You are adding char and x,y to char (list), then adding that to self.chars
             char.append(next_pos)     # append the current position to the letter
             self.coords.append(next_pos)
 
@@ -1023,7 +1024,8 @@ class Drawbot(Dobot):
         """
 
         rand_char = self.chars[randrange(0, len(self.chars))]
-
+        print(rand_char)
+        print(self.chars)
         self.draw_char(rand_char, size, wait)
 
     def create_shape_group(self, wait=True):
