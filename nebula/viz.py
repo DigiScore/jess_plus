@@ -2,14 +2,13 @@ from threading import Thread
 import tkinter as tk
 import random
 import time
-
-
-CLOSE_WINDOW = False
+from nebula.hivemind import DataBorg
 
 
 class Visualiser():
 
     def __init__(self):
+        self.hivemind = DataBorg()
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas = tk.Canvas(self.root, height=500, width=500)
@@ -46,7 +45,7 @@ class Visualiser():
 
         for ch in self.centers:
             self.canvas.create_text(
-                self.centers[ch], text=ch, font=('Helvetica','15','bold'))
+                self.centers[ch], text=ch, font=('Helvetica', '15', 'bold'))
         self.window_closed = False
 
     def on_close(self):
@@ -67,16 +66,8 @@ class Visualiser():
                          self.centers[ch][1]+100*self.sizes[ch]]
             self.canvas.coords(self.items[ch], *items_xys)
 
-    def main_loop(self):
-        print('Starting visualisation')
-        t1 = Thread(target=self.make_viz)
-        t1.start()
-
     def make_viz(self):
-        # while self.hivemind.running:
-        #     if time() >= self.endtime:
-        #         break
-        while True:
+        while self.hivemind.running:
             self.root.update_idletasks()
             self.root.update()
             if self.window_closed is True:
@@ -86,6 +77,8 @@ class Visualiser():
 
 
 if __name__ == "__main__":
-    # from hivemind import DataBorg
+    from hivemind import DataBorg
     test = Visualiser()
-    test.make_viz()
+    # test.make_viz()
+    t4 = Thread(target=test.make_viz)
+    t4.start()
