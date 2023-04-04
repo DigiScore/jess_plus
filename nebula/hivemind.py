@@ -118,7 +118,7 @@ class DataBorg:
         self.rhythm_rate = randrange(30, 100) / 100
 
         # self.eeg_buffer = np.random.uniform(size=(4, 50))
-        # self.eda_buffer: np.array = np.random.uniform(size=(1, 50))
+        # self.eda_buffer = np.random.uniform(size=(1, 50))
         # self.audio_buffer = np.random.uniform(size=(1, 50))
 
         self.eeg2flow = random()

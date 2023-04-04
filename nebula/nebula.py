@@ -133,6 +133,8 @@ class Nebula(Listener,
                 eda_2d = eda_norm[:, np.newaxis]
                 self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer, eda_2d, axis=1)
                 self.hivemind.eda_buffer = np.delete(self.hivemind.eda_buffer, 0, axis=1)
+            else:
+                self.hivemind.eda_buffer = np.random.uniform(size=(1, 50))
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
@@ -142,6 +144,8 @@ class Nebula(Listener,
                 eeg_2d = eeg_norm[:, np.newaxis]
                 self.hivemind.eeg_buffer = np.append(self.hivemind.eeg_buffer, eeg_2d, axis=1)
                 self.hivemind.eeg_buffer = np.delete(self.hivemind.eeg_buffer, 0, axis=1)
+            else:
+                self.hivemind.eeg_buffer = np.random.uniform(size=(4, 50))
 
             sleep(0.1)  # for 10 Hz
 
