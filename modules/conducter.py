@@ -125,7 +125,6 @@ class Conducter:
 
             # define robot mode for this phase length
             # robot_mode = RobotMode(randrange(5))
-            # TODO: is robot MID response always random?
             robot_mode = randrange(4)
 
             while time() < phrase_loop_end:
