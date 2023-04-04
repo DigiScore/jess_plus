@@ -113,9 +113,13 @@ class DataBorg:
     def randomiser(self):
         """ Blitz's the DataBorg dict with random numbers"""
         self.master_stream = random()
-        # self.mic_in = random()
+        self.mic_in = random()
         self.rnd_poetry = random()
         self.rhythm_rate = randrange(30, 100) / 100
+
+        # self.eeg_buffer = np.random.uniform(size=(4, 50))
+        # self.eda_buffer: np.array = np.random.uniform(size=(1, 50))
+        # self.audio_buffer = np.random.uniform(size=(1, 50))
 
         self.eeg2flow = random()
         self.eeg2flow_2d = np.random.uniform(size=(1, 50))

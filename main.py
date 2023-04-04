@@ -79,7 +79,7 @@ class Visualiser:
                 self.root.destroy()
                 break
             self.callback()
-            time.sleep(0.1)
+            time.sleep(0.2)
 
 
 class Main(Visualiser):
