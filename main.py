@@ -24,12 +24,12 @@ class Visualiser:
         self.canvas = tk.Canvas(self.root, height=500, width=500)
         self.canvas.pack()
 
-        # assign location points for visuals
+        # assign location points and colors for visuals
         self.centers = {
             'T3': [100, 250],
             'T4': [400, 250],
-            'O1': [200, 350],
-            'O2': [300, 350],
+            'O1': [190, 350],
+            'O2': [310, 350],
             'EDA': [250, 150]
         }
         self.colors = {
@@ -39,6 +39,8 @@ class Visualiser:
             'O2': '#ff6600',
             'EDA': '#0099ff'
         }
+
+        # assign initial sizes of the circles (between 0 and 1)
         self.sizes = {
             'T3': 0.5,
             'T4': 0.5,
@@ -57,16 +59,24 @@ class Visualiser:
             self.items[ch] = self.canvas.create_oval(
                 *items_xys, fill=self.colors[ch], outline=self.colors[ch])
 
+        # add labels
         for ch in self.centers:
             self.canvas.create_text(
                 self.centers[ch], text=ch, font=('Helvetica', '15', 'bold'))
+
         self.window_closed = False
 
     def on_close(self):
+        """
+        Callback function for when the window is closed.
+        """
         self.window_closed = True
 
     def callback(self):
-        """ DOCSTRING HERE """
+        """
+        Callback function for updating the circle sizes based on the
+        hivemind data.
+        """
         self.sizes['T3'] = self.hivemind.eeg_buffer[0][-10:].mean()
         self.sizes['T4'] = self.hivemind.eeg_buffer[1][-10:].mean()
         self.sizes['O1'] = self.hivemind.eeg_buffer[2][-10:].mean()
@@ -80,7 +90,9 @@ class Visualiser:
             self.canvas.coords(self.items[ch], *items_xys)
 
     def make_viz(self):
-        """ DOCSTRING HERE """
+        """
+        Loop to update the window content at 10 Hz.
+        """
         while self.hivemind.running:
             self.root.update_idletasks()
             self.root.update()
