@@ -72,8 +72,11 @@ class Conducter:
         """
         starts the main thread for the gesture manager
         """
-        robot_thread = Thread(target=self.gesture_manager)
-        robot_thread.start()
+        gesture_thread = Thread(target=self.gesture_manager)
+        if self.drawbot:
+            position_thread = Thread(target=self.drawbot.get_normalised_position)
+            position_thread.start()
+        gesture_thread.start()
 
     def gesture_manager(self):
         """
@@ -236,8 +239,8 @@ class Conducter:
                                     self.offpage(thought_train)
 
                     # get new position for hivemind
-                    if self.drawbot:
-                        self.drawbot.get_normalised_position()
+                    # if self.drawbot:
+                    #     self.drawbot.get_normalised_position()
 
                     # and wait for a cycle
                     sleep(rhythm_rate)
