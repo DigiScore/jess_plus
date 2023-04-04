@@ -1,7 +1,7 @@
 # [HARDWARE]
-robot = False
-eeg_live = False
-eda_live = False
+robot = True
+eeg_live = True
+eda_live = True
 
 """
 to check available ports run the following code:
@@ -34,7 +34,7 @@ xarm_z_extents = [0, 150]
 xarm_irregular_shape_extents = 50
 
 # play params
-silence_listener = True
+silence_listener = False
 duration_of_piece = 360
 continuous_line = False
 speed = 5

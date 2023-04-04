@@ -15,11 +15,16 @@ import time
 class Visualiser:
 
     def __init__(self):
-        # self.hivemind = DataBorg()
+        # build initial dataclass fill with random numbers
+        self.hivemind = DataBorg()
+
+        # build UI
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas = tk.Canvas(self.root, height=500, width=500)
         self.canvas.pack()
+
+        # assign location points for visuals
         self.centers = {
             'T3': [100, 250],
             'T4': [400, 250],
@@ -41,6 +46,8 @@ class Visualiser:
             'O2': 0.5,
             'EDA': 0.5,
         }
+
+        # build graphics
         self.items = {}
         for ch in self.centers:
             items_xys = [self.centers[ch][0]-100*self.sizes[ch],
@@ -59,6 +66,7 @@ class Visualiser:
         self.window_closed = True
 
     def callback(self):
+        """ DOCSTRING HERE """
         self.sizes['T3'] = self.hivemind.eeg_buffer[0][-10:].mean()
         self.sizes['T4'] = self.hivemind.eeg_buffer[1][-10:].mean()
         self.sizes['O1'] = self.hivemind.eeg_buffer[2][-10:].mean()
@@ -72,6 +80,7 @@ class Visualiser:
             self.canvas.coords(self.items[ch], *items_xys)
 
     def make_viz(self):
+        """ DOCSTRING HERE """
         while self.hivemind.running:
             self.root.update_idletasks()
             self.root.update()
@@ -79,7 +88,10 @@ class Visualiser:
                 self.root.destroy()
                 break
             self.callback()
-            time.sleep(0.2)
+
+            # print(f'self.hivemind.eeg_buffer = {self.hivemind.eeg_buffer}')
+
+            time.sleep(0.1)
 
 
 class Main(Visualiser):
@@ -96,14 +108,13 @@ class Main(Visualiser):
         pen: bool - True for pen, false for pencil
     """
     def __init__(self):
-        # todo - Johann - I've made Main inherit Visualier.
         Visualiser.__init__(self)
         # logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
         # build initial dataclass fill with random numbers
-        self.hivemind = DataBorg()
-        logging.debug(f'Data dict initial values are = {self.hivemind}')
+        # self.hivemind = DataBorg()
+        # logging.debug(f'Data dict initial values are = {self.hivemind}')
 
         # init the AI factory (inherits AIFactory, Listener)
         nebula = Nebula(
