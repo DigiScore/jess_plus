@@ -1,7 +1,7 @@
 # [HARDWARE]
-robot = True
-eeg_live = True
-eda_live = True
+robot = False
+eeg_live = False
+eda_live = False
 
 """
 to check available ports run the following code:

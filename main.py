@@ -12,10 +12,10 @@ import tkinter as tk
 import time
 
 
-class Visualiser():
+class Visualiser:
 
     def __init__(self):
-        self.hivemind = DataBorg()
+        # self.hivemind = DataBorg()
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas = tk.Canvas(self.root, height=500, width=500)
@@ -82,7 +82,7 @@ class Visualiser():
             time.sleep(0.1)
 
 
-class Main:
+class Main(Visualiser):
     """
     The main script to start the robot arm drawing digital score work.
     Affect calls the local interpreter for project specific functions.
@@ -96,7 +96,8 @@ class Main:
         pen: bool - True for pen, false for pencil
     """
     def __init__(self):
-
+        # todo - Johann - I've made Main inherit Visualier.
+        Visualiser.__init__(self)
         # logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
@@ -121,8 +122,9 @@ class Main:
         robot1.main_loop()
         nebula.main_loop()
 
-        v = Visualiser()
-        v.make_viz()
+        # v = Visualiser()
+        self.make_viz()
+        # v.make_viz()
 
 
 if __name__ == "__main__":
