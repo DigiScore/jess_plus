@@ -204,13 +204,14 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train <= 0.2:
+                    elif thought_train <= 0.2 or not self.hivemind.interrupt_bang:
                         logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
                             else:
+                                print("waiting")
                                 sleep(0.1)
                                 # self.offpage(thought_train)
 
