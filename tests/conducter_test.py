@@ -21,7 +21,7 @@ def main(mode=999):
             case 1:
                 test.repetition(rnd)
             case 2:
-                test.offpage(rnd)
+                test.offpage(rnd)  # continuous now
             case 3:
                 test.continuous(rnd)
             case 4:
