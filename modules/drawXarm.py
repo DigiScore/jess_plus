@@ -108,7 +108,7 @@ class DrawXarm(XArmAPI):
         # calculate the world offset
         # self.calc_world_offset()
         # self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
-        self.set_state(state=0)
+        self.set_state(state=0)  # TODO
 
     def calc_world_offset(self):
         """
@@ -251,7 +251,6 @@ class DrawXarm(XArmAPI):
 
     def get_pose(self):
         _, pose = self.get_position()
-        print(f"pose = {pose}")
         return pose
 
     def set_speed(self, arm_speed):
@@ -327,6 +326,9 @@ class DrawXarm(XArmAPI):
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
         logging.info('arc/ circle')
+        pose = self.get_pose()
+        pose1 = pose1 + pose[2:]
+        pose2 = pose2 + pose[2:]
         self.move_circle(pose1=pose1,
                          pose2=pose2,
                          percent=percent,
