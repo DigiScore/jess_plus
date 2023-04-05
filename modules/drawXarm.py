@@ -59,9 +59,9 @@ class DrawXarm(XArmAPI):
         self.set_reduced_tcp_boundary(boundary_limits)
         self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
-
+        self.move_gohome(wait=True)
         # make self.z a class constant - to be amended by pen placement check
-        self.z = 0
+        self.z = 120
         self.roll = -180
         self.pitch = 0
         self.yaw = 0
@@ -108,6 +108,7 @@ class DrawXarm(XArmAPI):
         # calculate the world offset
         # self.calc_world_offset()
         # self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
+        self.set_state(state=0)
 
     def calc_world_offset(self):
         """
@@ -249,7 +250,7 @@ class DrawXarm(XArmAPI):
         self.emergency_stop()
 
     def get_pose(self):
-        pose = self.position()
+        _, pose = self.get_position()
         print(f"pose = {pose}")
         return pose
 
@@ -333,6 +334,7 @@ class DrawXarm(XArmAPI):
                          mvacc=mvacc,
                          wait=wait
                          )
+        self.set_state(state=0)
 
     def move_to(self,
                 x: float = None,
@@ -340,7 +342,8 @@ class DrawXarm(XArmAPI):
                 z: float = None,
                 speed: int = 100,
                 mvacc: int = 1000,
-                wait: bool = False
+                wait: bool = False,
+                relative: bool = False,
                 ):
         """
         the main move to function for mid-level comms to Xarm_API
@@ -360,8 +363,10 @@ class DrawXarm(XArmAPI):
                           z=z,
                           speed=speed,
                           mvacc=mvacc,
-                          wait=wait
+                          wait=wait,
+                          relative=relative
                           )
+        self.set_state(state=0)
 
     def jump_to(self,
                 x: float = None,
@@ -393,6 +398,7 @@ class DrawXarm(XArmAPI):
                           mvacc=mvacc,
                           wait=wait
                           )
+        self.set_state(state=0)
 
     def tool_move(self,
                   colour: str = None,
@@ -430,13 +436,13 @@ class DrawXarm(XArmAPI):
         elapsed = time() - self.start_time
 
         # get current y-value
-        x, y, z = self.get_pose()[3]
+        x, y, z = self.get_pose()[:3]
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         newy = (((elapsed - 0) * (self.y_extents[1] - self.y_extents[0])) / (self.duration_of_piece - 0)) + self.y_extents[1]
 
         # check x-axis is in range
-        if x <= self.xarm_x_extents[0] or x >= self.xarm_x_extents[1]:
-            x = (self.xarm_x_extents[1] - self.xarm_x_extents[0]) / 2
+        if x <= config.xarm_x_extents[0] or x >= config.xarm_x_extents[1]:
+            x = (config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
         self.move_to(x=x,
@@ -514,8 +520,8 @@ class DrawXarm(XArmAPI):
         Move to a random position within the x and y
         extents with the pen touching the page.
         """
-        x = uniform(self.xarm_x_extents[0], self.xarm_x_extents[1])
-        y = uniform(self.xarm_y_extents[0], self.xarm_y_extents[1])
+        x = uniform(config.xarm_x_extents[0], config.xarm_x_extents[1])
+        y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
@@ -532,8 +538,8 @@ class DrawXarm(XArmAPI):
         Lift the pen, move to a random position within the x and y extents,
         then lower the pen to draw position
         """
-        x = uniform(self.xarm_x_extents[0], self.xarm_x_extents[1])
-        y = uniform(self.xarm_y_extents[0], self.xarm_y_extents[1])
+        x = uniform(config.xarm_x_extents[0], config.xarm_x_extents[1])
+        y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
         radius = randrange(100)
 
         self.coords.append((x, y))
@@ -576,7 +582,8 @@ class DrawXarm(XArmAPI):
                      z=z,
                      speed=self.speed,
                      mvacc=self.mvacc,
-                     wait=self.wait
+                     wait=self.wait,
+                     relative=True
                      )
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
@@ -647,14 +654,14 @@ class DrawXarm(XArmAPI):
             circumference point: size of arc in pixels across x axis
             end point x, end point y: distance from last/ previous position
         """
-        x, y, z = self.get_pose()[3]
+        x, y, z = self.get_pose()[:3]
         self.coords.append((x, y))
 
         for arc in arc_list:
             circumference, dx, dy = arc[0], arc[1], arc[2]
 
             self.arc(pose1=[x + circumference, y, self.z, self.roll, self.pitch, self.yaw],
-                     pose2=[x + dx, y + dy, self.z, self.rool, self.pitch, self.yaw],
+                     pose2=[x + dx, y + dy, self.z, self.roll, self.pitch, self.yaw],
                      percent=100,
                      speed=self.speed,
                      mvacc=self.mvacc,
@@ -684,7 +691,7 @@ class DrawXarm(XArmAPI):
 
         x, y, z = self.get_pose()[:3]
         self.arc(pose1=[x + size, y, self.z, self.roll, self.pitch, self.yaw],
-                 pose2=[x, y + size, self.z, self.rool, self.pitch, self.yaw],
+                 pose2=[x, y + size, self.z, self.roll, self.pitch, self.yaw],
                  percent=100,
                  speed=self.speed,
                  mvacc=self.mvacc,

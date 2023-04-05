@@ -285,7 +285,7 @@ class Conducter:
         jumps to a random spot and makes a mark inspired by Wolff
         """
         # get the current position
-        x, y, z = self.drawbot.pose()[:3]
+        x, y, z = self.drawbot.get_pose()[:3]
         # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
@@ -293,7 +293,7 @@ class Conducter:
         # self.drawbot.move_y_random()
 
         # randomly choose from the following choices
-        randchoice = randrange(7)
+        randchoice = randrange(6)
         logging.debug(f'randchoice WOLFF == {randchoice}')
 
         match randchoice:
@@ -304,9 +304,9 @@ class Conducter:
                                      z,
                                      False)
 
-            case 1:
-                logging.info('Wolff: random character')
-                self.drawbot.draw_random_char(peak * randrange(10, 20))
+            # case 1:
+            #     logging.info('Wolff: random character')
+            #     self.drawbot.draw_random_char(peak * randrange(10, 20))
 
             case 2:
                 logging.info('Wolff: dot and line')
@@ -335,15 +335,11 @@ class Conducter:
                 logging.info('Wolff: dot')
                 self.drawbot.dot()
 
-            case 6:
-                logging.info('Wolff: random character')
-                self.drawbot.draw_random_char(peak)
-
     def cardew_inspiration(self, peak):
         """
         randomly chooses a shape inspired by Cardew
         """
-        x, y, z = self.drawbot.pose()[:3]
+        x, y, z = self.drawbot.get_pose()[:3]
         # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # move Y along
