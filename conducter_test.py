@@ -21,32 +21,28 @@ def main(mode=999):
             case 1:
                 test.repetition(rnd)
             case 2:
-                test.offpage(rnd)  # continuous now
-            case 3:
                 test.continuous(rnd)
-            case 4:
+            case 3:
                 test.wolff_inspiration(rnd)
-            case 5:
+            case 4:
                 test.cardew_inspiration(rnd)
-            case 6:
+            case 5:
                 test.high_energy_response()
             case 999:
 
-                choice = randrange(7)
+                choice = randrange(5)
                 match choice:
                     case 0:
                         sleep(1)
                     case 1:
                         test.repetition(rnd)
                     case 2:
-                        test.offpage(rnd)
-                    case 3:
                         test.continuous(rnd)
-                    case 4:
+                    case 3:
                         test.wolff_inspiration(rnd)
-                    case 5:
+                    case 4:
                         test.cardew_inspiration(rnd)
-                    case 6:
+                    case 5:
                         test.high_energy_response()
 
 if __name__ == "__main__":
