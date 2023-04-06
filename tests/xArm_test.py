@@ -11,12 +11,12 @@ from xarm.wrapper.xarm_api import XArmAPI
 from modules.drawXarm import DrawXarm
 import config
 
-class RobotMode(Enum):
-    Continuous = 0
-    Modification = 1
-    Inspiration = 2
-    Repetition = 3
-    OffPage = 4
+# class RobotMode(Enum):
+#     Continuous = 0
+#     Modification = 1
+#     Inspiration = 2
+#     Repetition = 3
+#     OffPage = 4
 
 # arm = XArmAPI('192.168.1.222')
 # arm.motion_enable(enable=True)
@@ -29,25 +29,25 @@ drawbot = DrawXarm(port)
 
 # x, y, z, roll, pitch, yaw
 
-rl = -180
-pt = 0
-yw= 0
+# rl = -180
+# pt = 0
+# yw= 0
 
-poses = [
-    [300,  0,   80, rl, pt, yw],
-    [400,  100, 80, rl, pt, yw],
-    [300,  100, 80, rl, pt, yw],
-    [400, -100, 80, rl, pt, yw],
-    [300,  0,   80, rl, pt, yw]
-]
+# poses = [
+#     [300,  0,   80, rl, pt, yw],
+#     [400,  100, 80, rl, pt, yw],
+#     [300,  100, 80, rl, pt, yw],
+#     [400, -100, 80, rl, pt, yw],
+#     [300,  0,   80, rl, pt, yw]
+# ]
 
-# for p in poses:
+# # for p in poses:
 
-ret = drawbot.set_position(*poses[1], speed=50, mvacc=100, wait=True)
-print('set_position, ret: {}'.format(ret))
+# ret = drawbot.set_position(*poses[1], speed=50, mvacc=100, wait=True)
+# print('set_position, ret: {}'.format(ret))
 
-#
-drawbot.note_head()
+# #
+# drawbot.note_head()
 # ret = drawbot.move_circle(pose1=poses[1], pose2=poses[2], percent=100, speed=200, mvacc=1000, wait=True)
 # print('move_circle, ret: {}'.format(ret))
 #
