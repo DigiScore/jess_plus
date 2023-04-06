@@ -126,7 +126,6 @@ class Main(Visualiser):
 
         # init Conducter & Gesture management (controls Drawbot)
         robot1 = Conducter(
-            continuous_line=config.continuous_line,
             speed=config.speed,
         )
 

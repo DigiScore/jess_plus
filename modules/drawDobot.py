@@ -42,7 +42,6 @@ class Drawbot(Dobot):
     def __init__(self,
                  port,
                  verbose,
-                 continuous_line
                  ):
 
         # own a hive mind
@@ -50,8 +49,6 @@ class Drawbot(Dobot):
 
         # init and inherit the Dobot library
         super().__init__(port, verbose)
-
-        self.continuous_line = continuous_line
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
@@ -336,10 +333,10 @@ class Drawbot(Dobot):
             x = 250
 
         # which mode
-        if self.continuous_line:
-            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
-        else:
-            self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
+        # if self.continuous_line:
+        #     self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
+        # else:
+        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
 
     def go_position_ready(self):
         """

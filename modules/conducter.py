@@ -44,7 +44,6 @@ class Conducter:
             self.drawbot = Drawbot(
                 port=port,
                 verbose=verbose,
-                continuous_line=continuous_line
             )
         elif self.XARM_CONNECTED:
             from modules.drawXarm import DrawXarm
