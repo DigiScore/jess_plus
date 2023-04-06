@@ -46,6 +46,7 @@ class DrawXarm(XArmAPI):
         # init and inherit the XArm_API library
         XArmAPI().__init__(port)
 
+        # get XArm ready to move
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
@@ -59,6 +60,16 @@ class DrawXarm(XArmAPI):
         # self.set_collision_sensitivity(value=0)
         # self.move_gohome(wait=True)
         # make self.z a class constant - to be amended by pen placement check
+
+        # create a command list and start process thread
+        self.command_list = []
+        self.command_list_lock = True  # True = locked
+        self.command_list_active = False
+
+        # setup call back for command list
+        self.register_cmdnum_changed_callback(callback=self.callback_cmdnum_changed)
+
+        # init coord params
         self.z = 40
         self.roll = -180
         self.pitch = 0
@@ -76,7 +87,6 @@ class DrawXarm(XArmAPI):
                                0,
                                self.z
                                 ]
-        # self.end_position = (250, 0, 50, 0)
 
         self.x_extents = config.xarm_x_extents
         self.y_extents = config.xarm_y_extents
@@ -92,11 +102,6 @@ class DrawXarm(XArmAPI):
 
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []  # list of coordinates drawn
-
-        # create a command list and start process thread
-        self.command_list = []
-        # list_thread = Thread(target=self.process_command_list)
-        # list_thread.start()
 
         self.last_shape_group = None
 
@@ -117,44 +122,55 @@ class DrawXarm(XArmAPI):
     ######################
     # Command Q control & safety checks
     ######################
-    # def add_to_command_list(self,
-    #                         command: str,
-    #                         arg_list: list):
-    #
-    #     package = (command, arg_list)
-    #
-    #     self.command_list.append(package)
-    #     # print(len(self.command_list))
-    #
-    # def process_command_list(self):
-    #     while self.hivemind.running:
-    #
-    #         # interrupt? clear list
-    #         if not self.hivemind.interrupt_bang:
-    #             self.command_list.clear()
-    #             sleep(0.1)
-    #             logging.info('Clearing command list')
-    #
-    #         # is the arm still moving????
-    #         elif not self.get_is_moving():
-    #
-    #         # and there is a command on list
-    #             if self.command_list:
-    #                 msg = self.command_list.pop()
-    #                 command, arg_list = msg[:]
-    #
-    #                 match command:
-    #                     case "move_circle":
-    #                         self.move_circle(arg_list)
-    #
-    #                     case "move_to":
-    #                         self.move_circle(arg_list)
-    #
-    #                     case "jump_to":
-    #                         self.move_circle(arg_list)
-    #
-    #         else:
-    #             sleep(0.01)
+
+    def callback_cmdnum_changed(self, item):
+        print('cmdnum changed:', item)
+        self.command_list_lock = False
+
+    def command_list_main_loop(self):
+        """
+        main loop thread for parsing command loop and rocker lock
+        """
+        if self.command_list_active:
+            list_thread = Thread(target=self.process_command_list)
+            list_thread.start()
+
+    def add_to_command_list(self,
+                            command: str,
+                            arg_list: list):
+
+        package = (command, arg_list)
+
+        self.command_list.append(package)
+        # print(len(self.command_list))
+
+    def process_command_list(self):
+        while self.hivemind.running:
+
+            # interrupt? clear list
+            if not self.hivemind.interrupt_bang:
+                self.command_list.clear()
+                sleep(0.1)
+                logging.info('Clearing command list')
+
+            # is the arm still moving????
+            elif self.command_list:
+                if not self.command_list_lock:
+
+                    msg = self.command_list.pop()
+                    command, arg_list = msg[0]
+
+                    match command:
+                        case "move_circle":
+                            self.move_circle(*arg_list)
+
+                        case "move_to":
+                            self.set_position(*arg_list)
+
+                    self.command_list_lock = True
+
+            else:
+                sleep(0.01)
 
     def get_normalised_position(self):
         while self.hivemind.running:
@@ -255,44 +271,6 @@ class DrawXarm(XArmAPI):
         self.speed = arm_speed
         self.mvacc = arm_speed
 
-    # def _send_message(self, msg):
-    #     sleep(0.1)
-    #     if self.verbose:
-    #         print('pydobot: >>', msg)
-    #     if self.hivemind.interrupt_bang:
-    #         self.ser.write(msg.bytes())
-    #     else:
-    #         self.clear_commands()
-    #
-    # def _send_command(self, msg, wait=False):
-    #     self.lock.acquire()
-    #     self._send_message(msg)
-    #     response = self._read_message()
-    #     self.lock.release()
-    #     #
-    #     # if not wait:
-    #     #     return response
-    #     #
-    #     # # if self.hivemind.interrupt_bang:
-    #     # try:
-    #     #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
-    #     #     if self.verbose:
-    #     #         print('pydobot: waiting for command', expected_idx)
-    #     #
-    #     #     while True:
-    #     #         current_idx = self._get_queued_cmd_current_index()
-    #     #
-    #     #         if current_idx != expected_idx:
-    #     #             sleep(0.1)
-    #     #             continue
-    #     #
-    #     #         if self.verbose:
-    #     #             print('pydobot: command %d executed' % current_idx)
-    #     #         break
-    #     # except:
-    #     #     print('pydobot -- command error')
-    #
-    #     return response
 
     ######################
     # drawXarm BASE FUNCTIONS
@@ -324,13 +302,26 @@ class DrawXarm(XArmAPI):
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
         logging.info('arc/ circle')
-        self.move_circle(pose1=pose1,
-                         pose2=pose2,
-                         percent=percent,
-                         speed=speed,
-                         mvacc=mvacc,
-                         wait=wait
-                         )
+
+        if self.command_list_active:
+            cmd_list = [pose1,
+                        pose2,
+                        percent,
+                        speed,
+                        mvacc,
+                        wait
+                        ]
+            self.add_to_command_list("move_circle",
+                                     cmd_list)
+
+        else:
+            self.move_circle(pose1=pose1,
+                             pose2=pose2,
+                             percent=percent,
+                             speed=speed,
+                             mvacc=mvacc,
+                             wait=wait
+                             )
 
     def move_to(self,
                 x: float = None,
@@ -353,8 +344,21 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        logging.info('move to')
-        self.set_position(x=x,
+        logging.info('move_to')
+        if self.command_list_active:
+            cmd_list = [x,
+                        y,
+                        z,
+                        speed,
+                        mvacc,
+                        wait,
+                        relative
+                        ]
+            self.add_to_command_list("move_to",
+                                     cmd_list)
+
+        else:
+            self.set_position(x=x,
                           y=y,
                           z=z,
                           speed=speed,

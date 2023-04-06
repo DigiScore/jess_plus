@@ -102,6 +102,8 @@ class Drawbot(Dobot):
             if not self.hivemind.interrupt_bang:
                 self.command_list.clear()
                 sleep(0.1)
+                logging.info('Clearing command list')
+
             elif self.command_list:
                 if not self.command_list_lock:
                     msg = self.command_list.pop()
