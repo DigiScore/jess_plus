@@ -124,29 +124,23 @@ class Main(Visualiser):
         # logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
-        # build initial dataclass fill with random numbers
-        # self.hivemind = DataBorg()
-        # logging.debug(f'Data dict initial values are = {self.hivemind}')
+        # init Conducter & Gesture management (controls Drawbot)
+        robot1 = Conducter(
+            continuous_line=config.continuous_line,
+            speed=config.speed,
+        )
 
         # init the AI factory (inherits AIFactory, Listener)
         nebula = Nebula(
             speed=config.speed
         )
 
-        # init Conducter & Gesture management (controls Drawbot)
-        robot1 = Conducter(
-            continuous_line=config.continuous_line,
-            speed=config.speed,
-            staves=config.staves,
-        )
-
         # start Nebula AI Factory here after affect starts data moving
         robot1.main_loop()
         nebula.main_loop()
 
-        # v = Visualiser()
+        # start visualiser
         self.make_viz()
-        # v.make_viz()
 
 
 if __name__ == "__main__":

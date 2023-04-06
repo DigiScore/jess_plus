@@ -22,10 +22,8 @@ class Conducter:
     """
 
     def __init__(self,
-                 # port: str,
                  continuous_line: bool = False,
                  speed: int = 5,
-                 staves: int = 0,
                  ):
 
         # PLATFORM = platform.system()
