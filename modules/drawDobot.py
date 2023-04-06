@@ -69,24 +69,33 @@ class Drawbot(Dobot):
 
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
-
-        # create a command loist and start process thread
-        self.command_list = []
-        list_thread = Thread(target=self.process_command_list)
-        list_thread.start()
-
         self.last_shape_group = None
 
+        # create a command list
+        self.command_list = []
+        self.command_list_lock = True  # True = locked
+
+        # timing vars
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
 
     ######################
     # Command Q control & safety checks
     ######################
+    def command_list_main_loop(self):
+        """
+        main loop thread for parsing command loop and rocker lock
+        """
+        list_thread = Thread(target=self.process_command_list)
+        list_thread.start()
+
     def add_to_list_set_ptp_cmd(self, x, y, z, r, mode, wait):
-        msg_item = (x, y, z, r, mode, wait)
-        self.command_list.append(msg_item)
-        # print(len(self.command_list))
+        if not self.hivemind.running:
+            self._set_ptp_cmd(x, y, z, r, mode, wait)
+        else:
+            msg_item = (x, y, z, r, mode, wait)
+            self.command_list.append(msg_item)
+            # print(len(self.command_list))
 
     def process_command_list(self):
         while self.hivemind.running:
@@ -94,11 +103,50 @@ class Drawbot(Dobot):
                 self.command_list.clear()
                 sleep(0.1)
             elif self.command_list:
-                msg = self.command_list.pop()
-                x, y, z, r, mode, wait = msg[:]
-                self._set_ptp_cmd(x, y, z, r, mode, wait)
+                if not self.command_list_lock:
+                    msg = self.command_list.pop()
+                    x, y, z, r, mode, wait = msg[:]
+                    self._set_ptp_cmd(x, y, z, r, mode, wait)
+                    self.command_list_lock = True
             else:
                 sleep(0.01)
+
+    def _send_command(self, msg, wait=False):
+        self.lock.acquire()
+        self._send_message(msg)
+        response = self._read_message()
+        self.lock.release()
+
+        # if not wait:
+        #     return response
+
+        # wait until Dobot completes current command
+        try:
+            expected_idx = struct.unpack_from('L', response.params, 0)[0]
+            if self.verbose:
+                print('pydobot: waiting for command', expected_idx)
+
+            while True:
+                current_idx = self._get_queued_cmd_current_index()
+
+                if current_idx != expected_idx:
+                    sleep(0.1)
+                    continue
+
+                if self.verbose:
+                    print('pydobot: command %d executed' % current_idx)
+
+                # open command list lock
+                self.command_list_lock = False
+                break
+
+        # the API through errors here, so this is a hacky fix
+        except:
+            print('pydobot -- command error')
+            # open command list lock
+            self.command_list_lock = False
+
+        return response
 
     def get_normalised_position(self):
         while self.hivemind.running:
@@ -203,35 +251,6 @@ class Drawbot(Dobot):
     #     else:
     #         self.clear_commands()
 
-    def _send_command(self, msg, wait=False):
-        self.lock.acquire()
-        self._send_message(msg)
-        response = self._read_message()
-        self.lock.release()
-        #
-        # if not wait:
-        #     return response
-        #
-        # # if self.hivemind.interrupt_bang:
-        # try:
-        #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
-        #     if self.verbose:
-        #         print('pydobot: waiting for command', expected_idx)
-        #
-        #     while True:
-        #         current_idx = self._get_queued_cmd_current_index()
-        #
-        #         if current_idx != expected_idx:
-        #             sleep(0.1)
-        #             continue
-        #
-        #         if self.verbose:
-        #             print('pydobot: command %d executed' % current_idx)
-        #         break
-        # except:
-        #     print('pydobot -- command error')
-
-        return response
 
     ######################
     # DIGIBOT CORE FUNCTIONS

@@ -22,7 +22,6 @@ class Conducter:
     """
 
     def __init__(self,
-                 continuous_line: bool = False,
                  speed: int = 5,
                  ):
 
@@ -57,7 +56,6 @@ class Conducter:
         self.hivemind = DataBorg()
 
         # start operating vars
-        self.continuous_line = continuous_line
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         self.joint_inc = 10
 
@@ -79,9 +77,13 @@ class Conducter:
         starts the main thread for the gesture manager
         """
         gesture_thread = Thread(target=self.gesture_manager)
+        command_list_thread = Thread(target=self.drawbot.command_list_main_loop)
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
+
+        # start threads
+        command_list_thread.start()
         gesture_thread.start()
 
     def gesture_manager(self):
@@ -104,6 +106,9 @@ class Conducter:
         while self.hivemind.running:
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_bang = True
+
+            # clear command list
+            self.drawbot.command_list.clear()
 
             #############################
             # Phrase-level gesture gate: 3 - 8 seconds
@@ -143,8 +148,8 @@ class Conducter:
                 # 1. clear the alarms
                 if self.drawbot:
                     self.drawbot.clear_alarms()
-                    if self.continuous_line:
-                        self.drawbot.move_y()
+                    # if self.continuous_line:
+                    #     self.drawbot.move_y()
 
                 # # generate rhythm rate here
                 # rhythm_rate = (randrange(10,
@@ -210,9 +215,9 @@ class Conducter:
                         logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
-                            if self.continuous_line:
-                                self.drawbot.move_y()
-                            elif random() < 0.36:
+                            # if self.continuous_line:
+                            #     self.drawbot.move_y()
+                            if random() < 0.36:
                                 self.offpage(thought_train)
                             else:
                                 sleep(0.1)
