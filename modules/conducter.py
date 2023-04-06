@@ -59,15 +59,13 @@ class Conducter:
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         self.joint_inc = 10
 
-        # calculate the inverse of speed
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        self.global_speed = speed # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
-        # print(f'user def speed = {speed}, global speed = {self.global_speed}')
+        # calculate the inverse of speed (NOT IMPLEMENTED)
+        self.global_speed = speed   # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
 
         if self.drawbot:
             print('locating home')
             self.drawbot.home()
-            # input('remove pen lid, then press enter')
+            input('remove pen lid, then press enter')
 
             # self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
@@ -111,7 +109,9 @@ class Conducter:
             self.drawbot.command_list.clear()
 
             #############################
+            #
             # Phrase-level gesture gate: 3 - 8 seconds
+            #
             #############################
 
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
@@ -148,14 +148,10 @@ class Conducter:
                 # 1. clear the alarms
                 if self.drawbot:
                     self.drawbot.clear_alarms()
-                    # if self.continuous_line:
-                    #     self.drawbot.move_y()
+
 
                 # # generate rhythm rate here
-                # rhythm_rate = (randrange(10,
-                #                          80) / 100) #* self.global_speed
-                # self.hivemind.rhythm_rate = rhythm_rate
-                # logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
+
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
 
                 #############################
@@ -175,11 +171,9 @@ class Conducter:
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
-                    # thought_train = self.hivemind.rnd_stream
                     logging.info(f'=========Hello - baby cycle 2 ===========Affect stream output {rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
-                    # setattr(self.hivemind, 'master_stream', thought_train)
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
 
@@ -215,8 +209,6 @@ class Conducter:
                         logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
-                            # if self.continuous_line:
-                            #     self.drawbot.move_y()
                             if random() < 0.36:
                                 self.offpage(thought_train)
                             else:
@@ -245,10 +237,6 @@ class Conducter:
                                     # random movements off the page, balletic movements above the page
                                     print("OffPage Mode")
                                     self.offpage(thought_train)
-
-                    # get new position for hivemind
-                    # if self.drawbot:
-                    #     self.drawbot.get_normalised_position()
 
                     # and wait for a cycle
                     sleep(rhythm_rate)
@@ -293,11 +281,9 @@ class Conducter:
         """
         # get the current position
         x, y, z = self.drawbot.get_pose()[:3]
-        # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # jump to a random location
         self.drawbot.go_random_jump()
-        # self.drawbot.move_y_random()
 
         # randomly choose from the following choices
         randchoice = randrange(6)
@@ -314,6 +300,11 @@ class Conducter:
             # case 1:
             #     logging.info('Wolff: random character')
             #     self.drawbot.draw_random_char(peak * randrange(10, 20))
+
+            # TEMPORARY UNTIL ADAM COMPLETES
+            case 1:
+                logging.info('Wolff: dot and line')
+                self.drawbot.dot()
 
             case 2:
                 logging.info('Wolff: dot and line')
@@ -347,7 +338,6 @@ class Conducter:
         randomly chooses a shape inspired by Cardew
         """
         x, y, z = self.drawbot.get_pose()[:3]
-        # logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # move Y along
         self.drawbot.move_y()
@@ -407,7 +397,11 @@ class Conducter:
         """
         move to a random x, y position
         """
+        # clear robot command cache
         self.drawbot.clear_commands()
+
+        # clear the internal command list
+        self.drawbot.command_list.clear()
 
     def terminate(self):
         """
