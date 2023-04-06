@@ -63,8 +63,8 @@ class DrawXarm(XArmAPI):
 
         # create a command list and start process thread
         self.command_list = []
-        self.command_list_lock = True  # True = locked
-        self.command_list_active = False
+        self.command_list_lock = False  # True = locked
+        self.command_list_active = False # temp to avoid holding up Johann
 
         # setup call back for command list
         self.register_cmdnum_changed_callback(callback=self.callback_cmdnum_changed)
@@ -112,18 +112,16 @@ class DrawXarm(XArmAPI):
         # self.calc_world_offset()
         # self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
 
-    def calc_world_offset(self):
-        """
-        go to start position. Fix pen, and record
-        :return:
-        """
-        pass
 
     ######################
     # Command Q control & safety checks
     ######################
 
     def callback_cmdnum_changed(self, item):
+        """
+        listens out for a cmdnum change call back from XARM and unlocks the
+        command list thread
+        """
         print('cmdnum changed:', item)
         self.command_list_lock = False
 
@@ -131,6 +129,7 @@ class DrawXarm(XArmAPI):
         """
         main loop thread for parsing command loop and rocker lock
         """
+        # if temp Bool is active
         if self.command_list_active:
             list_thread = Thread(target=self.process_command_list)
             list_thread.start()
@@ -138,7 +137,12 @@ class DrawXarm(XArmAPI):
     def add_to_command_list(self,
                             command: str,
                             arg_list: list):
-
+        """
+        Adds a base command to the command list. Must be
+        "move_circle", "set_position" or "set_tool_position"
+        :param command: the name of the API command
+        :param arg_list: list of args for specific command
+        """
         package = (command, arg_list)
 
         self.command_list.append(package)
@@ -153,7 +157,6 @@ class DrawXarm(XArmAPI):
                 sleep(0.1)
                 logging.info('Clearing command list')
 
-            # is the arm still moving????
             elif self.command_list:
                 if not self.command_list_lock:
 
@@ -164,8 +167,11 @@ class DrawXarm(XArmAPI):
                         case "move_circle":
                             self.move_circle(*arg_list)
 
-                        case "move_to":
+                        case "set_position":
                             self.set_position(*arg_list)
+
+                        case "set_tool_position":
+                            self.set_tool_position(*arg_list)
 
                     self.command_list_lock = True
 
@@ -354,7 +360,7 @@ class DrawXarm(XArmAPI):
                         wait,
                         relative
                         ]
-            self.add_to_command_list("move_to",
+            self.add_to_command_list("set_position",
                                      cmd_list)
 
         else:

@@ -73,7 +73,7 @@ class Drawbot(Dobot):
 
         # create a command list
         self.command_list = []
-        self.command_list_lock = True  # True = locked
+        self.command_list_lock = False  # True = locked
 
         # timing vars
         self.duration_of_piece = config.duration_of_piece
