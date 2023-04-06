@@ -684,19 +684,18 @@ class DrawXarm(XArmAPI):
                  wait=self.wait
                  )
 
-    def draw_arc2D(self,
-                   pose1_x,
-                   pose1_y,
-                   pose2_x,
-                   pose2_y
-                   ):
+    def arc2D(self,
+              pose1_x: int,
+              pose1_y: int,
+              pose2_x: int,
+              pose2_y: int
+              ):
         """
         Draws an arc taking two new coords pose1 and pose2
-        :param new_x1:
-        :param new_y1:
-        :param new_x2:
-        :param new_y2:
-        :return:
+        :param new_x1: new x position for arc point 1
+        :param new_y1: new y position for arc point 1
+        :param new_x2: new x position for arc point 2
+        :param new_y2: new y position for arc point 2
         """
         pose1 = [pose1_x, pose1_y, self.z, self.roll, self.pitch, self.yaw]
         pose2 = [pose2_x, pose2_y, self.z, self.roll, self.pitch, self.yaw]
