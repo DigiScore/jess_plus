@@ -43,23 +43,21 @@ class DrawXarm(XArmAPI):
         # own a hive mind
         self.hivemind = DataBorg()
 
-        # init and inherit the Dobot library
-        super().__init__(port,
-                         # max_cmdnum=1
-                         ) # todo - is this the way to limit blind running?
+        # init and inherit the XArm_API library
+        XArmAPI().__init__(port)
 
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
         self.move_gohome(wait=True)
-        boundary_limits = [config.xarm_x_extents[1], config.xarm_x_extents[0],
-                           config.xarm_y_extents[1], config.xarm_y_extents[0],
-                           config.xarm_z_extents[1], config.xarm_z_extents[0]
-                           ]
-        self.set_reduced_tcp_boundary(boundary_limits)
-        self.set_world_offset([0, 0, 100, 0, 0, 0])
+        # boundary_limits = [config.xarm_x_extents[1], config.xarm_x_extents[0],
+        #                    config.xarm_y_extents[1], config.xarm_y_extents[0],
+        #                    config.xarm_z_extents[1], config.xarm_z_extents[0]
+        #                    ]
+        # self.set_reduced_tcp_boundary(boundary_limits)
+        # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
-        self.move_gohome(wait=True)
+        # self.move_gohome(wait=True)
         # make self.z a class constant - to be amended by pen placement check
         self.z = 120
         self.roll = -180
@@ -70,11 +68,11 @@ class DrawXarm(XArmAPI):
         self.mvacc = 100
 
         # make a shared list/ dict
-        self.ready_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
+        self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
                                self.z + 20
                                 ]
-        self.draw_position = [(config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2,
+        self.draw_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
                                self.z
                                 ]
@@ -108,7 +106,6 @@ class DrawXarm(XArmAPI):
         # calculate the world offset
         # self.calc_world_offset()
         # self.offsetx, self.offsety, self.offsetz = self.world_offset()[:3]
-        self.set_state(state=0)  # TODO
 
     def calc_world_offset(self):
         """
@@ -336,7 +333,6 @@ class DrawXarm(XArmAPI):
                          mvacc=mvacc,
                          wait=wait
                          )
-        self.set_state(state=0)
 
     def move_to(self,
                 x: float = None,
@@ -368,39 +364,6 @@ class DrawXarm(XArmAPI):
                           wait=wait,
                           relative=relative
                           )
-        self.set_state(state=0)
-
-    def jump_to(self,
-                x: float = None,
-                y: float = None,
-                z: float = None,
-                radius: float = 20,
-                speed: int = 100,
-                mvacc: int = 1000,
-                wait: bool = False
-                ):
-        """
-        Jump to a cartesian coord. Jump default is 20.
-        :param x:
-        :param y:
-        :param z:
-        :param radius:
-        :param speed:
-        :param mvacc:
-        :param wait:
-        :return:
-        """
-
-        logging.info('jump to')
-        self.set_position(x=x,
-                          y=y,
-                          z=z,
-                          radius=radius,
-                          speed=speed,
-                          mvacc=mvacc,
-                          wait=wait
-                          )
-        self.set_state(state=0)
 
     def tool_move(self,
                   colour: str = None,
@@ -502,15 +465,41 @@ class DrawXarm(XArmAPI):
                      wait=self.wait
                      )
 
-    def go_draw_up(self, x, y, wait=False):
+    def go_draw_up(self,
+                   dx: float,
+                   dy: float,
+                   jump: float = 20,
+                   wait: bool = False
+                   ):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
+        # get current position, save to coords list
+        x, y, z = self.position[:3]
         self.coords.append((x, y))
-        self.jump_to(x=x,
+
+        # jump off page
+        self.move_to(x=x,
                      y=y,
+                     z=self.z + jump,
+                     speed=self.speed,
+                     mvacc=self.mvacc,
+                     wait=self.wait
+                     )
+
+        # move to new position
+        self.move_to(x=dx,
+                     y=dy,
+                     z=self.z + jump,
+                     speed=self.speed,
+                     mvacc=self.mvacc,
+                     wait=self.wait
+                     )
+
+        # put pen on paper
+        self.move_to(x=dx,
+                     y=dy,
                      z=self.z,
-                     radius=100,
                      speed=self.speed,
                      mvacc=self.mvacc,
                      wait=self.wait
@@ -542,18 +531,13 @@ class DrawXarm(XArmAPI):
         """
         x = uniform(config.xarm_x_extents[0], config.xarm_x_extents[1])
         y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
-        radius = randrange(100)
+        # radius = randrange(100)
 
         self.coords.append((x, y))
         print("Random draw pos above page x:", x, " y:", y)
-        self.jump_to(x=x,
-                     y=y,
-                     z=self.z,
-                     radius=radius,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.go_draw_up(dx=x,
+                        dy=y,
+                        )
 
     # -- move by functions --#
     def position_move_by(self, x, y, z, wait=False):
