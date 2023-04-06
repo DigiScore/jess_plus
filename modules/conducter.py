@@ -62,6 +62,9 @@ class Conducter:
         # calculate the inverse of speed (NOT IMPLEMENTED)
         self.global_speed = speed   # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
 
+        # get the baseline temperature from config
+        self.temperature = config.temperature
+
         if self.drawbot:
             print('locating home')
             self.drawbot.home()
@@ -83,6 +86,22 @@ class Conducter:
         # start threads
         command_list_thread.start()
         gesture_thread.start()
+
+    def temperature_drunk_walk(self):
+        """
+        modifies the temperature var by +/- 0.1 every call.
+        Temperature is used to amend the thought-train by adding spice
+        """
+        if random() >= 0.5:
+            self.temperature += 0.1
+        else:
+            self.temperature -= 0.1
+
+        # boundary checker
+        if self.temperature > 1:
+            self.temperature = 1
+        elif self.temperature < 0:
+            self.temperature = 0
 
     def gesture_manager(self):
         """
@@ -149,7 +168,6 @@ class Conducter:
                 if self.drawbot:
                     self.drawbot.clear_alarms()
 
-
                 # # generate rhythm rate here
 
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
@@ -168,6 +186,10 @@ class Conducter:
 
                 while time() < rhythm_loop:
                     print('-----------------')
+
+                    # adjust the temperature as a drunk walk every cycle
+                    self.temperature_drunk_walk()
+
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
@@ -176,6 +198,11 @@ class Conducter:
                     # 2. send to Master Output
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
+
+                    # 3. add the temperature factor
+                    thought_train += self.temperature
+                    if thought_train > 1:
+                        thought_train = 1
 
                     # generate rhythm rate here
                     rhythm_rate = 1 - self.hivemind.core2flow + 0.05  # (randrange(10, 80) / 100) #* self.global_speed
@@ -197,7 +224,10 @@ class Conducter:
                         # B - jumps out of this loop into daddy
                         self.hivemind.interrupt_bang = False
 
-                        # C - respond
+                        # C - clears the command list in drawbot
+                        self.drawbot.command_list.clear()
+
+                        # D - respond
                         if self.drawbot:
                             self.high_energy_response()
 
@@ -307,12 +337,8 @@ class Conducter:
                 self.drawbot.dot()
 
             case 2:
-                logging.info('Wolff: dot and line')
+                logging.info('Wolff: dot')
                 self.drawbot.dot()
-                self.drawbot.move_to(x + self.rnd(peak),
-                                     y + self.rnd(peak),
-                                     z,
-                                     False)
 
             case 3:
                 logging.info('Wolff: note head')
@@ -400,9 +426,6 @@ class Conducter:
         # clear robot command cache
         self.drawbot.clear_commands()
 
-        # clear the internal command list
-        self.drawbot.command_list.clear()
-
     def terminate(self):
         """
         Smart collapse of all threads and comms
@@ -421,7 +444,7 @@ class Conducter:
         if power_of_command <= 0:
             power_of_command = 1
         pos = 1
-        if getrandbits(1):
+        if random() >= 0.5:
             pos = -1
         result = (randrange(1, 5) + randrange(power_of_command)) * pos
         logging.debug(f'Rnd result = {result}')
