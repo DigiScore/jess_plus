@@ -209,10 +209,10 @@ class Conducter:
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
+                            elif random() < 0.36:
+                                self.offpage(thought_train)
                             else:
-                                print("waiting")
                                 sleep(0.1)
-                                # self.offpage(thought_train)
 
                     else:
                         # MID response
