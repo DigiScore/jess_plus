@@ -104,27 +104,30 @@ class Drawbot(Dobot):
                 sleep(0.01)
 
     def get_normalised_position(self):
-        original_pose = self.get_pose()[:3]
+        while self.hivemind.running:
+            original_pose = self.get_pose()[:3]
 
-        # do a safety position check
-        pose = self.safety_position_check(original_pose)
+            # do a safety position check
+            pose = self.safety_position_check(original_pose)
 
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+            # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+            # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
 
-        norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
-        norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
-        norm_z = ((pose[2] - config.z_extents[0]) / (config.z_extents[1] - config.z_extents[0])) * (1 - 0) + 0
+            norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
+            norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
+            norm_z = ((pose[2] - config.z_extents[0]) / (config.z_extents[1] - config.z_extents[0])) * (1 - 0) + 0
 
-        norm_xyz = (norm_x, norm_y, norm_z)
-        norm_xyz = tuple(np.clip(norm_xyz, 0.0, 1.0))
-        norm_xy_2d = np.array(norm_xyz[:2])[:, np.newaxis]
+            norm_xyz = (norm_x, norm_y, norm_z)
+            norm_xyz = tuple(np.clip(norm_xyz, 0.0, 1.0))
+            norm_xy_2d = np.array(norm_xyz[:2])[:, np.newaxis]
 
-        self.hivemind.current_robot_x_y_z = norm_xyz
-        self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
-        self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
+            self.hivemind.current_robot_x_y_z = norm_xyz
+            self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
+            self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
-        logging.info(f'current x,y,z normalised  = {norm_xyz}')
+            logging.debug(f'current x,y,z normalised  = {norm_xyz}')
+
+            sleep(0.1)
 
     def safety_position_check(self, pose):
         if pose[0] < self.x_extents[0]:     # check x posiion
@@ -178,7 +181,8 @@ class Drawbot(Dobot):
         # self.force_queued_stop()
         # self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        # self._set_queued_cmd_start_exec()
+        sleep(0.1)
+        self._set_queued_cmd_start_exec()
 
     def force_queued_stop(self):
         """
@@ -898,7 +902,8 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_c(self, size, wait=True):
         """

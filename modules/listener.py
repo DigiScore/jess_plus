@@ -65,6 +65,7 @@ class Listener:
 
         # set silence listener to 10 seconds in future
         silence_timer = time() + 10
+        first_minute = time() + 60
 
         # main loop
         while self.hivemind.running:
@@ -95,7 +96,7 @@ class Listener:
                 logging.info("MIC LISTENER: %05d %s" % (peak, bars))
 
                 # reset the silence listener
-                silence_timer = time() + 6
+                silence_timer = time() + 5   # 5 seconds ahead
 
             # normalise it for range 0.0 - 1.0
             normalised_peak = ((peak - 0) / (20000 - 0)) * (1 - 0) + 0
@@ -115,8 +116,9 @@ class Listener:
 
             # check human musician induced ending (wait for 5 secs)
             if config.silence_listener:
-                if time() >= silence_timer:
-                    self.hivemind.running = False
+                if time() > first_minute:
+                    if time() >= silence_timer:
+                        self.hivemind.running = False
 
         logging.info('quitting listener thread')
         self.terminate()
