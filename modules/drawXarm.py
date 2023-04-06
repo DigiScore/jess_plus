@@ -59,7 +59,7 @@ class DrawXarm(XArmAPI):
         # self.set_collision_sensitivity(value=0)
         # self.move_gohome(wait=True)
         # make self.z a class constant - to be amended by pen placement check
-        self.z = 120
+        self.z = 40
         self.roll = -180
         self.pitch = 0
         self.yaw = 0
@@ -323,9 +323,6 @@ class DrawXarm(XArmAPI):
                     wait=False, timeout=None, is_tool_coord=False, is_axis_angle=False
         """
         logging.info('arc/ circle')
-        pose = self.get_pose()
-        pose1 = pose1 + pose[2:]
-        pose2 = pose2 + pose[2:]
         self.move_circle(pose1=pose1,
                          pose2=pose2,
                          percent=percent,

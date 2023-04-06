@@ -28,9 +28,9 @@ irregular_shape_extents = 50
 xarm1_port = '192.168.1.222'
 xarm2_port = '192.168.1.223'
 
-xarm_x_extents = [200, 600]
-xarm_y_extents = [-360, 360]
-xarm_z_extents = [80, 250]
+xarm_x_extents = [200, 500]
+xarm_y_extents = [-250, 250]
+xarm_z_extents = [30, 550]
 xarm_ballet_x_extents = [375, 375]
 xarm_ballet_y_extents = [-360, 360]
 xarm_ballet_z_extents = [150, 550]

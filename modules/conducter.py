@@ -353,9 +353,11 @@ class Conducter:
             case 0:
                 logging.info('Cardew: draw arc')
                 are_range = peak * 10
-                self.drawbot.arc([x + uniform(-are_range, are_range), y + uniform(-are_range, are_range)],
-                                 [x + uniform(-are_range, are_range), y + uniform(-are_range, are_range)]
-                                 )
+                self.drawbot.arc2D(x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range),
+                                   x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range)
+                                   )
 
             case 1:
                 logging.info('Cardew: small squiggle')
