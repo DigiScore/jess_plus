@@ -44,7 +44,7 @@ class DrawXarm(XArmAPI):
         self.hivemind = DataBorg()
 
         # init and inherit the XArm_API library
-        XArmAPI().__init__(port)
+        XArmAPI.__init__(self, port)
 
         # get XArm ready to move
         self.motion_enable(enable=True)
