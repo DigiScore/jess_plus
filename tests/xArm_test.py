@@ -62,6 +62,7 @@ def test_tool_move():
 # Ancillary functions
 #####################
 def test_move_y():
+    drawbot.go_position_draw()
     drawbot.move_y()
 
 
