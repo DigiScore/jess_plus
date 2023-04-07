@@ -132,11 +132,45 @@ def test_arc2D():
 
 
 def test_draw_square():
-    pass
+    drawbot.go_position_draw()
+    drawbot.draw_square(5)
+    drawbot.draw_square(25)
+    drawbot.draw_square(10)
+
+
+def test_draw_triangle():
+    drawbot.go_position_draw()
+    drawbot.draw_triangle(5)
+    drawbot.draw_triangle(25)
+    drawbot.draw_triangle(10)
+
+
+def test_draw_sunburst():
+    drawbot.go_position_draw()
+    drawbot.draw_sunburst(5)
+    drawbot.draw_sunburst(25)
+    drawbot.draw_sunburst(10)
+
+
+def test_draw_irregular_shape():
+    drawbot.go_position_draw()
+    drawbot.draw_irregular_shape(3)
+    drawbot.draw_irregular_shape(0)
+    drawbot.draw_irregular_shape(10)
+
+
+def test_draw_circle():
+    drawbot.go_position_draw()
+    drawbot.draw_circle(5)
+    drawbot.draw_circle(25)
+    drawbot.draw_circle(10)
+
+
+# TODO: draw_characters
 
 
 if __name__ == "__main__":
     # test_move_to()
     # test_arc()
     # test_squiggle()
-    test_go_position_draw()
+    test_draw_sunburst()
