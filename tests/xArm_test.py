@@ -173,5 +173,6 @@ def test_draw_circle():
 ####################################################
 # Running the tests with pytest (pip install pytest)
 ####################################################
-# Running all the tests (in cmd): $ pytest xArm_test.py
-# Running a specific test (in cmd): $ pytest xArm_test.py::test_function
+# Run the tests in the cmd from the root folder:
+# - running all the tests: $ tests/pytest xArm_test.py
+# - running a specific test: $ pytest tests/xArm_test.py::test_function
