@@ -93,6 +93,9 @@ def test_go_random_draw():
 
 
 def test_go_random_jump():
+    drawbot.go_position_draw()
+    drawbot.go_random_jump()
+    drawbot.go_position_draw()
     drawbot.go_random_jump()
 
 
