@@ -36,9 +36,9 @@ pose_off_limit = [
 # Base functions
 ################
 def test_arc():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.arc(pose1, pose2)
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.arc(pose1, pose_off_limit)
 
 
@@ -46,10 +46,11 @@ def test_move_to():
     for _ in range(N_REPEAT):
         drawbot.move_to(*middle)
         drawbot.move_to(*middle_too_high)
-        drawbot.test_go_position_draw()
+        drawbot.go_position_draw()
 
 
 def test_tool_move():
+    drawbot.go_position_draw()
     drawbot.tool_move('black')
     drawbot.tool_move('blue')
     drawbot.tool_move('red')
@@ -126,9 +127,9 @@ def test_note_head():
 
 def test_arc2D():
     drawbot.go_position_draw()
-    drawbot.arc2D(pose1, pose2)
+    drawbot.arc2D(*pose1[:2], *pose2[:2])
     drawbot.go_position_draw()
-    drawbot.arc2D(pose1, pose_off_limit)
+    drawbot.arc2D(*pose1[:2], *pose_off_limit[:2])
 
 
 def test_draw_square():
@@ -169,8 +170,8 @@ def test_draw_circle():
 # TODO: draw_characters
 
 
-if __name__ == "__main__":
-    # test_move_to()
-    # test_arc()
-    # test_squiggle()
-    test_draw_sunburst()
+####################################################
+# Running the tests with pytest (pip install pytest)
+####################################################
+# Running all the tests (in cmd): $ pytest xArm_test.py
+# Running a specific test (in cmd): $ pytest xArm_test.py::test_function
