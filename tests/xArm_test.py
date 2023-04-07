@@ -66,12 +66,10 @@ def test_move_y():
     drawbot.move_y()
 
 
-def test_go_position_ready():
+def test_go_positions_ready_draw():
     drawbot.go_position_ready()
-
-
-def test_go_position_draw():
     drawbot.go_position_draw()
+    drawbot.go_position_ready()
 
 
 def test_home():
