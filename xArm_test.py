@@ -77,13 +77,13 @@ def test_home():
 
 
 def test_go_draw():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.go_draw(drawbot.draw_position[0] + 50,
                     drawbot.draw_position[1] + 50)
 
 
 def test_go_draw_up():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.go_draw_up(50, 50, jump=30)
 
 
@@ -96,7 +96,7 @@ def test_go_random_jump():
 
 
 def test_position_move_by():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.position_move_by(50, 50, 20)
 
 
@@ -113,21 +113,21 @@ def test_squiggle():
 
 
 def test_dot():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.dot()
 
 
 def test_note_head():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.note_head(5)
     drawbot.note_head(1)
     drawbot.note_head(10)
 
 
 def test_arc2D():
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.arc2D(pose1, pose2)
-    drawbot.test_go_position_draw()
+    drawbot.go_position_draw()
     drawbot.arc2D(pose1, pose_off_limit)
 
 
