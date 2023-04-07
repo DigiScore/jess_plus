@@ -73,6 +73,7 @@ def test_go_positions_ready_draw():
 
 
 def test_home():
+    drawbot.go_position_draw()
     drawbot.home()
 
 
