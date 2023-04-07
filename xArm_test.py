@@ -24,12 +24,6 @@ middle_too_high = [
     sum(config.xarm_y_extents)/2,
     config.xarm_z_extents[1] + 50
 ]
-middle_down = [
-    sum(config.xarm_x_extents)/2,
-    sum(config.xarm_y_extents)/2,
-    drawbot.z
-]
-
 pose1 = [300, 0, drawbot.z, drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose2 = [400, 200, drawbot.z, drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose_off_limit = [
@@ -42,9 +36,9 @@ pose_off_limit = [
 # Base functions
 ################
 def test_arc():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.arc(pose1, pose2)
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.arc(pose1, pose_off_limit)
 
 
@@ -52,7 +46,7 @@ def test_move_to():
     for _ in range(N_REPEAT):
         drawbot.move_to(*middle)
         drawbot.move_to(*middle_too_high)
-        drawbot.move_to(*middle_down)
+        drawbot.test_go_position_draw()
 
 
 def test_tool_move():
@@ -74,7 +68,7 @@ def test_go_position_ready():
     drawbot.go_position_ready()
 
 
-def test_go_position_ready():
+def test_go_position_draw():
     drawbot.go_position_draw()
 
 
@@ -83,14 +77,14 @@ def test_home():
 
 
 def test_go_draw():
-    drawbot.move_to(*middle_down)
-    drawbot.go_draw(middle_down[0] + 50, middle_down[1] + 50)
+    drawbot.test_go_position_draw()
+    drawbot.go_draw(drawbot.draw_position[0] + 50,
+                    drawbot.draw_position[1] + 50)
 
 
 def test_go_draw_up():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.go_draw_up(50, 50, jump=30)
-
 
 
 def test_go_random_draw():
@@ -102,7 +96,7 @@ def test_go_random_jump():
 
 
 def test_position_move_by():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.position_move_by(50, 50, 20)
 
 
@@ -119,21 +113,21 @@ def test_squiggle():
 
 
 def test_dot():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.dot()
 
 
 def test_note_head():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.note_head(5)
     drawbot.note_head(1)
     drawbot.note_head(10)
 
 
 def test_arc2D():
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.arc2D(pose1, pose2)
-    drawbot.move_to(*middle_down)
+    drawbot.test_go_position_draw()
     drawbot.arc2D(pose1, pose_off_limit)
 
 
@@ -145,4 +139,4 @@ if __name__ == "__main__":
     # test_move_to()
     # test_arc()
     # test_squiggle()
-    test_home()
+    test_go_position_draw()
