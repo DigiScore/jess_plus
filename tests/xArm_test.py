@@ -85,7 +85,9 @@ def test_go_draw():
 
 def test_go_draw_up():
     drawbot.go_position_draw()
-    drawbot.go_draw_up(50, 50, jump=30)
+    drawbot.go_draw_up(drawbot.draw_position[0] + 50,
+                       drawbot.draw_position[1] + 50,
+                       jump=30)
 
 
 def test_go_random_draw():
