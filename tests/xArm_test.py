@@ -24,8 +24,12 @@ middle_too_high = [
     sum(config.xarm_y_extents)/2,
     config.xarm_z_extents[1] + 50
 ]
-pose1 = [300, 0, drawbot.z, drawbot.roll, drawbot.pitch, drawbot.yaw]
-pose2 = [400, 200, drawbot.z, drawbot.roll, drawbot.pitch, drawbot.yaw]
+pose1 = [drawbot.draw_position[0]+50, drawbot.draw_position[1], drawbot.z,
+         drawbot.roll, drawbot.pitch, drawbot.yaw]
+pose2 = [drawbot.draw_position[0], drawbot.draw_position[1]+50, drawbot.z,
+         drawbot.roll, drawbot.pitch, drawbot.yaw]
+pose3 = [drawbot.draw_position[0], drawbot.draw_position[1]+100, drawbot.z,
+         drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose_off_limit = [
     400, config.xarm_y_extents[1] + 50, drawbot.z,
     drawbot.roll, drawbot.pitch, drawbot.yaw
@@ -134,7 +138,8 @@ def test_arc2D():
     drawbot.go_position_draw()
     drawbot.arc2D(*pose1[:2], *pose2[:2])
     drawbot.go_position_draw()
-    drawbot.arc2D(*pose1[:2], *pose_off_limit[:2])
+    drawbot.arc2D(*pose1[:2], *pose3[:2])
+    drawbot.go_position_draw()
 
 
 def test_draw_square():
