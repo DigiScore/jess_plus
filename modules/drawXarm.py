@@ -543,8 +543,8 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print("Random draw pos above page x:", x, " y:", y)
-        self.go_draw_up(dx=x,
-                        dy=y,
+        self.go_draw_up(x=x,
+                        y=y,
                         )
 
     # -- move by functions --#
