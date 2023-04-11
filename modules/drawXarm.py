@@ -474,8 +474,8 @@ class DrawXarm(XArmAPI):
                      )
 
     def go_draw_up(self,
-                   dx: float,
-                   dy: float,
+                   x: float,
+                   y: float,
                    jump: float = 20,
                    wait: bool = False
                    ):
@@ -483,10 +483,19 @@ class DrawXarm(XArmAPI):
         Lift the pen up, go to an x and y position, then lower the pen
         """
         # get current position, save to coords list
-        x, y, z = self.position[:3]
+        old_x, old_y = self.get_pose()[:2]
         self.coords.append((x, y))
 
         # jump off page
+        self.move_to(x=old_x,
+                     y=old_y,
+                     z=self.z + jump,
+                     speed=self.speed,
+                     mvacc=self.mvacc,
+                     wait=self.wait
+                     )
+
+        # move to new position
         self.move_to(x=x,
                      y=y,
                      z=self.z + jump,
@@ -495,18 +504,9 @@ class DrawXarm(XArmAPI):
                      wait=self.wait
                      )
 
-        # move to new position
-        self.move_to(x=dx,
-                     y=dy,
-                     z=self.z + jump,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
-
         # put pen on paper
-        self.move_to(x=dx,
-                     y=dy,
+        self.move_to(x=x,
+                     y=y,
                      z=self.z,
                      speed=self.speed,
                      mvacc=self.mvacc,
