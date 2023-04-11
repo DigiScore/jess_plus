@@ -270,7 +270,7 @@ class DrawXarm(XArmAPI):
         self.emergency_stop()
 
     def get_pose(self):
-        _, pose = self.get_position()
+        _, pose = self.last_used_position
         return pose
 
     def set_speed(self, arm_speed):
