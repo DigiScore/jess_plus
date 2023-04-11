@@ -434,7 +434,7 @@ class DrawXarm(XArmAPI):
         x, y, z = self.ready_position
         self.move_to(x=x,
                      y=y,
-                     z=self.z,
+                     z=z,
                      speed=self.speed,
                      mvacc=self.mvacc,
                      wait=self.wait
@@ -447,7 +447,7 @@ class DrawXarm(XArmAPI):
         x, y, z = self.draw_position
         self.move_to(x=x,
                      y=y,
-                     z=self.z,
+                     z=z,
                      speed=self.speed,
                      mvacc=self.mvacc,
                      wait=self.wait
