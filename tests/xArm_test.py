@@ -177,7 +177,16 @@ def test_draw_circle():
     drawbot.draw_circle(10)
 
 
-# TODO: draw_characters
+def test_draw_char():
+    drawbot.go_position_draw()
+    drawbot.draw_char('A', size=5)
+    # drawbot.draw_char('B', size=5)
+    # drawbot.draw_char('C', size=5)
+    # drawbot.draw_char('D', size=5)
+    drawbot.draw_char('E', size=5)
+    drawbot.draw_char('F', size=5)
+    # drawbot.draw_char('G', size=5)
+    # drawbot.draw_char('P', size=5)
 
 
 ####################################################
