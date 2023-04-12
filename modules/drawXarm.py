@@ -696,7 +696,8 @@ class DrawXarm(XArmAPI):
               pose1_x: int,
               pose1_y: int,
               pose2_x: int,
-              pose2_y: int
+              pose2_y: int,
+              wait: bool = False
               ):
         """
         Draws an arc taking two new coords pose1 and pose2
@@ -714,7 +715,7 @@ class DrawXarm(XArmAPI):
                  percent=rnd_percent,
                  speed=self.speed,
                  mvacc=self.mvacc,
-                 wait=self.wait
+                 wait=wait
                  )
 
     # -- shape drawing functions --#
