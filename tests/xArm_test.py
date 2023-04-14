@@ -189,6 +189,11 @@ def test_draw_char():
     drawbot.draw_char('P', size=5)
 
 
+def test_create_shape_group():
+    drawbot.go_random_jump()
+    drawbot.create_shape_group()
+
+
 ####################################################
 # Running the tests with pytest (pip install pytest)
 ####################################################
