@@ -75,8 +75,8 @@ class DrawXarm(XArmAPI):
         self.pitch = 0
         self.yaw = 0
         self.wait = False  # global wait var
-        self.speed = 100
-        self.mvacc = 100
+        self.speed = 80
+        self.mvacc = 80
 
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
