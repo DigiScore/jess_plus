@@ -240,6 +240,7 @@ class Conducter:
                             self.high_energy_response()
 
                         # D- break out of this loop, and next (cos of flag)
+                        sleep(rhythm_rate)
                         break
 
                         # LOW
@@ -248,7 +249,7 @@ class Conducter:
 
                         if self.drawbot:
                             if random() < 0.36:
-                                self.offpage(thought_train)
+                                self.continuous(thought_train)
                             else:
                                 sleep(0.1)
 
@@ -283,7 +284,7 @@ class Conducter:
         self.terminate()
 
     def repetition(self, peak):
-        self.drawbot.go_random_jump()
+        self.drawbot.go_random_draw_up()
         self.drawbot.create_shape_group()  # create a new shape group
         for i in range(randrange(1, 2)):  # repeat the shape group a random number of times
             logging.debug("repetition of shape")
@@ -350,7 +351,7 @@ class Conducter:
         x, y, z = self.drawbot.get_pose()[:3]
 
         # jump to a random location
-        self.drawbot.go_random_jump()
+        self.drawbot.go_random_draw_up()
 
         # randomly choose from the following choices
         randchoice = randrange(6)

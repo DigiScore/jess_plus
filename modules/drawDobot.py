@@ -121,8 +121,8 @@ class Drawbot(Dobot):
         response = self._read_message()
         self.lock.release()
 
-        # if not wait:
-        #     return response
+        if not wait:
+            return response
 
         # wait until Dobot completes current command
         try:
@@ -154,10 +154,10 @@ class Drawbot(Dobot):
 
     def get_normalised_position(self):
         while self.hivemind.running:
-            original_pose = self.get_pose()[:3]
+            pose = self.get_pose()[:3]
 
             # do a safety position check
-            pose = self.safety_position_check(original_pose)
+            # pose = self.safety_position_check(original_pose)
 
             # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
             # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
@@ -213,8 +213,8 @@ class Drawbot(Dobot):
         else:
             z = pose[2]
 
-        if pos_changed:
-            self.move_to(x, y, z, 0, False)
+        # if pos_changed:
+        #     self.move_to(x, y, z, 0, False)
 
         return_pose = (x, y, z)
         return return_pose
@@ -437,7 +437,6 @@ class Drawbot(Dobot):
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        # TODO - Adam - this needs organising better. We have multiple funcs that are calling Dobot API primitives when we should be controlling all of those with a single command here e.g. def.send_ptp_jump and def send_ptp_movej
         self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
 
     #-- creative go to position functions --#
@@ -470,7 +469,7 @@ class Drawbot(Dobot):
         self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
 
     #-- move by functions --#
-    def position_move_by(self, x, y, z, wait=True):
+    def position_move_by(self, dx, dy, dz, wait=True):
         """
         Increment the robot cartesian position by x, y, z.
         Check that the arm isn't going out of x, y, z extents
@@ -478,21 +477,17 @@ class Drawbot(Dobot):
 
         pose = self.get_pose()[:3]
         print(pose)
-        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking
+        new_pose = [pose[0] + dx, pose[1] + dy, pose[2] + dz]       #calulate new position, used for checking
 
-        # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        # if newPose[0] < config.x_extents[0] or newPose[0] > config.x_extents[1]:     # check x posiion
-        #     print("delta x reset to 0")
-        #     x = 0
-        # if newPose[1] < config.y_extents[0] or newPose[1] > config.y_extents[1]:     # check y position
-        #     print("delta y reset to 0")
-        #     y = 0
-        # if newPose[2] < config.z_extents[0] or newPose[2] > config.z_extents[1]:      # check z height
-        #     print("delta z reset to 0")
-        #     z = 0
-
-        self.coords.append(newPose[:2])
-        self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
+        corrected_pose = self.safety_position_check(new_pose)
+        self.coords.append(corrected_pose[:2])
+        self.add_to_list_set_ptp_cmd(corrected_pose[0],
+                                     corrected_pose[1],
+                                     corrected_pose[2],
+                                     0,
+                                     mode=PTPMode.MOVJ_XYZ_INC,
+                                     wait=wait
+                                     )
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
     #     """moves specific joints by an amount."""
