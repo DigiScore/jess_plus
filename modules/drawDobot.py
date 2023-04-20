@@ -43,7 +43,6 @@ class Drawbot(Dobot):
     def __init__(self,
                  port,
                  verbose,
-                 continuous_line
                  ):
 
         # own a hive mind
@@ -51,8 +50,6 @@ class Drawbot(Dobot):
 
         # init and inherit the Dobot library
         super().__init__(port, verbose)
-
-        self.continuous_line = continuous_line
 
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
@@ -74,36 +71,86 @@ class Drawbot(Dobot):
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
         self.positions = []
-
-        # create a command loist and start process thread
-        self.command_list = []
-        list_thread = Thread(target=self.process_command_list)
-        list_thread.start()
-
         self.last_shape_group = None
 
+        # create a command list
+        self.command_list = []
+        self.command_list_lock = False  # True = locked
+
+        # timing vars
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
 
     ######################
     # Command Q control & safety checks
     ######################
+    def command_list_main_loop(self):
+        """
+        main loop thread for parsing command loop and rocker lock
+        """
+        list_thread = Thread(target=self.process_command_list)
+        list_thread.start()
+
     def add_to_list_set_ptp_cmd(self, x, y, z, r, mode, wait):
-        msg_item = (x, y, z, r, mode, wait)
-        self.command_list.append(msg_item)
-        # print(len(self.command_list))
+        if not self.hivemind.running:
+            self._set_ptp_cmd(x, y, z, r, mode, wait)
+        else:
+            msg_item = (x, y, z, r, mode, wait)
+            self.command_list.append(msg_item)
+            # print(len(self.command_list))
 
     def process_command_list(self):
         while self.hivemind.running:
             if not self.hivemind.interrupt_bang:
                 self.command_list.clear()
                 sleep(0.1)
+                logging.info('Clearing command list')
+
             elif self.command_list:
-                msg = self.command_list.pop()
-                x, y, z, r, mode, wait = msg[:]
-                self._set_ptp_cmd(x, y, z, r, mode, wait)
+                if not self.command_list_lock:
+                    msg = self.command_list.pop()
+                    x, y, z, r, mode, wait = msg[:]
+                    self._set_ptp_cmd(x, y, z, r, mode, wait)
+                    self.command_list_lock = True
             else:
                 sleep(0.01)
+
+    def _send_command(self, msg, wait=False):
+        self.lock.acquire()
+        self._send_message(msg)
+        response = self._read_message()
+        self.lock.release()
+
+        # if not wait:
+        #     return response
+
+        # wait until Dobot completes current command
+        try:
+            expected_idx = struct.unpack_from('L', response.params, 0)[0]
+            if self.verbose:
+                print('pydobot: waiting for command', expected_idx)
+
+            while True:
+                current_idx = self._get_queued_cmd_current_index()
+
+                if current_idx != expected_idx:
+                    sleep(0.1)
+                    continue
+
+                if self.verbose:
+                    print('pydobot: command %d executed' % current_idx)
+
+                # open command list lock
+                self.command_list_lock = False
+                break
+
+        # the API through errors here, so this is a hacky fix
+        except:
+            print('pydobot -- command error')
+            # open command list lock
+            self.command_list_lock = False
+
+        return response
 
     def get_normalised_position(self):
         while self.hivemind.running:
@@ -222,35 +269,6 @@ class Drawbot(Dobot):
     #     else:
     #         self.clear_commands()
 
-    def _send_command(self, msg, wait=False):
-        self.lock.acquire()
-        self._send_message(msg)
-        response = self._read_message()
-        self.lock.release()
-        #
-        # if not wait:
-        #     return response
-        #
-        # # if self.hivemind.interrupt_bang:
-        # try:
-        #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
-        #     if self.verbose:
-        #         print('pydobot: waiting for command', expected_idx)
-        #
-        #     while True:
-        #         current_idx = self._get_queued_cmd_current_index()
-        #
-        #         if current_idx != expected_idx:
-        #             sleep(0.1)
-        #             continue
-        #
-        #         if self.verbose:
-        #             print('pydobot: command %d executed' % current_idx)
-        #         break
-        # except:
-        #     print('pydobot -- command error')
-
-        return response
 
     ######################
     # DIGIBOT CORE FUNCTIONS
@@ -279,7 +297,7 @@ class Drawbot(Dobot):
         msg.params.extend(bytearray(struct.pack('f', cir_r)))
         return self._send_command(msg, wait)
 
-    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
+    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=False):
         """
         Simplified arc function for drawing 2D arcs on the xy axis.
         apex_x and y determine
@@ -328,7 +346,7 @@ class Drawbot(Dobot):
 
         # which mode
         # if self.continuous_line:
-        self.bot_move_to(x, newy, z, r, True)
+        self.bot_move_to(x, newy, z, r, False)
         # else:
         #     self.jump_to(x, newy, z, r, True)
 
@@ -352,10 +370,10 @@ class Drawbot(Dobot):
             x = 250
 
         # which mode
-        if self.continuous_line:
-            self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
-        else:
-            self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, True)
+        # if self.continuous_line:
+        #     self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
+        # else:
+        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
 
     def go_position_ready(self):
         """
@@ -401,6 +419,10 @@ class Drawbot(Dobot):
 
     def bot_move_to(self, x, y, z, r, wait=False):
         self.move_to(x, y, z, r, wait)
+
+    def set_speed(self, arm_speed: float = 100):
+        self.speed(velocity=arm_speed,
+                           acceleration=arm_speed)
 
     def go_draw(self, x, y, wait=True):
         """

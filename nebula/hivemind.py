@@ -104,7 +104,7 @@ class DataBorg:
             self.interrupt_bang: bool = True
             """Signals an interrupt to the gesture manager"""
 
-            self.running: bool = True
+            self.running: bool = False
             """Master running bool for whole script"""
 
         else:

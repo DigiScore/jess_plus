@@ -7,7 +7,6 @@ from threading import Thread
 
 # import project modules
 from nebula.hivemind import DataBorg
-from modules.drawDobot import Drawbot
 import config
 
 class RobotMode(Enum):
@@ -23,27 +22,33 @@ class Conducter:
     """
 
     def __init__(self,
-                 port: str,
-                 continuous_line: bool = False,
                  speed: int = 5,
-                 staves: int = 0,
                  ):
 
         # PLATFORM = platform.system()
-        ROBOT_CONNECTED = config.robot
-        verbose = config.robot_verbose
+        self.DOBOT_CONNECTED = config.dobot_connected
+        verbose = config.dobot_verbose
+
+        self.XARM_CONNECTED = config.xarm_connected
 
         ############################
         # Robot
         ############################
         # start dobot communications
         # may need sudo chmod 666 /dev/ttyACM0
-        if ROBOT_CONNECTED:
+        if self.DOBOT_CONNECTED:
+            from modules.drawDobot import Drawbot
+
+            port = config.dobot1_port
             self.drawbot = Drawbot(
                 port=port,
                 verbose=verbose,
-                continuous_line=continuous_line
             )
+        elif self.XARM_CONNECTED:
+            from modules.drawXarm import DrawXarm
+            port = config.xarm1_port
+            self.drawbot = DrawXarm(port)
+
         else:
             self.drawbot = None
 
@@ -51,23 +56,23 @@ class Conducter:
         self.hivemind = DataBorg()
 
         # start operating vars
-        self.continuous_line = continuous_line
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
         self.joint_inc = 10          # scaling factor for incremental movement
         self.continuous_mode = 0     # mode for continuous module. 0 == on page, 1 == above page
         self.continuous_source = 0   # source of data used for continous movement. 0 == random, 1 == NN, 2 == peak
 
-        # calculate the inverse of speed
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        self.global_speed = speed # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
-        # print(f'user def speed = {speed}, global speed = {self.global_speed}')
+        # calculate the inverse of speed (NOT IMPLEMENTED)
+        self.global_speed = speed   # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
+
+        # get the baseline temperature from config
+        self.temperature = config.temperature
 
         if self.drawbot:
             print('locating home')
             self.drawbot.home()
             input('remove pen lid, then press enter')
 
-            #self.drawbot.draw_stave(staves=staves)
+            # self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
 
     def main_loop(self):
@@ -75,11 +80,30 @@ class Conducter:
         starts the main thread for the gesture manager
         """
         gesture_thread = Thread(target=self.gesture_manager)
+        command_list_thread = Thread(target=self.drawbot.command_list_main_loop)
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
+
+        # start threads
+        command_list_thread.start()
         gesture_thread.start()
 
+    def temperature_drunk_walk(self):
+        """
+        modifies the temperature var by +/- 0.1 every call.
+        Temperature is used to amend the thought-train by adding spice
+        """
+        if random() >= 0.5:
+            self.temperature += 0.1
+        else:
+            self.temperature -= 0.1
+
+        # boundary checker
+        if self.temperature > 1:
+            self.temperature = 1
+        elif self.temperature < 0:
+            self.temperature = 0
 
     def gesture_manager(self):
         """
@@ -102,8 +126,13 @@ class Conducter:
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_bang = True
 
+            # clear command list
+            self.drawbot.command_list.clear()
+
             #############################
+            #
             # Phrase-level gesture gate: 3 - 8 seconds
+            #
             #############################
 
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
@@ -146,14 +175,9 @@ class Conducter:
                 # 1. clear the alarms
                 if self.drawbot:
                     self.drawbot.clear_alarms()
-                    if self.continuous_line:
-                        self.drawbot.move_y()
 
                 # # generate rhythm rate here
-                # rhythm_rate = (randrange(10,
-                #                          80) / 100) #* self.global_speed
-                # self.hivemind.rhythm_rate = rhythm_rate
-                # logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
+
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
 
                 #############################
@@ -165,23 +189,28 @@ class Conducter:
 
                 # speed for this phrase
                 arm_speed = randrange(30, 500)
-                if self.drawbot:
-                    self.drawbot.speed(velocity=arm_speed,
-                                       acceleration=arm_speed)
+                if self.DOBOT_CONNECTED or self.XARM_CONNECTED:
+                    self.drawbot.set_speed(arm_speed)
 
                 while time() < rhythm_loop:
                     print('-----------------')
 
+                    # adjust the temperature as a drunk walk every cycle
+                    self.temperature_drunk_walk()
+
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
-                    # thought_train = self.hivemind.rnd_stream
                     logging.info(f'=========Hello - baby cycle 2 ===========Affect stream output {rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
-                    # setattr(self.hivemind, 'master_stream', thought_train)
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
+
+                    # 3. add the temperature factor
+                    thought_train += self.temperature
+                    if thought_train > 1:
+                        thought_train = 1
 
                     # generate rhythm rate here
                     rhythm_rate = 1 - self.hivemind.core2flow + 0.05  # (randrange(10, 80) / 100) #* self.global_speed
@@ -203,7 +232,10 @@ class Conducter:
                         # B - jumps out of this loop into daddy
                         self.hivemind.interrupt_bang = False
 
-                        # C - respond
+                        # C - clears the command list in drawbot
+                        self.drawbot.command_list.clear()
+
+                        # D - respond
                         if self.drawbot:
                             self.high_energy_response()
 
@@ -215,10 +247,8 @@ class Conducter:
                         logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
-                            if self.continuous_line:
-                                self.drawbot.move_y()
-                            elif random() < 0.36:
-                                self.continuous(thought_train)
+                            if random() < 0.36:
+                                self.offpage(thought_train)
                             else:
                                 sleep(0.1)
 
@@ -246,10 +276,6 @@ class Conducter:
                                     print("Repetition Mode")
                                     self.repetition(thought_train)
 
-                    # get new position for hivemind
-                    # if self.drawbot:
-                    #     self.drawbot.get_normalised_position()
-
                     # and wait for a cycle
                     sleep(rhythm_rate)
 
@@ -257,7 +283,7 @@ class Conducter:
         self.terminate()
 
     def repetition(self, peak):
-        self.drawbot.go_random_draw_up()
+        self.drawbot.go_random_jump()
         self.drawbot.create_shape_group()  # create a new shape group
         for i in range(randrange(1, 2)):  # repeat the shape group a random number of times
             logging.debug("repetition of shape")
@@ -321,36 +347,35 @@ class Conducter:
         jumps to a random spot and makes a mark inspired by Wolff
         """
         # get the current position
-        (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
-        logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+        x, y, z = self.drawbot.get_pose()[:3]
 
         # jump to a random location
-        self.drawbot.go_random_draw_up()
-        # self.drawbot.move_y_random()
+        self.drawbot.go_random_jump()
 
         # randomly choose from the following choices
-        randchoice = randrange(7)
+        randchoice = randrange(6)
         logging.debug(f'randchoice WOLFF == {randchoice}')
 
         match randchoice:
             case 0:
                 logging.info('Wolff: draw line')
-                self.drawbot.bot_move_to(x + self.rnd(peak),
+                self.drawbot.move_to(x + self.rnd(peak),
                                      y + self.rnd(peak),
-                                     z, 0,
+                                     z,
                                      False)
 
-            case 1:
-                logging.info('Wolff: random character')
-                self.drawbot.draw_random_char(peak * randrange(10, 20))
+            # case 1:
+            #     logging.info('Wolff: random character')
+            #     self.drawbot.draw_random_char(peak * randrange(10, 20))
 
-            case 2:
+            # TEMPORARY UNTIL ADAM COMPLETES
+            case 1:
                 logging.info('Wolff: dot and line')
                 self.drawbot.dot()
-                self.drawbot.bot_move_to(x + self.rnd(peak),
-                                     y + self.rnd(peak),
-                                     z, 0,
-                                     False)
+
+            case 2:
+                logging.info('Wolff: dot')
+                self.drawbot.dot()
 
             case 3:
                 logging.info('Wolff: note head')
@@ -368,16 +393,11 @@ class Conducter:
                 logging.info('Wolff: dot')
                 self.drawbot.dot()
 
-            case 6:
-                logging.info('Wolff: random character')
-                self.drawbot.draw_random_char(peak)
-
     def cardew_inspiration(self, peak):
         """
         randomly chooses a shape inspired by Cardew
         """
-        (x, y, z, r, j1, j2, j3, j4) = self.drawbot.pose()
-        logging.debug(f'Current position: x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
+        x, y, z = self.drawbot.get_pose()[:3]
 
         # move Y along
         self.drawbot.move_y()
@@ -389,31 +409,35 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Cardew: draw arc')
-                # range = peak * 10
-                self.drawbot.arc2D(x + randrange(-10, 10),
-                                   y + randrange(-10, 10),
-                                   x + randrange(-10, 10),
-                                   y + randrange(-10, 10),
+                are_range = peak * 10
+                self.drawbot.arc2D(x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range),
+                                   x + uniform(-are_range, are_range),
+                                   y + uniform(-are_range, are_range)
                                    )
 
             case 1:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((randrange(-5, 5),
-                                          randrange(-5, 5),
-                                          randrange(-5, 5))
+                    squiggle_list.append((uniform(-5, 5),
+                                          uniform(-5, 5),
+                                          uniform(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
             case 2:
                 logging.info('Cardew: draw circle')
-                self.drawbot.draw_circle(int(peak * 10))
+                side = randrange(2)
+                self.drawbot.draw_circle(int(peak * 10),
+                                         side
+                                         )
 
             case 3:
                 logging.info('Cardew: line')
                 self.drawbot.go_draw(x + self.rnd(peak * 10),
-                                     y + self.rnd(peak * 10))
+                                     y + self.rnd(peak * 10)
+                                     )
 
             case 4:
                 logging.info('Cardew: return to coord')
@@ -423,9 +447,9 @@ class Conducter:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((randrange(-5, 5),
-                                          randrange(-5, 5),
-                                          randrange(-5, 5))
+                    squiggle_list.append((uniform(-5, 5),
+                                          uniform(-5, 5),
+                                          uniform(-5, 5))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
@@ -433,10 +457,8 @@ class Conducter:
         """
         move to a random x, y position
         """
+        # clear robot command cache
         self.drawbot.clear_commands()
-        # self.drawbot.go_random_draw()
-        # self.drawbot.return_to_coord()
-        # sleep(0.1)
 
     def terminate(self):
         """
@@ -456,7 +478,7 @@ class Conducter:
         if power_of_command <= 0:
             power_of_command = 1
         pos = 1
-        if getrandbits(1):
+        if random() >= 0.5:
             pos = -1
         result = (randrange(1, 5) + randrange(power_of_command)) * pos
         logging.debug(f'Rnd result = {result}')
