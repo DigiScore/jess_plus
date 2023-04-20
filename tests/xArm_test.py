@@ -1,6 +1,4 @@
 # from xarm.wrapper.xarm_api import XArmAPI
-from operator import pos
-from conducter_test import main
 from modules.drawXarm import DrawXarm
 import config
 from random import randrange, uniform

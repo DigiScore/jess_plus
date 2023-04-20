@@ -17,7 +17,7 @@ sudo chmod 666 /dev/ttyACM0
 
 # [DOBOT]
 dobot1_port = 'COM4' # '/dev/ttyACM0' or 'COM4' or 'COM10' or arm = XArmAPI('192.168.1.222')
-dobot_verbose = True
+dobot_verbose = False
 
 x_extents = [160, 350]
 y_extents = [-150, 150]

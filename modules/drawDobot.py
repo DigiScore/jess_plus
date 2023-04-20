@@ -338,17 +338,8 @@ class Drawbot(Dobot):
         if x <= 200 or x >= 300:
             x = 250
 
-        # move z (pen head) a little
-        # if getrandbits(1):
-        #     z = 0
-        # else:
-        #     z = randrange(-2, 2)
-
         # which mode
-        # if self.continuous_line:
         self.bot_move_to(x, newy, z, r, False)
-        # else:
-        #     self.jump_to(x, newy, z, r, True)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
@@ -454,7 +445,7 @@ class Drawbot(Dobot):
         print("Random draw pos x:", round(x, 2)," y:", round(y,2))
         self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
 
-    def go_random_draw_up(self):   #goes to random positon on page with pen above page then back on
+    def go_random_jump(self):   #goes to random positon on page with pen above page then back on
         """
         Lift the pen, move to a random position within the x and y extents,
         then lower the pen to draw position
@@ -489,20 +480,6 @@ class Drawbot(Dobot):
                                      wait=wait
                                      )
 
-    # def joint_move_by(self, _j1, _j2, _j3, wait=True):
-    #     """moves specific joints by an amount."""
-    #     (j1, j2, j3, j4) = self.get_pose()[-4:]
-    #     print(j1, j2, j3, j4)
-    #     #if(z <= z_extents[0] + 2):  # if the arm is too low, rotate j2 slightly clockwise to raise the arm
-    #     #    print("joint_move_by z too low, _j2 = -2")
-    #     #    _j2 = -2
-    #
-    #     # newPose = [
-    #     _j1 += j1
-    #     _j2 += j2
-    #     _j3 -= j3
-    #     # ]
-    #     self.add_to_list_set_ptp_cmd(_j1, _j2, _j3, j4, mode=PTPMode.MOVJ_INC, wait=wait)
 
     ######################
     # DIGIBOT NOTATION FUNCTIONS
@@ -734,11 +711,9 @@ class Drawbot(Dobot):
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
-            # todo Adam - this needs to call a dobot mid level func (above)
             self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         # if self.hivemind.interrupt_bang:
-        # todo Adam - this needs to call a dobot mid level func (above)
         self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
 
         self.irregulars.append(vertices)
