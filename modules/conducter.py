@@ -218,7 +218,7 @@ class Conducter:
                             if self.continuous_line:
                                 self.drawbot.move_y()
                             elif random() < 0.36:
-                                self.offpage(thought_train)
+                                self.continuous(thought_train)
                             else:
                                 sleep(0.1)
 
@@ -280,8 +280,8 @@ class Conducter:
                         move_y = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = uniform(self.hivemind.audio2core_2d[0], - self.hivemind.audio2core_2d[0]) * self.joint_inc
-                        move_y = uniform(self.hivemind.audio2core_2d[1], - self.hivemind.audio2core_2d[1]) * self.joint_inc
+                        move_x = uniform(self.hivemind.audio2core_2d[0, -1], - self.hivemind.audio2core_2d[0, -1]) * self.joint_inc
+                        move_y = uniform(self.hivemind.audio2core_2d[1, -1], - self.hivemind.audio2core_2d[1, -1]) * self.joint_inc
 
                 self.drawbot.position_move_by(move_x, move_y, 0, wait=True)
                 
@@ -294,9 +294,9 @@ class Conducter:
                         move_z = uniform(-self.joint_inc, self.joint_inc)
 
                     case 1:     # NN data
-                        move_x = uniform(self.hivemind.flow2core_2d[0], - self.hivemind.flow2core_2d[0]) * self.joint_inc
+                        move_x = uniform(self.hivemind.flow2core_2d[0, -1], - self.hivemind.flow2core_2d[0, -1]) * self.joint_inc
                         #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
-                        move_z = uniform(self.hivemind.flow2core_2d[1], + self.hivemind.flow2core_2d[1]) * self.joint_inc
+                        move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
 
                 self.drawbot.position_move_by(move_x, 0, move_z, wait=False)
 
