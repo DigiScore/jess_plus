@@ -57,7 +57,9 @@ class Conducter:
 
         # start operating vars
         self.current_phrase_num = 0  # number of phrases looped through. can be used for something to change behaviour over time...
-        self.joint_inc = 10
+        self.joint_inc = 10          # scaling factor for incremental movement
+        self.continuous_mode = 0     # mode for continuous module. 0 == on page, 1 == above page
+        self.continuous_source = 0   # source of data used for continous movement. 0 == random, 1 == NN, 2 == peak
 
         # calculate the inverse of speed (NOT IMPLEMENTED)
         self.global_speed = speed   # ((speed - 1) * (0.1 - 1) / (10 - 1)) + 1
@@ -154,7 +156,13 @@ class Conducter:
             print(self.hivemind.thought_train_stream)
 
             # define robot mode for this phase length
-            robot_mode = randrange(4)
+            # robot_mode = RobotMode(randrange(5))
+            # set random mode and data source for continuous mode
+            # TODO: is robot MID response always random?
+            robot_mode = RobotMode(randrange(4))
+            if robot_mode == RobotMode.Continuous:         # randomise continuous settings
+                self.continuous_mode = randrange(2)      # 0 == on page, 1 == above page
+                self.continuous_source = randrange(2)    # 0 == random, 1 == NN
 
             while time() < phrase_loop_end:
                 print('================')
@@ -248,25 +256,25 @@ class Conducter:
                         # MID response
                         if self.drawbot:
                             match robot_mode:
-                                case 0:
+                                case RobotMode.Continuous:
                                     # move continuously using data streams from EMD, borg
-                                    print("Repetition Mode")
-                                    self.repetition(thought_train)
+                                    print("Continuous Mode")
+                                    self.continuous(thought_train)
 
-                                case 1:
-                                    # random shapes inspired by Wolff's 1, 2, 3
-                                    print("Inspiration/ Wolff Mode")
-                                    self.wolff_inspiration(thought_train)
-
-                                case 2:
+                                case RobotMode.Modification:
                                     # random shapes inspired by Cardews "Treatise"
                                     print("Modification/ Cardew Mode")
                                     self.cardew_inspiration(thought_train)
 
-                                case 3:
-                                    # random movements off the page, balletic movements above the page
-                                    print("OffPage Mode")
-                                    self.offpage(thought_train)
+                                case RobotMode.Inspiration:
+                                    # random shapes inspired by Wolff's 1, 2, 3
+                                    print("Inspiration/ Wolff Mode")
+                                    self.wolff_inspiration(thought_train)
+
+                                case RobotMode.Repetition:
+                                    # large repeating gestures
+                                    print("Repetition Mode")
+                                    self.repetition(thought_train)
 
                     # and wait for a cycle
                     sleep(rhythm_rate)
@@ -281,29 +289,58 @@ class Conducter:
             logging.debug("repetition of shape")
             self.drawbot.repeat_shape_group()
 
-    def offpage(self, peak):
-        move_var = (peak * 10) * self.joint_inc
-        self.drawbot.position_move_by(
-            uniform(-move_var, move_var),
-            uniform(-move_var, move_var),
-            uniform(-move_var, move_var),
-            wait=False
-        )
     def continuous(self, peak):
-        # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
-        inc = self.joint_inc * self.current_phrase_num
+        """
+        Performs continuous movement in 2 different modes and from 3 different data sources, all randomised when the mode is randomised.
+        Modes: 0 == on page drawing (xy), 1 == above page (xyz)
+        Data sources: 1 = random data, 2 = NN data, 3 = peak (mic input)
+        """
+        # move_x = 0
+        # move_y = 0
 
-        if random() > 0.5:  # use mic input - probably want to change this so x, y, z aren't all the same
-            self.drawbot.position_move_by(self.hivemind.mic_in,
-                                          self.hivemind.mic_in,
-                                          self.hivemind.mic_in,
-                                          wait=False)
+        match self.continuous_mode:
+            case 0:     # on page (z axis at draw height)
+                match self.continuous_source:
+                    case 0:     # random data
+                        move_x = uniform(-self.joint_inc, self.joint_inc)
+                        move_y = uniform(-self.joint_inc, self.joint_inc)
 
-        else:  # todo - use EMD data. Currently uses random data
-            self.drawbot.position_move_by(uniform(-inc, inc),
-                                          uniform(-inc, inc),
-                                          self.drawbot.draw_position[2],
-                                          wait=False)
+                    case 1:     # NN data
+                        move_x = uniform(self.hivemind.audio2core_2d[0, -1], - self.hivemind.audio2core_2d[0, -1]) * self.joint_inc
+                        move_y = uniform(self.hivemind.audio2core_2d[1, -1], - self.hivemind.audio2core_2d[1, -1]) * self.joint_inc
+
+                self.drawbot.position_move_by(move_x, move_y, 0, wait=True)
+                
+            case 1:     # above page (z axis affected by data)
+                # move_z = 0
+                match self.continuous_source:
+                    case 0:     # random data
+                        move_x = uniform(-self.joint_inc, self.joint_inc)
+                        #move_y = uniform(-self.joint_inc, self.joint_inc)
+                        move_z = uniform(-self.joint_inc, self.joint_inc)
+
+                    case 1:     # NN data
+                        move_x = uniform(self.hivemind.flow2core_2d[0, -1], - self.hivemind.flow2core_2d[0, -1]) * self.joint_inc
+                        #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
+                        move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
+
+                self.drawbot.position_move_by(move_x, 0, move_z, wait=False)
+
+    #def continuous(self, peak):
+    #    # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
+    #    inc = self.joint_inc * self.current_phrase_num
+    #
+    #    if random() > 0.5:  # use mic input - probably want to change this so x, y, z aren't all the same
+    #        self.drawbot.position_move_by(self.hivemind.mic_in,
+    #                                      self.hivemind.mic_in,
+    #                                      self.hivemind.mic_in,
+    #                                      wait=False)
+    #
+    #    else:  # todo - use EMD data. Currently uses random data
+    #        self.drawbot.position_move_by(uniform(-inc, inc),
+    #                                      uniform(-inc, inc),
+    #                                      self.drawbot.draw_position[2],
+    #                                      wait=False)
 
     def wolff_inspiration(self, peak):
         """
@@ -350,10 +387,7 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.move_to(x + self.rnd(peak),
-                                     y + self.rnd(peak),
-                                     z,
-                                     False)
+                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=False)    # draw small line from note head
 
             case 5:
                 logging.info('Wolff: dot')

@@ -6,6 +6,7 @@ import struct
 import math
 import numpy as np
 from threading import Thread
+import json
 
 # install dobot modules
 from pydobot import Dobot
@@ -65,10 +66,11 @@ class Drawbot(Dobot):
         self.irregulars = []
         self.circles = []
         self.triangles = []
-        self.chars = []
-
+        self.chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
+        
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
+        self.positions = []
         self.last_shape_group = None
 
         # create a command list
@@ -172,33 +174,47 @@ class Drawbot(Dobot):
             self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
             self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
-            logging.debug(f'current x,y,z normalised  = {norm_xyz}')
+            self.positions.append(norm_xyz)
 
+            #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)
+        
+        json_str = json.dumps(self.positions)
+        json_file = open("position_data.json", "w")
+        json_file.write(json_str)
+        json_file.close()
 
     def safety_position_check(self, pose):
-        if pose[0] < self.x_extents[0]:     # check x posiion
-            x = self.x_extents[0]
-        elif pose[0] > self.x_extents[1]:
-            x = self.x_extents[1]
+        pos_changed = False
+        if pose[0] < config.x_extents[0]:     # check x posiion
+            x = config.x_extents[0]
+            pos_changed = True
+        elif pose[0] > config.x_extents[1]:
+            x = config.x_extents[1]
+            pos_changed = True
         else:
             x = pose[0]
 
-        if pose[1] < self.y_extents[0]:  # check y posiion
-            y = self.y_extents[0]
-        elif pose[1] > self.y_extents[1]:
-            y = self.y_extents[1]
+        if pose[1] < config.y_extents[0]:  # check y posiion
+            y = config.y_extents[0]
+            pos_changed = True
+        elif pose[1] > config.y_extents[1]:
+            y = config.y_extents[1]
+            pos_changed = True
         else:
             y = pose[1]
 
-        if pose[2] < self.z_extents[0]:  # check x posiion
-            z = self.z_extents[0]
-        elif pose[2] > self.z_extents[1]:
-            z = self.z_extents[1]
+        if pose[2] < config.z_extents[0]:  # check x posiion
+            z = config.z_extents[0]
+            pos_changed = True
+        elif pose[2] > config.z_extents[1]:
+            z = config.z_extents[1]
+            pos_changed = True
         else:
             z = pose[2]
 
-        self.move_to(x, y, z, 0, False)
+        if pos_changed:
+            self.move_to(x, y, z, 0, False)
 
         return_pose = (x, y, z)
         return return_pose
@@ -461,19 +477,19 @@ class Drawbot(Dobot):
         """
 
         pose = self.get_pose()[:3]
-
+        print(pose)
         newPose = [pose[0] + x, pose[1] + y, pose[2] + z]       #calulate new position, used for checking
 
-        # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:     # check x posiion
-            print("delta x reset to 0")
-            x = 0
-        if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:     # check y position
-            print("delta y reset to 0")
-            y = 0
-        if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:      # check z height
-            print("delta z reset to 0")
-            z = 0
+        # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
+        # if newPose[0] < config.x_extents[0] or newPose[0] > config.x_extents[1]:     # check x posiion
+        #     print("delta x reset to 0")
+        #     x = 0
+        # if newPose[1] < config.y_extents[0] or newPose[1] > config.y_extents[1]:     # check y position
+        #     print("delta y reset to 0")
+        #     y = 0
+        # if newPose[2] < config.z_extents[0] or newPose[2] > config.z_extents[1]:      # check z height
+        #     print("delta z reset to 0")
+        #     z = 0
 
         self.coords.append(newPose[:2])
         self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
@@ -754,7 +770,11 @@ class Drawbot(Dobot):
 
         self.circles.append(circle)
 
-    def draw_char(self, _char, size, wait=True):
+    def draw_char(self,
+                  _char: str,
+                  size: float,
+                  wait=True
+                  ):
         """
         Draws a character (letter, number) on the pens current position.
         Supported characters are as follows:
@@ -762,10 +782,11 @@ class Drawbot(Dobot):
         lines are drawn in this function whereas
         letters with curves are drarn in their own respective functions.
         """
-        #print("Drawing letter: ", _char)
+        print("Drawing letter: ", _char)
         pos = self.get_pose()[:2]     # x, y
         char = []
-        char.append(_char.upper())
+        _char = _char.upper()
+        char.append(_char)
 
         jump_num = -1   # determines the characters that need a jump, cant be drawn continuously. If left as -1 then no jump is needed
 
@@ -849,6 +870,7 @@ class Drawbot(Dobot):
             else:                                   # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
 
+            # todo ADAM - here is your problem. You are adding char and x,y to char (list), then adding that to self.chars
             char.append(next_pos)     # append the current position to the letter
             self.coords.append(next_pos)
 
@@ -1020,10 +1042,13 @@ class Drawbot(Dobot):
             self.coords.append(world_pos[i])
 
     def draw_random_char(self, size=1, wait=True):
-        chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
+        """
+        Draws a random character from the list of available characters.
+        """
 
-        rand_char = chars[randrange(0, len(chars))]
-
+        rand_char = self.chars[randrange(0, len(self.chars))]
+        print(rand_char)
+        print(self.chars)
         self.draw_char(rand_char, size, wait)
 
     def create_shape_group(self, wait=True):
@@ -1109,27 +1134,34 @@ class Drawbot(Dobot):
         """
         square_length = int(len(self.squares))
         if square_length > 0:
-            # if self.hivemind.interrupt_bang:
             square = self.squares[int(uniform(0, square_length))]
             print(square)
 
-            rand = uniform(0, 1)
+            rand = randrange(0, 3)
 
             if rand == 0:              # move to a random corner on the square and draw a new square with a random size
-                randCorner = uniform(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2], square[randCorner][3], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                randCorner = randrange(0,3)
+                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
                 self.draw_square(uniform(20,29), True)
-            else:                       # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)
-                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
-
-                #device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
-            #device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
-            #device.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=True)
-            #device.move_to(square[0][0], square[0][1], square[0][2], square[0][3], wait=True)
-
+            elif rand == 1:                       # draw a cross in the square
+                self.go_draw_up(square[0][0], square[0][1], wait=True)
+                self.move_to(square[2][0], square[2][1], wait=True)
+                self.go_draw_up(square[1][0], square[1][1], wait=True)
+                self.move_to(square[3][0], square[3][1], wait=True)
+            elif rand == 2:                 # pick a random number of points within the square and scribble inside of it
+                point_num = randrange(3,10)
+                randCorner = randrange(0,3)
+                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                for i in range(point_num):
+                    rand_point = [
+                        uniform(square[0][0], square[1][0]), uniform(square[0][1], square[3][1])    # random point inside square bounds
+                    ]
+                    self.go_draw(rand_point[0], rand_point[1], wait=True)
+            elif rand == 3:                 # redraw the square from top right corner anti-clockwise
+                self.go_draw(square[1][0], square[1][1], wait=True)  
+                self.go_draw(square[2][0], square[2][1], wait=True)
+                self.go_draw(square[3][0], square[3][1], wait=True)
+                self.go_draw(square[0][0], square[0][1], wait=True)
         else:
             print("cannot return to square, no squares in list")
 
@@ -1140,19 +1172,19 @@ class Drawbot(Dobot):
         """
         sunbursts_length = int(len(self.sunbursts))
         if sunbursts_length > 0:
-            sunburst = self.sunbursts[int(uniform(0, sunbursts_length))]
+            sunburst = self.sunbursts[int(randrange(0, sunbursts_length))]
             print(sunburst)
 
-            rand = uniform(0,1)      #randomly choose between two behaviours
+            rand = randrange(0,1)      #randomly choose between two behaviours
 
             if rand == 0:                  #join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=True) 
-                self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=True)
-                self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)
-                self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=True)
-                self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=True)
+                self.go_draw_up(sunburst[0][0], sunburst[0][1], wait=True) 
+                self.go_draw(sunburst[1][0], sunburst[1][1], wait=True)
+                self.go_draw(sunburst[2][0], sunburst[2][1], wait=True)
+                self.go_draw(sunburst[3][0], sunburst[3][1], wait=True)
+                self.go_draw(sunburst[4][0], sunburst[4][1], wait=True)
             else:                           # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=True)  
+                self.go_draw_up(sunburst[2][0], sunburst[2][1], wait=True)  
                 self.draw_sunburst(20, True)
 
         else:
@@ -1181,12 +1213,15 @@ class Drawbot(Dobot):
     def return_to_char(self):
         """
         Randomly chooses a character from the 'chars' list and
-        randomly chooses a behaviour to do with it. (NOT FINISHED)
+        randomly chooses a behaviour to do with it. 
         """
         chars_length = int(len(self.chars))
         if chars_length > 0:
             char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
+            rand_point = randrange(0, len(char))
 
+            self.go_draw_up(char[rand_point][0], char[rand_point][1], wait=True)   # go to a random point on the character
+            self.draw_random_char(uniform(5,20), wait=True)
         else:
             print("Cannot return to char, no chars in list")
     
