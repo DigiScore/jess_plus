@@ -325,7 +325,7 @@ class Conducter:
                         #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
                         move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
 
-                self.drawbot.position_move_by(move_x, 0, move_z, wait=False)
+                self.drawbot.position_move_by(move_x, 0, move_z, wait=True)
 
     #def continuous(self, peak):
     #    # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
@@ -388,7 +388,7 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=False)    # draw small line from note head
+                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=True)    # draw small line from note head
 
             case 5:
                 logging.info('Wolff: dot')

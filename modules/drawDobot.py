@@ -76,6 +76,7 @@ class Drawbot(Dobot):
         # create a command list
         self.command_list = []
         self.command_list_lock = False  # True = locked
+        self.wait = True
 
         # timing vars
         self.duration_of_piece = config.duration_of_piece
@@ -88,34 +89,62 @@ class Drawbot(Dobot):
         """
         main loop thread for parsing command loop and rocker lock
         """
+        print("Started Command List Thread")
         list_thread = Thread(target=self.process_command_list)
         list_thread.start()
 
     def add_to_list_set_ptp_cmd(self, x, y, z, r, mode, wait):
+        print("adding to list", x, y, z)
         if not self.hivemind.running:
             self._set_ptp_cmd(x, y, z, r, mode, wait)
         else:
             msg_item = (x, y, z, r, mode, wait)
             self.command_list.append(msg_item)
-            # print(len(self.command_list))
+            print(len(self.command_list))
 
     def process_command_list(self):
         while self.hivemind.running:
             if not self.hivemind.interrupt_bang:
                 self.command_list.clear()
+                print("clearded commands")
+                self.hivemind.interrupt_bang = True
                 sleep(0.1)
                 logging.info('Clearing command list')
 
             elif self.command_list:
                 if not self.command_list_lock:
-                    msg = self.command_list.pop()
-                    x, y, z, r, mode, wait = msg[:]
-                    self._set_ptp_cmd(x, y, z, r, mode, wait)
+                    print("sending message")
+                    msg = self.command_list.pop(0)
                     self.command_list_lock = True
+                    print("locked LOCK")
+                    x, y, z, r, mode, wait = msg
+                    params = [x, y, z, r]
+                    # mv = mode.value
+                    print("send message ", msg, mode.value)
+                    self.custom_set_ptp_cmd(params=params,
+                                            id=84,
+                                            mode=mode,
+                                            wait=wait
+                                            ) # x, y, z, r, mode, wait)
             else:
                 sleep(0.01)
 
+    def custom_set_ptp_cmd(self, params: list, id, mode, wait):
+        msg = Message()
+        msg.id = id
+        msg.ctrl = 0x03
+        msg.params = bytearray([])
+        if mode:
+            msg.params.extend(bytearray([mode.value]))
+        for _p in params:
+            msg.params.extend(bytearray(struct.pack('f', _p)))
+        # msg.params.extend(bytearray(struct.pack('f', y)))
+        # msg.params.extend(bytearray(struct.pack('f', z)))
+        # msg.params.extend(bytearray(struct.pack('f', r)))
+        return self._send_command(msg, self.wait)
+
     def _send_command(self, msg, wait=False):
+        # print("recieved msg", msg)
         self.lock.acquire()
         self._send_message(msg)
         response = self._read_message()
@@ -137,11 +166,12 @@ class Drawbot(Dobot):
                     sleep(0.1)
                     continue
 
-                if self.verbose:
-                    print('pydobot: command %d executed' % current_idx)
+                # if self.verbose:
+                print('pydobot: command %d executed' % current_idx)
 
                 # open command list lock
                 self.command_list_lock = False
+                print("Lock OPENED")
                 break
 
         # the API through errors here, so this is a hacky fix
@@ -278,26 +308,33 @@ class Drawbot(Dobot):
     All of the notation functions ()below) need to call these here.
     """
 
-    def arc(self, x, y, z, r, cir_x, cir_y, cir_z, cir_r, wait=False):
+    def arc(self, x, y, z, r, cir_x, cir_y, cir_z, cir_r, wait=True):
         """
         Draws an arc defined by a) circumference of arc (x, y, z, r),
         with b) a finishing coordinates (cirx, ciry, cirz, cirr.
         """
-        msg = Message()
-        msg.id = 101
-        msg.ctrl = 0x03
-        msg.params = bytearray([])
-        msg.params.extend(bytearray(struct.pack('f', x)))
-        msg.params.extend(bytearray(struct.pack('f', y)))
-        msg.params.extend(bytearray(struct.pack('f', z)))
-        msg.params.extend(bytearray(struct.pack('f', r)))
-        msg.params.extend(bytearray(struct.pack('f', cir_x)))
-        msg.params.extend(bytearray(struct.pack('f', cir_y)))
-        msg.params.extend(bytearray(struct.pack('f', cir_z)))
-        msg.params.extend(bytearray(struct.pack('f', cir_r)))
-        return self._send_command(msg, wait)
+        self.coords.append((x, y))
+        params = [x, y, z, r, cir_x, cir_y, cir_z, cir_r]
+        self.custom_set_ptp_cmd(params=params,
+                                id=101,
+                                mode=None,
+                                wait=wait
+                                )  # x, y, z, r, mode, wait)
+        # msg = Message()
+        # msg.id = 101
+        # msg.ctrl = 0x03
+        # msg.params = bytearray([])
+        # msg.params.extend(bytearray(struct.pack('f', x)))
+        # msg.params.extend(bytearray(struct.pack('f', y)))
+        # msg.params.extend(bytearray(struct.pack('f', z)))
+        # msg.params.extend(bytearray(struct.pack('f', r)))
+        # msg.params.extend(bytearray(struct.pack('f', cir_x)))
+        # msg.params.extend(bytearray(struct.pack('f', cir_y)))
+        # msg.params.extend(bytearray(struct.pack('f', cir_z)))
+        # msg.params.extend(bytearray(struct.pack('f', cir_r)))
+        # return self._send_command(msg, wait)
 
-    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=False):
+    def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
         """
         Simplified arc function for drawing 2D arcs on the xy axis.
         apex_x and y determine
@@ -306,19 +343,28 @@ class Drawbot(Dobot):
         """
         pos = self.get_pose()
         self.coords.append(pos[:2])
-        msg = Message()
-        msg.id = 101
-        msg.ctrl = 0x03
-        msg.params = bytearray([])
-        msg.params.extend(bytearray(struct.pack('f', apex_x)))
-        msg.params.extend(bytearray(struct.pack('f', apex_y)))
-        msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        msg.params.extend(bytearray(struct.pack('f', target_x)))
-        msg.params.extend(bytearray(struct.pack('f', target_y)))
-        msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        return self._send_command(msg, wait)
+        params = [apex_x, apex_y, pos[2], pos[3], target_x, target_y, pos[2], pos[3]]
+        self.custom_set_ptp_cmd(params=params,
+                                id=101,
+                                mode=None,
+                                wait=wait
+                                )  # x, y, z, r, mode, wait)
+
+        # pos = self.get_pose()
+        # self.coords.append(pos[:2])
+        # msg = Message()
+        # msg.id = 101
+        # msg.ctrl = 0x03
+        # msg.params = bytearray([])
+        # msg.params.extend(bytearray(struct.pack('f', apex_x)))
+        # msg.params.extend(bytearray(struct.pack('f', apex_y)))
+        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
+        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
+        # msg.params.extend(bytearray(struct.pack('f', target_x)))
+        # msg.params.extend(bytearray(struct.pack('f', target_y)))
+        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
+        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
+        # return self._send_command(msg, wait)
 
     def move_y(self):
         """
@@ -339,7 +385,7 @@ class Drawbot(Dobot):
             x = 250
 
         # which mode
-        self.bot_move_to(x, newy, z, r, False)
+        self.bot_move_to(x, newy, z, r, self.wait)
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
@@ -364,40 +410,40 @@ class Drawbot(Dobot):
         # if self.continuous_line:
         #     self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
         # else:
-        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
+        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, self.wait)
 
     def go_position_ready(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z, r = self.ready_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=self.wait)
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z, r = self.draw_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=self.wait)
 
     def go_position_end(self):
         """
         moves directly to pre-defined position 'end position'
         """
         x, y, z, r = self.end_position[:4]
-        self.bot_move_to(x, y, z, r, wait=True)
+        self.bot_move_to(x, y, z, r, wait=self.wait)
 
     def jump_to(self, x, y, z, r, wait=True):
         """
         Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
         """
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=wait)
+        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
 
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """
         moves specific joints direct to new angles.
         """
-        self.joint_move_to(j1, j2, j3, j4, wait)
+        self.joint_move_to(j1, j2, j3, j4, self.wait)
 
     def home(self):
         """
@@ -408,8 +454,8 @@ class Drawbot(Dobot):
         msg.ctrl = ControlValues.THREE
         return self._send_command(msg, wait=True)
 
-    def bot_move_to(self, x, y, z, r, wait=False):
-        self.move_to(x, y, z, r, wait)
+    def bot_move_to(self, x, y, z, r, wait=True):
+        self.move_to(x, y, z, r, self.wait)
 
     def set_speed(self, arm_speed: float = 100):
         self.speed(velocity=arm_speed,
@@ -420,15 +466,15 @@ class Drawbot(Dobot):
         Go to an x and y position with the pen touching the paper
         """
         self.coords.append((x, y))
-        if self.hivemind.interrupt_bang:
-            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=wait)
+        # if self.hivemind.interrupt_bang:
+        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
 
     def go_draw_up(self, x, y, wait=True):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
         self.coords.append((x, y))
-        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=wait)
+        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=self.wait)
 
     #-- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -457,7 +503,7 @@ class Drawbot(Dobot):
 
         self.coords.append((x, y))
         print("Random draw pos above page x:",x," y:",y)
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=False)
+        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
 
     #-- move by functions --#
     def position_move_by(self, dx, dy, dz, wait=True):
@@ -476,8 +522,8 @@ class Drawbot(Dobot):
                                      corrected_pose[1],
                                      corrected_pose[2],
                                      0,
-                                     mode=PTPMode.MOVJ_XYZ_INC,
-                                     wait=wait
+                                     mode=PTPMode.MOVJ_XYZ,
+                                     wait=self.wait
                                      )
 
 
@@ -588,7 +634,7 @@ class Drawbot(Dobot):
             self.coords.append(next_pos)
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(pos[0], pos[1], wait=False)
+        self.go_draw(pos[0], pos[1], wait=self.wait)
 
         self.squares.append(square)
 
@@ -626,7 +672,7 @@ class Drawbot(Dobot):
                 pos[1] + local_pos[i][1]
             ]
             # if shape_interrupt == False:
-            self.go_draw(next_pos[0], next_pos[1], wait=True)
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
             # else:
             #     shape_interrupt = False
             #     return None
@@ -682,8 +728,8 @@ class Drawbot(Dobot):
             sunburst.append(next_pos)
             self.coords.append(next_pos)
 
-            self.go_draw(next_pos[0], next_pos[1], wait=False)       #draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=False)              #return to centre point to then draw another line
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)       #draw line from centre point outwards
+            self.go_draw(pos[0], pos[1], wait=self.wait)              #return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -711,10 +757,10 @@ class Drawbot(Dobot):
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
-            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
 
         # if self.hivemind.interrupt_bang:
-        self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=True)
+        self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
 
         self.irregulars.append(vertices)
 
@@ -728,9 +774,9 @@ class Drawbot(Dobot):
         pos = self.get_pose()[:4]
 
         if side == 0:  # side is used to draw figure 8 patterns
-            self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
+            self.arc(pos[0] + size, pos[1] - size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=self.wait)
         elif side == 1:
-            self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=wait)
+            self.arc(pos[0] - size, pos[1] + size, pos[2], pos[3], pos[0]+ 0.01, pos[1] + 0.01, pos[2], pos[3], wait=self.wait)
 
         circle = []
         circle.append(pos)
@@ -772,15 +818,15 @@ class Drawbot(Dobot):
             ]
         elif _char == "B" or _char == "b":
             print("B")
-            self.draw_b(size=size, wait=wait)
+            self.draw_b(size=size, wait=self.wait)
             return None
 
         elif _char == "C" or _char == "c":  # for characters with curves, defer to specific functions
-            self.draw_c(size=size, wait=wait)
+            self.draw_c(size=size, wait=self.wait)
             return None                     # everything else is handled in draw_c, can exit function here
 
         elif _char == "D" or _char == "d":
-            self.draw_d(size=size, wait=wait)
+            self.draw_d(size=size, wait=self.wait)
             return None
 
         elif _char == "E" or _char == "e":
@@ -807,11 +853,11 @@ class Drawbot(Dobot):
             jump_num = 3
 
         elif _char == "G" or _char == "g":
-            self.draw_g(size=size, wait=wait)
+            self.draw_g(size=size, wait=self.wait)
             return None
 
         elif _char == "P" or _char == "p":  
-            self.draw_p(size=size, wait=wait)
+            self.draw_p(size=size, wait=self.wait)
             return None                     
 
         elif _char == "Z" or _char == "z":
@@ -835,7 +881,7 @@ class Drawbot(Dobot):
             if jump_num != -1:                      # for characters that need a jump
                 if i == jump_num: self.go_draw_up(next_pos[0], next_pos[1])
                 else:
-                    self.go_draw(next_pos[0], next_pos[1], wait=True)
+                    self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
 
             else:                                   # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
@@ -1019,7 +1065,7 @@ class Drawbot(Dobot):
         rand_char = self.chars[randrange(0, len(self.chars))]
         print(rand_char)
         print(self.chars)
-        self.draw_char(rand_char, size, wait)
+        self.draw_char(rand_char, size, self.wait)
 
     def create_shape_group(self, wait=True):
         """
@@ -1096,104 +1142,104 @@ class Drawbot(Dobot):
         self.go_draw(new_pos[0], new_pos[1])    # go to new position
         self.draw_shape_group(shape_group, uniform(-3, 3))  # red-draw shape group, set variation param to random, varies sizes when re-drawing shape group
 
-    #-- return to shape functions --#
-    def return_to_square(self):     # returns to a random pre-existing square and does something
-        """
-        Randomly chooses a square from the 'squares' list and
-        randomly chooses a behaviour to do with it.
-        """
-        square_length = int(len(self.squares))
-        if square_length > 0:
-            square = self.squares[int(uniform(0, square_length))]
-            print(square)
-
-            rand = randrange(0, 3)
-
-            if rand == 0:              # move to a random corner on the square and draw a new square with a random size
-                randCorner = randrange(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
-                self.draw_square(uniform(20,29), True)
-            elif rand == 1:                       # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], wait=True)
-                self.move_to(square[2][0], square[2][1], wait=True)
-                self.go_draw_up(square[1][0], square[1][1], wait=True)
-                self.move_to(square[3][0], square[3][1], wait=True)
-            elif rand == 2:                 # pick a random number of points within the square and scribble inside of it
-                point_num = randrange(3,10)
-                randCorner = randrange(0,3)
-                self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
-                for i in range(point_num):
-                    rand_point = [
-                        uniform(square[0][0], square[1][0]), uniform(square[0][1], square[3][1])    # random point inside square bounds
-                    ]
-                    self.go_draw(rand_point[0], rand_point[1], wait=True)
-            elif rand == 3:                 # redraw the square from top right corner anti-clockwise
-                self.go_draw(square[1][0], square[1][1], wait=True)  
-                self.go_draw(square[2][0], square[2][1], wait=True)
-                self.go_draw(square[3][0], square[3][1], wait=True)
-                self.go_draw(square[0][0], square[0][1], wait=True)
-        else:
-            print("cannot return to square, no squares in list")
-
-    def return_to_sunburst(self):
-        """
-        Randomly chooses a sunburst from the 'sunbursts' list
-        and randomly chooses a behaviour to do with it.
-        """
-        sunbursts_length = int(len(self.sunbursts))
-        if sunbursts_length > 0:
-            sunburst = self.sunbursts[int(randrange(0, sunbursts_length))]
-            print(sunburst)
-
-            rand = randrange(0,1)      #randomly choose between two behaviours
-
-            if rand == 0:                  #join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], wait=True) 
-                self.go_draw(sunburst[1][0], sunburst[1][1], wait=True)
-                self.go_draw(sunburst[2][0], sunburst[2][1], wait=True)
-                self.go_draw(sunburst[3][0], sunburst[3][1], wait=True)
-                self.go_draw(sunburst[4][0], sunburst[4][1], wait=True)
-            else:                           # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], wait=True)  
-                self.draw_sunburst(20, True)
-
-        else:
-            print("cannot return to sunburst, no sunbursts in list")
-
-    def return_to_irregular(self):
-        """
-        Randomly chooses an irregular shape from the 'irregulars'
-        list and randomly chooses a behaviour to do with it.
-        """
-        irregulars_length = int(len(self.irregulars))
-        if irregulars_length > 0:
-            irregular = self.irregulars[randrange(0, irregulars_length)]
-
-            #rand = random.uniform(0,1)     #add random choice of behaviours
-            #if(rand == 0):
-
-            rand_vertex = irregular[randrange(0,len(irregular))]
-            # if self.hivemind.interrupt_bang:
-            self.go_draw(rand_vertex[0], rand_vertex[1])
-            self.draw_irregular_shape(randrange(3,8))
-
-        else:
-            print("Cannot return to irregular, no irregulars in list")
-
-    def return_to_char(self):
-        """
-        Randomly chooses a character from the 'chars' list and
-        randomly chooses a behaviour to do with it. 
-        """
-        chars_length = int(len(self.chars))
-        if chars_length > 0:
-            char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
-            rand_point = randrange(0, len(char))
-
-            self.go_draw_up(char[rand_point][0], char[rand_point][1], wait=True)   # go to a random point on the character
-            self.draw_random_char(uniform(5,20), wait=True)
-        else:
-            print("Cannot return to char, no chars in list")
+    # #-- return to shape functions --#
+    # def return_to_square(self):     # returns to a random pre-existing square and does something
+    #     """
+    #     Randomly chooses a square from the 'squares' list and
+    #     randomly chooses a behaviour to do with it.
+    #     """
+    #     square_length = int(len(self.squares))
+    #     if square_length > 0:
+    #         square = self.squares[int(uniform(0, square_length))]
+    #         print(square)
+    #
+    #         rand = randrange(0, 3)
+    #
+    #         if rand == 0:              # move to a random corner on the square and draw a new square with a random size
+    #             randCorner = randrange(0,3)
+    #             self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+    #             self.draw_square(uniform(20,29), True)
+    #         elif rand == 1:                       # draw a cross in the square
+    #             self.go_draw_up(square[0][0], square[0][1], wait=True)
+    #             self.move_to(square[2][0], square[2][1], wait=True)
+    #             self.go_draw_up(square[1][0], square[1][1], wait=True)
+    #             self.move_to(square[3][0], square[3][1], wait=True)
+    #         elif rand == 2:                 # pick a random number of points within the square and scribble inside of it
+    #             point_num = randrange(3,10)
+    #             randCorner = randrange(0,3)
+    #             self.go_draw_up(square[randCorner][0], square[randCorner][1], wait=True)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+    #             for i in range(point_num):
+    #                 rand_point = [
+    #                     uniform(square[0][0], square[1][0]), uniform(square[0][1], square[3][1])    # random point inside square bounds
+    #                 ]
+    #                 self.go_draw(rand_point[0], rand_point[1], wait=True)
+    #         elif rand == 3:                 # redraw the square from top right corner anti-clockwise
+    #             self.go_draw(square[1][0], square[1][1], wait=True)
+    #             self.go_draw(square[2][0], square[2][1], wait=True)
+    #             self.go_draw(square[3][0], square[3][1], wait=True)
+    #             self.go_draw(square[0][0], square[0][1], wait=True)
+    #     else:
+    #         print("cannot return to square, no squares in list")
+    #
+    # def return_to_sunburst(self):
+    #     """
+    #     Randomly chooses a sunburst from the 'sunbursts' list
+    #     and randomly chooses a behaviour to do with it.
+    #     """
+    #     sunbursts_length = int(len(self.sunbursts))
+    #     if sunbursts_length > 0:
+    #         sunburst = self.sunbursts[int(randrange(0, sunbursts_length))]
+    #         print(sunburst)
+    #
+    #         rand = randrange(0,1)      #randomly choose between two behaviours
+    #
+    #         if rand == 0:                  #join up the ends of the sunburst lines
+    #             self.go_draw_up(sunburst[0][0], sunburst[0][1], wait=True)
+    #             self.go_draw(sunburst[1][0], sunburst[1][1], wait=True)
+    #             self.go_draw(sunburst[2][0], sunburst[2][1], wait=True)
+    #             self.go_draw(sunburst[3][0], sunburst[3][1], wait=True)
+    #             self.go_draw(sunburst[4][0], sunburst[4][1], wait=True)
+    #         else:                           # go to the end of one of the sunburst lines and draw another sunburst
+    #             self.go_draw_up(sunburst[2][0], sunburst[2][1], wait=True)
+    #             self.draw_sunburst(20, True)
+    #
+    #     else:
+    #         print("cannot return to sunburst, no sunbursts in list")
+    #
+    # def return_to_irregular(self):
+    #     """
+    #     Randomly chooses an irregular shape from the 'irregulars'
+    #     list and randomly chooses a behaviour to do with it.
+    #     """
+    #     irregulars_length = int(len(self.irregulars))
+    #     if irregulars_length > 0:
+    #         irregular = self.irregulars[randrange(0, irregulars_length)]
+    #
+    #         #rand = random.uniform(0,1)     #add random choice of behaviours
+    #         #if(rand == 0):
+    #
+    #         rand_vertex = irregular[randrange(0,len(irregular))]
+    #         # if self.hivemind.interrupt_bang:
+    #         self.go_draw(rand_vertex[0], rand_vertex[1])
+    #         self.draw_irregular_shape(randrange(3,8))
+    #
+    #     else:
+    #         print("Cannot return to irregular, no irregulars in list")
+    #
+    # def return_to_char(self):
+    #     """
+    #     Randomly chooses a character from the 'chars' list and
+    #     randomly chooses a behaviour to do with it.
+    #     """
+    #     chars_length = int(len(self.chars))
+    #     if chars_length > 0:
+    #         char = self.chars[randrange(0, chars_length)]     # pick a char at random, do something with it
+    #         rand_point = randrange(0, len(char))
+    #
+    #         self.go_draw_up(char[rand_point][0], char[rand_point][1], wait=True)   # go to a random point on the character
+    #         self.draw_random_char(uniform(5,20), wait=True)
+    #     else:
+    #         print("Cannot return to char, no chars in list")
     
     def return_to_coord(self):
         """
