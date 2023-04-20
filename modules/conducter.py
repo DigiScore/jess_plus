@@ -74,14 +74,11 @@ class Conducter:
         """
         starts the main thread for the gesture manager
         """
-        robot_thread = Thread(target=self.gesture_manager)
-
-        # normalised position thread
+        gesture_thread = Thread(target=self.gesture_manager)
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
-        
-        robot_thread.start()
+        gesture_thread.start()
 
 
     def gesture_manager(self):
@@ -152,11 +149,11 @@ class Conducter:
                     if self.continuous_line:
                         self.drawbot.move_y()
 
-                # generate rhythm rate here
-                rhythm_rate = (randrange(10,
-                                         80) / 100) #* self.global_speed
-                self.hivemind.rhythm_rate = rhythm_rate
-                logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
+                # # generate rhythm rate here
+                # rhythm_rate = (randrange(10,
+                #                          80) / 100) #* self.global_speed
+                # self.hivemind.rhythm_rate = rhythm_rate
+                # logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
                 logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
 
                 #############################
@@ -173,6 +170,8 @@ class Conducter:
                                        acceleration=arm_speed)
 
                 while time() < rhythm_loop:
+                    print('-----------------')
+
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
@@ -183,6 +182,11 @@ class Conducter:
                     # setattr(self.hivemind, 'master_stream', thought_train)
                     self.hivemind.master_stream = thought_train
                     logging.info(f'\t\t ==============  thought_train output = {thought_train}')
+
+                    # generate rhythm rate here
+                    rhythm_rate = 1 - self.hivemind.core2flow + 0.05  # (randrange(10, 80) / 100) #* self.global_speed
+                    self.hivemind.rhythm_rate = rhythm_rate
+                    logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
 
                     ######################################
                     #
@@ -207,15 +211,16 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train <= 0.2:
+                    elif thought_train <= 0.2 or not self.hivemind.interrupt_bang:
                         logging.info('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if self.continuous_line:
                                 self.drawbot.move_y()
+                            elif random() < 0.36:
+                                self.offpage(thought_train)
                             else:
                                 sleep(0.1)
-                                # self.offpage(thought_train)
 
                     else:
                         # MID response
@@ -242,8 +247,8 @@ class Conducter:
                                     self.repetition(thought_train)
 
                     # get new position for hivemind
-                    #if self.drawbot:
-                        #self.drawbot.get_normalised_position()
+                    # if self.drawbot:
+                    #     self.drawbot.get_normalised_position()
 
                     # and wait for a cycle
                     sleep(rhythm_rate)
@@ -438,6 +443,7 @@ class Conducter:
         Smart collapse of all threads and comms
         """
         print('TERMINATING')
+        self.drawbot.clear_commands()
         self.drawbot.home()
         self.drawbot.close()
 

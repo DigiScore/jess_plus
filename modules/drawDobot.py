@@ -106,7 +106,6 @@ class Drawbot(Dobot):
                 sleep(0.01)
 
     def get_normalised_position(self):
-        
         while self.hivemind.running:
             original_pose = self.get_pose()[:3]
 
@@ -198,7 +197,8 @@ class Drawbot(Dobot):
         # self.force_queued_stop()
         # self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        # self._set_queued_cmd_start_exec()
+        sleep(0.1)
+        self._set_queued_cmd_start_exec()
 
     def force_queued_stop(self):
         """
@@ -920,7 +920,8 @@ class Drawbot(Dobot):
 
         char.append(world_pos)
         self.chars.append(char)
-        for i in range(len(world_pos)): self.coords.append(world_pos[i])
+        for i in range(len(world_pos)):
+            self.coords.append(world_pos[i])
 
     def draw_c(self, size, wait=True):
         """

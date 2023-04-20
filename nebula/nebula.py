@@ -127,21 +127,44 @@ class Nebula(Listener,
                 break
             # read data from bitalino
             if self.BITALINO_CONNECTED:
+                # get raw data
                 eda_raw = [self.eda.read(1)[0][-1]]
                 logging.debug(f"eda data raw = {eda_raw}")
+                # # replace min and max for scaling
+                # if eda_raw[0] > self.hivemind.eda_maxs[0]:
+                #     self.hivemind.eda_maxs[0] = eda_raw[0]
+                # if eda_raw[0] < self.hivemind.eda_mins[0]:
+                #     self.hivemind.eda_mins[0] = eda_raw[0]
+                # rescale between 0 and 1
                 eda_norm = scaler(eda_raw, self.hivemind.eda_mins, self.hivemind.eda_maxs)
+                # buffer append and pop
                 eda_2d = eda_norm[:, np.newaxis]
                 self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer, eda_2d, axis=1)
                 self.hivemind.eda_buffer = np.delete(self.hivemind.eda_buffer, 0, axis=1)
+            else:
+                # random data if no bitalino
+                self.hivemind.eda_buffer = np.random.uniform(size=(1, 50))
 
             # read data from brainbit
             if self.BRAINBIT_CONNECTED:
+                # get raw data
                 eeg = self.eeg_board.read(1)
                 logging.debug(f"eeg data raw = {eeg}")
+                # # replace mins and maxs for scaling
+                # for i_ch, eeg_ch in enumerate(eeg):
+                #     if eeg_ch > self.hivemind.eeg_maxs[i_ch]:
+                #         self.hivemind.eeg_maxs[i_ch] = eeg_ch
+                #     if eeg_ch < self.hivemind.eeg_mins[i_ch]:
+                #         self.hivemind.eeg_mins[i_ch] = eeg_ch
+                # rescale between 0 and 1
                 eeg_norm = scaler(eeg, self.hivemind.eeg_mins, self.hivemind.eeg_maxs)
+                # buffer append and pop
                 eeg_2d = eeg_norm[:, np.newaxis]
                 self.hivemind.eeg_buffer = np.append(self.hivemind.eeg_buffer, eeg_2d, axis=1)
                 self.hivemind.eeg_buffer = np.delete(self.hivemind.eeg_buffer, 0, axis=1)
+            else:
+                # random data if no brainbit
+                self.hivemind.eeg_buffer = np.random.uniform(size=(4, 50))
 
             sleep(0.1)  # for 10 Hz
 
