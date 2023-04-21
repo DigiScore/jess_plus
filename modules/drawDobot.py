@@ -75,7 +75,7 @@ class Drawbot(Dobot):
 
         # create a command list
         self.command_list = []
-        self.command_list_lock = False  # True = locked
+        # self.command_list_lock = False  # True = locked
         self.wait = True
 
         # timing vars
@@ -288,11 +288,14 @@ class Drawbot(Dobot):
         self._send_command(msg)  # empty response
 
     def clear_commands(self):
+        """
+        Clears all commands in Dobot buffer.
+        """
         # self.force_queued_stop()
         # self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        # sleep(0.1)
-        # self._set_queued_cmd_start_exec()
+        sleep(0.1)
+        self._set_queued_cmd_start_exec()
 
     def get_pose(self):
         return self.pose()
@@ -876,7 +879,7 @@ class Drawbot(Dobot):
             char.append(next_pos)     # append the current position to the letter
             self.coords.append(next_pos)
 
-        self.chars.append(char)          # add the completed character to the characters list
+        # self.chars.append(char)          # add the completed character to the characters list
 
     def draw_p(self, size, wait=True):
         """
@@ -908,7 +911,7 @@ class Drawbot(Dobot):
         self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
 
         char.append(world_pos)
-        self.chars.append(char)
+        # self.chars.append(char)
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
@@ -943,7 +946,7 @@ class Drawbot(Dobot):
         self.arc2D(world_pos[4][0], world_pos[4][1], world_pos[0][0], world_pos[0][1], wait=wait)
 
         char.append(world_pos)
-        self.chars.append(char)
+        # self.chars.append(char)
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
@@ -972,7 +975,7 @@ class Drawbot(Dobot):
         self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
 
         char.append(world_pos)
-        self.chars.append(char)
+        # self.chars.append(char)
         for i in range(len(world_pos)): self.coords.append(world_pos[i])
 
     def draw_d(self, size, wait=True):
@@ -1002,7 +1005,7 @@ class Drawbot(Dobot):
         self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[0][0], world_pos[0][1], wait=wait)
 
         char.append(world_pos)
-        self.chars.append(char)
+        # self.chars.append(char)
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
@@ -1039,7 +1042,7 @@ class Drawbot(Dobot):
         self.go_draw(world_pos[4][0], world_pos[4][1], wait=wait)
 
         char.append(world_pos)
-        self.chars.append(char)
+        # self.chars.append(char)
         for i in range(len(world_pos)):
             self.coords.append(world_pos[i])
 
@@ -1050,7 +1053,7 @@ class Drawbot(Dobot):
 
         rand_char = self.chars[randrange(0, len(self.chars))]
         print(rand_char)
-        print(self.chars)
+        # print(self.chars)
         self.draw_char(rand_char, size, self.wait)
 
     def create_shape_group(self, wait=True):
