@@ -93,26 +93,6 @@ class Drawbot(Dobot):
         list_thread = Thread(target=self.manage_command_list)
         list_thread.start()
 
-    # def add_to_list_set_ptp_cmd(self,
-    #                             params: list,
-    #                             mode,
-    #                             wait):
-    #     """
-    #     Adds a
-    #     :param params:
-    #     :param mode:
-    #     :param wait:
-    #     :return:
-    #     """
-    #
-    #     print("adding to list", params)
-    #     # if not self.hivemind.running:
-    #     #     self._set_ptp_cmd(x, y, z, r, mode, wait)
-    #     # else:
-    #     msg_item = (params, mode, wait)
-    #     self.command_list.append(msg_item)
-    #     print(len(self.command_list))
-
     def manage_command_list(self):
         """
         Watches hivemind.interrupt_bang for FALSE
@@ -126,37 +106,7 @@ class Drawbot(Dobot):
                 print("clearded commands")
                 self.hivemind.interrupt_clear = True
 
-            # elif not self.command_list_lock:
-            #     print("popping command")
-            #     self.pop_next_command()
-
             sleep(0.01)
-
-        # while self.hivemind.running:
-        #     if not self.hivemind.interrupt_bang:
-        #         self.command_list.clear()
-        #         print("clearded commands")
-        #         self.hivemind.interrupt_bang = True
-        #         sleep(0.1)
-        #         logging.info('Clearing command list')
-        #
-        #     if self.command_list:
-        #         if not self.command_list_lock:
-        #             print("sending message")
-        #             msg = self.command_list.pop(0)
-        #             self.command_list_lock = True
-        #             print("locked LOCK")
-        #             x, y, z, r, mode, wait = msg
-        #             params = [x, y, z, r]
-        #             # mv = mode.value
-        #             print("send message ", msg, mode.value)
-        #             self.custom_set_ptp_cmd(params=params,
-        #                                     id=84,
-        #                                     mode=mode,
-        #                                     wait=wait
-        #                                     ) # x, y, z, r, mode, wait)
-        #     # else:
-        #     sleep(0.01)
 
     def custom_set_ptp_cmd(self,
                            params: list,
@@ -180,28 +130,13 @@ class Drawbot(Dobot):
             msg.params.extend(bytearray([mode.value]))
         for _p in params:
             msg.params.extend(bytearray(struct.pack('f', _p)))
-        # msg.params.extend(bytearray(struct.pack('f', y)))
-        # msg.params.extend(bytearray(struct.pack('f', z)))
-        # msg.params.extend(bytearray(struct.pack('f', r)))
-        # return self._send_command(msg, self.wait)
+
         if self.hivemind.interrupt_clear:
             print('sending message ', msg)
             self.command_list.append(msg)
             self._send_command(msg=msg,
                                wait=self.wait
                                )
-
-    # def pop_next_command(self):
-    #     if self.hivemind.running:
-    #         if self.command_list:
-    #             logging.info('Sending command')
-    #             msg = self.command_list.pop(0)
-    #             self._send_command(msg=msg,
-    #                                wait=self.wait
-    #                                )
-    #
-    #             # lock command list
-    #             self.command_list_lock = True
 
     def _send_command(self,
                       msg: Message,
@@ -259,12 +194,6 @@ class Drawbot(Dobot):
         """
         while self.hivemind.running:
             pose = self.get_pose()[:3]
-
-            # do a safety position check
-            # pose = self.safety_position_check(original_pose)
-
-            # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-            # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
 
             norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
             norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
@@ -365,28 +294,8 @@ class Drawbot(Dobot):
         # sleep(0.1)
         # self._set_queued_cmd_start_exec()
 
-    # def force_queued_stop(self):
-    #     """
-    #     Uses the 242 code to force stop a command
-    #     :return: stop command via message send
-    #     """
-    #     msg = Message()
-    #     msg.id = 242
-    #     msg.ctrl = ControlValues.ONE
-    #     return self._send_command(msg)
-
     def get_pose(self):
         return self.pose()
-
-    # def _send_message(self, msg):
-    #     sleep(0.1)
-    #     if self.verbose:
-    #         print('pydobot: >>', msg)
-    #     if self.hivemind.interrupt_bang:
-    #         self.ser.write(msg.bytes())
-    #     else:
-    #         self.clear_commands()
-
 
     ######################
     # DIGIBOT CORE FUNCTIONS
@@ -408,19 +317,6 @@ class Drawbot(Dobot):
                                 mode=None,
                                 wait=wait
                                 )  # x, y, z, r, mode, wait)
-        # msg = Message()
-        # msg.id = 101
-        # msg.ctrl = 0x03
-        # msg.params = bytearray([])
-        # msg.params.extend(bytearray(struct.pack('f', x)))
-        # msg.params.extend(bytearray(struct.pack('f', y)))
-        # msg.params.extend(bytearray(struct.pack('f', z)))
-        # msg.params.extend(bytearray(struct.pack('f', r)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_x)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_y)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_z)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_r)))
-        # return self._send_command(msg, wait)
 
     def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
         """
@@ -437,22 +333,6 @@ class Drawbot(Dobot):
                                 mode=None,
                                 wait=wait
                                 )  # x, y, z, r, mode, wait)
-
-        # pos = self.get_pose()
-        # self.coords.append(pos[:2])
-        # msg = Message()
-        # msg.id = 101
-        # msg.ctrl = 0x03
-        # msg.params = bytearray([])
-        # msg.params.extend(bytearray(struct.pack('f', apex_x)))
-        # msg.params.extend(bytearray(struct.pack('f', apex_y)))
-        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        # msg.params.extend(bytearray(struct.pack('f', target_x)))
-        # msg.params.extend(bytearray(struct.pack('f', target_y)))
-        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        # return self._send_command(msg, wait)
 
     def move_y(self):
         """
@@ -494,10 +374,6 @@ class Drawbot(Dobot):
         if x <= 200 or x >= 300:
             x = 250
 
-        # which mode
-        # if self.continuous_line:
-        #     self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
-        # else:
         self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, self.wait)
 
     def go_position_ready(self):
@@ -521,11 +397,11 @@ class Drawbot(Dobot):
         x, y, z, r = self.end_position[:4]
         self.bot_move_to(x, y, z, r, wait=self.wait)
 
-    def jump_to(self, x, y, z, r, wait=True):
-        """
-        Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
-        """
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+    # def jump_to(self, x, y, z, r, wait=True):
+    #     """
+    #     Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
+    #     """
+    #     self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
 
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """
@@ -630,14 +506,6 @@ class Drawbot(Dobot):
 
         nx, ny, nz = self.safety_position_check(x, y, z)
         self.coords.append((nx, ny))
-        # self.add_to_list_set_ptp_cmd(corrected_pose[0],
-        #                              corrected_pose[1],
-        #                              corrected_pose[2],
-        #                              0,
-        #                              mode=PTPMode.MOVJ_XYZ,
-        #                              wait=self.wait
-        #                              )
-
         self.custom_set_ptp_cmd(params=[nx, ny, nz, 0],
                                 mode=PTPMode.MOVJ_XYZ,
                                 wait=self.wait
@@ -651,40 +519,40 @@ class Drawbot(Dobot):
       All of these notation functions need to call the Low level functions above.
       DO NOT CALL DOBOT PRIMATIVES DIRECTY!!
       """
-    def draw_stave(self, staves: int = 1):
-        """
-        Draws a  line across the middle of an A3 paper, symbolising a stave.
-        Has optional function to draw multiple staves.
-        Starts at right hand edge centre, and moves directly left.
-        Args:
-            staves: number of lines to draw. Default = 1
-        """
-
-        stave_gap = 2
-        x = 250 - ((staves * stave_gap) / 2)
-        y_start = 175
-        y_end = -175
-        z = 0
-        r = 0
-
-        # goto start position for line draw, without pen
-        self.bot_move_to(x, y_start, z, r)
-        input('place pen on paper, then press enter')
-
-        if staves >= 1:
-            # draw a line/ stave
-            for stave in range(staves):
-                print(f'drawing stave {stave + 1} out of {staves}')
-                self.bot_move_to(x, y_end, z, r)
-
-                if staves > 1:
-                    # reset to RH and draw the rest
-                    x += stave_gap
-
-                    if (stave + 1) < staves:
-                        self.jump_to(x, y_start, z, r)
-        else:
-            self.jump_to(x, y_end, z, r)
+    # def draw_stave(self, staves: int = 1):
+    #     """
+    #     Draws a  line across the middle of an A3 paper, symbolising a stave.
+    #     Has optional function to draw multiple staves.
+    #     Starts at right hand edge centre, and moves directly left.
+    #     Args:
+    #         staves: number of lines to draw. Default = 1
+    #     """
+    #
+    #     stave_gap = 2
+    #     x = 250 - ((staves * stave_gap) / 2)
+    #     y_start = 175
+    #     y_end = -175
+    #     z = 0
+    #     r = 0
+    #
+    #     # goto start position for line draw, without pen
+    #     self.bot_move_to(x, y_start, z, r)
+    #     input('place pen on paper, then press enter')
+    #
+    #     if staves >= 1:
+    #         # draw a line/ stave
+    #         for stave in range(staves):
+    #             print(f'drawing stave {stave + 1} out of {staves}')
+    #             self.bot_move_to(x, y_end, z, r)
+    #
+    #             if staves > 1:
+    #                 # reset to RH and draw the rest
+    #                 x += stave_gap
+    #
+    #                 if (stave + 1) < staves:
+    #                     self.jump_to(x, y_start, z, r)
+    #     else:
+    #         self.jump_to(x, y_end, z, r)
 
     def squiggle(self, arc_list: list):
         """

@@ -295,7 +295,6 @@ class Conducter:
         #
         #         move_y = 0
 
-
         move_x = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
         move_y = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
         move_z = randrange(self.joint_inc) # * self.hivemind.mic_in
@@ -417,8 +416,7 @@ class Conducter:
         move to a random x, y position
         """
         # clear robot command cache
-        # self.drawbot.clear_commands()
-        self.drawbot.command_list.clear()
+        self.drawbot.clear_commands()
 
     def terminate(self):
         """
