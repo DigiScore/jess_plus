@@ -99,6 +99,10 @@ class Drawbot(Dobot):
         then clears command_list
         """
         while self.hivemind.running:
+            # clear alarms
+            self.clear_alarms()
+
+            # clear commands?
             if not self.hivemind.interrupt_clear:
 
                 self.clear_commands()

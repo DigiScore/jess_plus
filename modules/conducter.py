@@ -156,9 +156,9 @@ class Conducter:
                     print("-----------------------------STREAM INTERRUPT----------------------------")
                     break
 
-                # 1. clear the alarms
-                if self.drawbot:
-                    self.drawbot.clear_alarms()
+                # # 1. clear the alarms
+                # if self.drawbot:
+                #     self.drawbot.clear_alarms()
 
                 # # generate rhythm rate here
                 rhythm_loop = time() + (randrange(500, 2000) / 1000)
