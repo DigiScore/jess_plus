@@ -16,10 +16,10 @@ def main(mode=999):
         rnd = random()
         print(rnd)
         arm_speed = randrange(20, 200)
-        # test.drawbot.speed(
-        #     velocity=arm_speed,
-        #     acceleration=arm_speed
-        # )
+        test.drawbot.speed(
+            velocity=arm_speed,
+            acceleration=arm_speed
+        )
 
         match mode:
             case 1:
