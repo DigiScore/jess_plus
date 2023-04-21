@@ -80,7 +80,7 @@ class Conducter:
         starts the main thread for the gesture manager
         """
         gesture_thread = Thread(target=self.gesture_manager)
-        command_list_thread = Thread(target=self.drawbot.command_list_main_loop)
+        command_list_thread = Thread(target=self.drawbot.manage_command_list)
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
@@ -322,14 +322,14 @@ class Conducter:
                                      z,
                                      False)
 
-            # case 1:
-            #     logging.info('Wolff: random character')
-            #     self.drawbot.draw_random_char(peak * randrange(10, 20))
+            case 1:
+                logging.info('Wolff: random character')
+                self.drawbot.draw_random_char(peak * randrange(10, 20))
 
             # TEMPORARY UNTIL ADAM COMPLETES
-            case 1:
-                logging.info('Wolff: dot and line')
-                self.drawbot.dot()
+            # case 1:
+            #     logging.info('Wolff: dot and line')
+            #     self.drawbot.dot()
 
             case 2:
                 logging.info('Wolff: dot')

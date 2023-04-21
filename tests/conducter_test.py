@@ -3,10 +3,12 @@ from time import sleep
 from random import random, randrange
 import logging
 import config
+from threading import Thread
+
+
+test = Conducter()
 
 def main(mode=999):
-
-    test = Conducter()
 
     while True:
         rnd = random()
@@ -45,6 +47,19 @@ def main(mode=999):
                     case 5:
                         test.high_energy_response()
 
+def interrupt():
+    while True:
+        rnd = randrange(10, 20)
+        sleep(rnd)
+        print("INTERRUPTING")
+        test.hivemind.interrupt_clear = False
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main(999)
+    t1 = Thread(target=main, args=(999,))
+    t2 = Thread(target=interrupt)
+
+    t1.start()
+    t2.start()
+
