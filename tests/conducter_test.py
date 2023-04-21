@@ -8,7 +8,7 @@ from threading import Thread
 
 test = Conducter()
 test.hivemind.running = True
-test.main_loop()
+test.drawbot.command_list_main_loop()
 
 def main(mode=999):
 
@@ -60,7 +60,7 @@ def interrupt():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    t1 = Thread(target=main, args=(999,))
+    t1 = Thread(target=main, args=(3,))
     t2 = Thread(target=interrupt)
 
     t1.start()

@@ -85,13 +85,13 @@ class Drawbot(Dobot):
     ######################
     # Command Q control & safety checks
     ######################
-    # def command_list_main_loop(self):
-    #     """
-    #     main loop thread for parsing command loop and rocker lock
-    #     """
-    #     print("Started Command List Thread")
-    #     list_thread = Thread(target=self.manage_command_list)
-    #     list_thread.start()
+    def command_list_main_loop(self):
+        """
+        main loop thread for parsing command loop and rocker lock
+        """
+        print("Started Command List Thread")
+        list_thread = Thread(target=self.manage_command_list)
+        list_thread.start()
 
     def manage_command_list(self):
         """

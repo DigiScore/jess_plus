@@ -80,14 +80,12 @@ class Conducter:
         starts the main thread for the gesture manager
         """
         gesture_thread = Thread(target=self.gesture_manager)
-        command_list_thread = Thread(target=self.drawbot.manage_command_list)
+        gesture_thread.start()
+
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
-
-        # start threads
-        command_list_thread.start()
-        gesture_thread.start()
+            self.drawbot.manage_command_list()
 
     def gesture_manager(self):
         """
