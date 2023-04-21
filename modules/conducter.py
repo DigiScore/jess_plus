@@ -89,22 +89,6 @@ class Conducter:
         command_list_thread.start()
         gesture_thread.start()
 
-    def temperature_drunk_walk(self):
-        """
-        modifies the temperature var by +/- 0.1 every call.
-        Temperature is used to amend the thought-train by adding spice
-        """
-        if random() >= 0.5:
-            self.temperature += 0.1
-        else:
-            self.temperature -= 0.1
-
-        # boundary checker
-        if self.temperature > 1:
-            self.temperature = 1
-        elif self.temperature < 0:
-            self.temperature = 0
-
     def gesture_manager(self):
         """
         Listens to the realtime incoming signal and calculates
@@ -123,22 +107,24 @@ class Conducter:
         stream_list_len = len(stream_list)
 
         while self.hivemind.running:
-            # flag for breaking a phrase from big affect signal
-            self.hivemind.interrupt_bang = True
-
-            # clear command list
-            self.drawbot.command_list.clear()
-
             #############################
             #
             # Phrase-level gesture gate: 3 - 8 seconds
             #
             #############################
 
+            # flag for breaking a phrase from big affect signal
+            self.hivemind.interrupt_clear = True
+
+            # clear command list at start of each gesture cycle
+            # self.drawbot.command_list.clear()
+            self.drawbot.clear_commands()
+
+            # get length of gesture
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
             phrase_loop_end = time() + phrase_length
 
-            logging.debug(f"=========AFFECT - Daddy cycle started ===========interrupt_listener: started! Duration =  {phrase_length} seconds")
+            print(f"========= GESTURE - Daddy cycle started =========== Duration =  {phrase_length} seconds")
 
             ##################################################################
             # choose thought stream from data streams from Nebula/ live inputs
@@ -151,24 +137,24 @@ class Conducter:
             else:
                 rnd = randrange(stream_list_len)
                 rnd_stream = stream_list[rnd]
+
             self.hivemind.thought_train_stream = rnd_stream
-            logging.info(f'Random stream choice = {rnd_stream}')
-            print(self.hivemind.thought_train_stream)
+            print(f"Random stream = {self.hivemind.thought_train_stream}")
 
             # define robot mode for this phase length
-            # robot_mode = RobotMode(randrange(5))
             # set random mode and data source for continuous mode
-            # TODO: is robot MID response always random?
             robot_mode = RobotMode(randrange(4))
             if robot_mode == RobotMode.Continuous:         # randomise continuous settings
                 self.continuous_mode = randrange(2)      # 0 == on page, 1 == above page
                 self.continuous_source = randrange(2)    # 0 == random, 1 == NN
 
             while time() < phrase_loop_end:
-                print('================')
+                #############################
+                # Rhythm-level gesture gate: .5-2 seconds
+                #############################
 
                 # if a major break out then go to Daddy cycle and restart
-                if not self.hivemind.interrupt_bang:
+                if not self.hivemind.interrupt_clear:
                     print("-----------------------------STREAM INTERRUPT----------------------------")
                     break
 
@@ -177,13 +163,6 @@ class Conducter:
                     self.drawbot.clear_alarms()
 
                 # # generate rhythm rate here
-
-                logging.debug('\t\t\t\t\t\t\t\t=========Hello - child cycle 1 started ===========')
-
-                #############################
-                # Rhythm-level gesture gate: .5-2 seconds
-                # THis streams the chosen data
-                #############################
                 rhythm_loop = time() + (randrange(500, 2000) / 1000)
                 logging.debug(f'end time = {rhythm_loop}')
 
@@ -193,29 +172,18 @@ class Conducter:
                     self.drawbot.set_speed(arm_speed)
 
                 while time() < rhythm_loop:
-                    print('-----------------')
-
-                    # adjust the temperature as a drunk walk every cycle
-                    self.temperature_drunk_walk()
+                    #############################
+                    # THis streams the chosen data around a loop
+                    #############################
 
                     # make the master output the current value of the affect stream
                     # 1. go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
-                    logging.info(f'=========Hello - baby cycle 2 ===========Affect stream output {rnd_stream} == {thought_train}')
+                    print(
+                        f'========= RHYTHM cycle 2 ===========Affect stream output {rnd_stream} == {thought_train}')
 
                     # 2. send to Master Output
                     self.hivemind.master_stream = thought_train
-                    logging.info(f'\t\t ==============  thought_train output = {thought_train}')
-
-                    # 3. add the temperature factor
-                    thought_train += self.temperature
-                    if thought_train > 1:
-                        thought_train = 1
-
-                    # generate rhythm rate here
-                    rhythm_rate = 1 - self.hivemind.core2flow + 0.05  # (randrange(10, 80) / 100) #* self.global_speed
-                    self.hivemind.rhythm_rate = rhythm_rate
-                    logging.info(f'////////////////////////   rhythm rate = {rhythm_rate}')
 
                     ######################################
                     #
@@ -223,14 +191,14 @@ class Conducter:
                     #
                     ######################################
 
-                    if thought_train > 0.8 or not self.hivemind.interrupt_bang:
-                        logging.info('interrupt > HIGH !!!!!!!!!')
+                    if thought_train > 0.8 or not self.hivemind.interrupt_clear:
+                        print('interrupt > HIGH !!!!!!!!!')
 
                         # A - refill dict with random
                         self.hivemind.randomiser()
 
                         # B - jumps out of this loop into daddy
-                        self.hivemind.interrupt_bang = False
+                        self.hivemind.interrupt_clear = False
 
                         # C - clears the command list in drawbot
                         self.drawbot.command_list.clear()
@@ -240,12 +208,12 @@ class Conducter:
                             self.high_energy_response()
 
                         # D- break out of this loop, and next (cos of flag)
-                        sleep(rhythm_rate)
+                        sleep(0.1)
                         break
 
                         # LOW
-                    elif thought_train <= 0.2 or not self.hivemind.interrupt_bang:
-                        logging.info('interrupt LOW ----------- no response')
+                    elif thought_train <= 0.2 or not self.hivemind.interrupt_clear:
+                        print('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if random() < 0.36:
@@ -278,7 +246,8 @@ class Conducter:
                                     self.repetition(thought_train)
 
                     # and wait for a cycle
-                    sleep(rhythm_rate)
+                    # sleep(rhythm_rate)
+                    sleep(0.1)
 
         logging.info('quitting dobot director thread')
         self.terminate()
@@ -290,58 +259,46 @@ class Conducter:
             logging.debug("repetition of shape")
             self.drawbot.repeat_shape_group()
 
-    def continuous(self, peak):
+    def continuous(self,
+                   peak: float):
         """
         Performs continuous movement in 2 different modes and from 3 different data sources, all randomised when the mode is randomised.
         Modes: 0 == on page drawing (xy), 1 == above page (xyz)
         Data sources: 1 = random data, 2 = NN data, 3 = peak (mic input)
         """
-        # move_x = 0
-        # move_y = 0
 
-        match self.continuous_mode:
-            case 0:     # on page (z axis at draw height)
-                match self.continuous_source:
-                    case 0:     # random data
-                        move_x = uniform(-self.joint_inc, self.joint_inc)
-                        move_y = uniform(-self.joint_inc, self.joint_inc)
+        # match self.continuous_mode:
+        #     case 0:     # on page (z axis at draw height)
+        #         match self.continuous_source:
+        #             case 0:     # random data
+        #                 move_x = uniform(-self.joint_inc, self.joint_inc)
+        #                 move_y = uniform(-self.joint_inc, self.joint_inc)
+        #
+        #             case 1:     # NN data
+        #                 move_x = uniform(self.hivemind.audio2core_2d[0, -1], - self.hivemind.audio2core_2d[0, -1]) * self.joint_inc
+        #                 move_y = uniform(self.hivemind.audio2core_2d[1, -1], - self.hivemind.audio2core_2d[1, -1]) * self.joint_inc
+        #
+        #         move_z = 0
+        #
+        #     case 1:     # above page (z axis affected by data)
+        #         # move_z = 0
+        #         match self.continuous_source:
+        #             case 0:     # random data
+        #                 move_x = uniform(-self.joint_inc, self.joint_inc)
+        #                 #move_y = uniform(-self.joint_inc, self.joint_inc)
+        #                 move_z = uniform(-self.joint_inc, self.joint_inc)
+        #
+        #             case 1:     # NN data
+        #                 move_x = uniform(self.hivemind.flow2core_2d[0, -1], - self.hivemind.flow2core_2d[0, -1]) * self.joint_inc
+        #                 #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
+        #                 move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
+        #
+        #         move_y = 0
 
-                    case 1:     # NN data
-                        move_x = uniform(self.hivemind.audio2core_2d[0, -1], - self.hivemind.audio2core_2d[0, -1]) * self.joint_inc
-                        move_y = uniform(self.hivemind.audio2core_2d[1, -1], - self.hivemind.audio2core_2d[1, -1]) * self.joint_inc
-
-                self.drawbot.position_move_by(move_x, move_y, 0, wait=True)
-                
-            case 1:     # above page (z axis affected by data)
-                # move_z = 0
-                match self.continuous_source:
-                    case 0:     # random data
-                        move_x = uniform(-self.joint_inc, self.joint_inc)
-                        #move_y = uniform(-self.joint_inc, self.joint_inc)
-                        move_z = uniform(-self.joint_inc, self.joint_inc)
-
-                    case 1:     # NN data
-                        move_x = uniform(self.hivemind.flow2core_2d[0, -1], - self.hivemind.flow2core_2d[0, -1]) * self.joint_inc
-                        #move_y = uniform(self.hivemind.flow2core_2d[1], -self.hivemind.flow2core_2d[1]) * self.joint_inc
-                        move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
-
-                self.drawbot.position_move_by(move_x, 0, move_z, wait=True)
-
-    #def continuous(self, peak):
-    #    # todo - make this a or b. A = pulls data from a file (extracts from dataset). B = live from Hivemind
-    #    inc = self.joint_inc * self.current_phrase_num
-    #
-    #    if random() > 0.5:  # use mic input - probably want to change this so x, y, z aren't all the same
-    #        self.drawbot.position_move_by(self.hivemind.mic_in,
-    #                                      self.hivemind.mic_in,
-    #                                      self.hivemind.mic_in,
-    #                                      wait=False)
-    #
-    #    else:  # todo - use EMD data. Currently uses random data
-    #        self.drawbot.position_move_by(uniform(-inc, inc),
-    #                                      uniform(-inc, inc),
-    #                                      self.drawbot.draw_position[2],
-    #                                      wait=False)
+        move_x = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
+        move_y = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
+        move_z = randrange(self.joint_inc) # * self.hivemind.mic_in
+        self.drawbot.position_move_by(move_x, move_y, move_z, wait=True)
 
     def wolff_inspiration(self, peak):
         """

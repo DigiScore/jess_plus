@@ -90,107 +90,110 @@ class Drawbot(Dobot):
         main loop thread for parsing command loop and rocker lock
         """
         print("Started Command List Thread")
-        list_thread = Thread(target=self.process_command_list)
+        list_thread = Thread(target=self.manage_command_list)
         list_thread.start()
 
-    def add_to_list_set_ptp_cmd(self, x, y, z, r, mode, wait):
-        print("adding to list", x, y, z)
-        if not self.hivemind.running:
-            self._set_ptp_cmd(x, y, z, r, mode, wait)
-        else:
-            msg_item = (x, y, z, r, mode, wait)
-            self.command_list.append(msg_item)
-            print(len(self.command_list))
-
-    def process_command_list(self):
+    def manage_command_list(self):
+        """
+        Watches hivemind.interrupt_bang for FALSE
+        then clears command_list
+        """
         while self.hivemind.running:
-            if not self.hivemind.interrupt_bang:
-                self.command_list.clear()
+            if not self.hivemind.interrupt_clear:
+
+                self.clear_commands()
+                # self.command_list.clear()
                 print("clearded commands")
-                self.hivemind.interrupt_bang = True
-                sleep(0.1)
-                logging.info('Clearing command list')
+                self.hivemind.interrupt_clear = True
 
-            elif self.command_list:
-                if not self.command_list_lock:
-                    print("sending message")
-                    msg = self.command_list.pop(0)
-                    self.command_list_lock = True
-                    print("locked LOCK")
-                    x, y, z, r, mode, wait = msg
-                    params = [x, y, z, r]
-                    # mv = mode.value
-                    print("send message ", msg, mode.value)
-                    self.custom_set_ptp_cmd(params=params,
-                                            id=84,
-                                            mode=mode,
-                                            wait=wait
-                                            ) # x, y, z, r, mode, wait)
-            else:
-                sleep(0.01)
+            sleep(0.01)
 
-    def custom_set_ptp_cmd(self, params: list, id, mode, wait):
+    def custom_set_ptp_cmd(self,
+                           params: list,
+                           cmd_id: int = 84,
+                           mode: PTPMode = None,
+                           wait: bool = True,
+                           ):
+        """
+        builds a Message for Dobot and adds to command list.
+        :param params: list of parameters to build Message
+        :param cmd_id: Dobot hex id for command
+        :param mode: optional is building a set_ptp_cmd
+        :param wait: defers to global self.wait
+        """
+
         msg = Message()
-        msg.id = id
+        msg.id = cmd_id
         msg.ctrl = 0x03
         msg.params = bytearray([])
         if mode:
             msg.params.extend(bytearray([mode.value]))
         for _p in params:
             msg.params.extend(bytearray(struct.pack('f', _p)))
-        # msg.params.extend(bytearray(struct.pack('f', y)))
-        # msg.params.extend(bytearray(struct.pack('f', z)))
-        # msg.params.extend(bytearray(struct.pack('f', r)))
-        return self._send_command(msg, self.wait)
 
-    def _send_command(self, msg, wait=False):
-        # print("recieved msg", msg)
+        if self.hivemind.interrupt_clear:
+            print('sending message ', msg)
+            self.command_list.append(msg)
+            self._send_command(msg=msg,
+                               wait=self.wait
+                               )
+
+    def _send_command(self,
+                      msg: Message,
+                      wait: bool = False
+                      ):
+        """
+        Overrides the Dobot function, but still sends and recieves Messages to Dobot.
+        Controls all wait commands using command_id ==
+        Implements a try-except to avoid struct errors.
+        Pops next command in Q
+        :param msg: A Message
+        :param wait: wait for command to be executed
+        :return: read response from Dobot
+        """
         self.lock.acquire()
         self._send_message(msg)
         response = self._read_message()
         self.lock.release()
 
-        if not wait:
-            return response
-
-        # wait until Dobot completes current command
-        try:
-            expected_idx = struct.unpack_from('L', response.params, 0)[0]
-            if self.verbose:
-                print('pydobot: waiting for command', expected_idx)
-
-            while True:
-                current_idx = self._get_queued_cmd_current_index()
-
-                if current_idx != expected_idx:
-                    sleep(0.1)
-                    continue
-
-                # if self.verbose:
-                print('pydobot: command %d executed' % current_idx)
-
-                # open command list lock
-                self.command_list_lock = False
-                print("Lock OPENED")
-                break
-
-        # the API through errors here, so this is a hacky fix
-        except:
-            print('pydobot -- command error')
-            # open command list lock
-            self.command_list_lock = False
-
+        # if not wait:
+        #     return response
+        #
+        # # wait until Dobot completes current command
+        # try:
+        #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
+        #     if self.verbose:
+        #         print('pydobot: waiting for command', expected_idx)
+        #
+        #     while True:
+        #         current_idx = self._get_queued_cmd_current_index()
+        #
+        #         if current_idx != expected_idx:
+        #             sleep(0.1)
+        #             continue
+        #
+        #         if self.verbose:
+        #             print('pydobot: command %d executed' % current_idx)
+        #
+        #         # open command list lock
+        #         # self.command_list_lock = False
+        #         # print("Lock OPENED")
+        #         break
+        #
+        # # the API through errors here, so this is a hacky fix
+        # except:
+        #     print('pydobot -- command error')
+        #
+        # # open command list lock
+        # self.command_list_lock = False
         return response
 
     def get_normalised_position(self):
+        """
+        While running generate normalised x, y, z position for NNets
+        """
         while self.hivemind.running:
             pose = self.get_pose()[:3]
-
-            # do a safety position check
-            # pose = self.safety_position_check(original_pose)
-
-            # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-            # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
 
             norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
             norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
@@ -214,34 +217,48 @@ class Drawbot(Dobot):
         json_file.write(json_str)
         json_file.close()
 
-    def safety_position_check(self, pose):
+    def safety_position_check(self,
+                              x: float,
+                              y: float,
+                              z: float,
+                              ) -> tuple:
+        """
+        Checks generated move does not exceed defined extents,
+        if it does, adjust to remain inside
+        params:
+            x,
+            y,
+            z coords for evaluation
+        :return: corrected x, y, z
+        """
+
         pos_changed = False
-        if pose[0] < config.x_extents[0]:     # check x posiion
+        if x < config.x_extents[0]:     # check x posiion
             x = config.x_extents[0]
             pos_changed = True
-        elif pose[0] > config.x_extents[1]:
+        elif x > config.x_extents[1]:
             x = config.x_extents[1]
             pos_changed = True
-        else:
-            x = pose[0]
+        # else:
+        #     x = pose[0]
 
-        if pose[1] < config.y_extents[0]:  # check y posiion
+        if y < config.y_extents[0]:  # check y posiion
             y = config.y_extents[0]
             pos_changed = True
-        elif pose[1] > config.y_extents[1]:
+        elif y > config.y_extents[1]:
             y = config.y_extents[1]
             pos_changed = True
-        else:
-            y = pose[1]
+        # else:
+        #     y = pose[1]
 
-        if pose[2] < config.z_extents[0]:  # check x posiion
+        if z < config.z_extents[0]:  # check x posiion
             z = config.z_extents[0]
             pos_changed = True
-        elif pose[2] > config.z_extents[1]:
+        elif z > config.z_extents[1]:
             z = config.z_extents[1]
             pos_changed = True
-        else:
-            z = pose[2]
+        # else:
+        #     z = pose[2]
 
         # if pos_changed:
         #     self.move_to(x, y, z, 0, False)
@@ -274,31 +291,11 @@ class Drawbot(Dobot):
         # self.force_queued_stop()
         # self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        sleep(0.1)
-        self._set_queued_cmd_start_exec()
-
-    def force_queued_stop(self):
-        """
-        Uses the 242 code to force stop a command
-        :return: stop command via message send
-        """
-        msg = Message()
-        msg.id = 242
-        msg.ctrl = ControlValues.ONE
-        return self._send_command(msg)
+        # sleep(0.1)
+        # self._set_queued_cmd_start_exec()
 
     def get_pose(self):
         return self.pose()
-
-    # def _send_message(self, msg):
-    #     sleep(0.1)
-    #     if self.verbose:
-    #         print('pydobot: >>', msg)
-    #     if self.hivemind.interrupt_bang:
-    #         self.ser.write(msg.bytes())
-    #     else:
-    #         self.clear_commands()
-
 
     ######################
     # DIGIBOT CORE FUNCTIONS
@@ -316,23 +313,10 @@ class Drawbot(Dobot):
         self.coords.append((x, y))
         params = [x, y, z, r, cir_x, cir_y, cir_z, cir_r]
         self.custom_set_ptp_cmd(params=params,
-                                id=101,
+                                cmd_id=101,
                                 mode=None,
                                 wait=wait
                                 )  # x, y, z, r, mode, wait)
-        # msg = Message()
-        # msg.id = 101
-        # msg.ctrl = 0x03
-        # msg.params = bytearray([])
-        # msg.params.extend(bytearray(struct.pack('f', x)))
-        # msg.params.extend(bytearray(struct.pack('f', y)))
-        # msg.params.extend(bytearray(struct.pack('f', z)))
-        # msg.params.extend(bytearray(struct.pack('f', r)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_x)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_y)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_z)))
-        # msg.params.extend(bytearray(struct.pack('f', cir_r)))
-        # return self._send_command(msg, wait)
 
     def arc2D(self, apex_x, apex_y, target_x, target_y, wait=True):
         """
@@ -345,26 +329,10 @@ class Drawbot(Dobot):
         self.coords.append(pos[:2])
         params = [apex_x, apex_y, pos[2], pos[3], target_x, target_y, pos[2], pos[3]]
         self.custom_set_ptp_cmd(params=params,
-                                id=101,
+                                cmd_id=101,
                                 mode=None,
                                 wait=wait
                                 )  # x, y, z, r, mode, wait)
-
-        # pos = self.get_pose()
-        # self.coords.append(pos[:2])
-        # msg = Message()
-        # msg.id = 101
-        # msg.ctrl = 0x03
-        # msg.params = bytearray([])
-        # msg.params.extend(bytearray(struct.pack('f', apex_x)))
-        # msg.params.extend(bytearray(struct.pack('f', apex_y)))
-        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        # msg.params.extend(bytearray(struct.pack('f', target_x)))
-        # msg.params.extend(bytearray(struct.pack('f', target_y)))
-        # msg.params.extend(bytearray(struct.pack('f', pos[2])))
-        # msg.params.extend(bytearray(struct.pack('f', pos[3])))
-        # return self._send_command(msg, wait)
 
     def move_y(self):
         """
@@ -406,10 +374,6 @@ class Drawbot(Dobot):
         if x <= 200 or x >= 300:
             x = 250
 
-        # which mode
-        # if self.continuous_line:
-        #     self.bot_move_to(x + self.rnd(10), newy + self.rnd(10), 0, r, False)
-        # else:
         self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, self.wait)
 
     def go_position_ready(self):
@@ -433,11 +397,11 @@ class Drawbot(Dobot):
         x, y, z, r = self.end_position[:4]
         self.bot_move_to(x, y, z, r, wait=self.wait)
 
-    def jump_to(self, x, y, z, r, wait=True):
-        """
-        Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
-        """
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+    # def jump_to(self, x, y, z, r, wait=True):
+    #     """
+    #     Lifts pen up, and moves directly to defined coordinates (x, y, z, r)
+    #     """
+    #     self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
 
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """
@@ -461,20 +425,33 @@ class Drawbot(Dobot):
         self.speed(velocity=arm_speed,
                            acceleration=arm_speed)
 
-    def go_draw(self, x, y, wait=True):
+    def go_draw(self,
+                x: float,
+                y: float,
+                wait: bool = True
+                ):
         """
         Go to an x and y position with the pen touching the paper
         """
-        self.coords.append((x, y))
-        # if self.hivemind.interrupt_bang:
-        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+        nx, ny, nz = self.safety_position_check(x, y, 0)
+        self.coords.append((nx, ny))
+        # self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+        self.custom_set_ptp_cmd(params=[x, y, self.draw_position[2], 0],
+                                mode=PTPMode.MOVJ_XYZ,
+                                wait=self.wait
+                                )
 
     def go_draw_up(self, x, y, wait=True):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
-        self.coords.append((x, y))
-        self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+        nx, ny, nz = self.safety_position_check(x, y, 0)
+        self.coords.append((nx, ny))
+        # self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+        self.custom_set_ptp_cmd(params=[x, y, self.draw_position[2], 0],
+                                mode=PTPMode.JUMP_XYZ,
+                                wait=self.wait
+                                )
 
     #-- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -487,9 +464,14 @@ class Drawbot(Dobot):
         z = self.draw_position[2]
         r = 0
 
-        self.coords.append((x, y))
-        print("Random draw pos x:", round(x, 2)," y:", round(y,2))
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
+        nx, ny, nz = self.safety_position_check(x, y, 0)
+        self.coords.append((nx, ny))
+        print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
+        # self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.MOVJ_XYZ, wait=True)
+        self.custom_set_ptp_cmd(params=[x, y, z, r],
+                                mode=PTPMode.MOVJ_XYZ,
+                                wait=True
+                                )
 
     def go_random_jump(self):   #goes to random positon on page with pen above page then back on
         """
@@ -498,12 +480,17 @@ class Drawbot(Dobot):
         """
         x = uniform(self.x_extents[0],self.x_extents[1])
         y = uniform(self.y_extents[0], self.y_extents[1])
-        z = self.draw_position[2]
-        r = 0
+        # z = self.draw_position[2]
+        # r = 0
 
-        self.coords.append((x, y))
-        print("Random draw pos above page x:",x," y:",y)
-        self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+        nx, ny, nz = self.safety_position_check(x, y, 0)
+        self.coords.append((nx, ny))
+        print("Random draw pos above page x:", nx, " y:", ny)
+        # self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
+        self.custom_set_ptp_cmd(params=[nx, ny, 0, 0],
+                                mode=PTPMode.JUMP_XYZ,
+                                wait=self.wait
+                                )
 
     #-- move by functions --#
     def position_move_by(self, dx, dy, dz, wait=True):
@@ -512,20 +499,17 @@ class Drawbot(Dobot):
         Check that the arm isn't going out of x, y, z extents
         """
 
-        pose = self.get_pose()[:3]
-        print(pose)
-        new_pose = [pose[0] + dx, pose[1] + dy, pose[2] + dz]       #calulate new position, used for checking
+        x, y, z = self.get_pose()[:3]
+        x += dx
+        y += dy
+        z += randrange(self.z_extents[1])       #calulate new position, used for checking
 
-        corrected_pose = self.safety_position_check(new_pose)
-        self.coords.append(corrected_pose[:2])
-        self.add_to_list_set_ptp_cmd(corrected_pose[0],
-                                     corrected_pose[1],
-                                     corrected_pose[2],
-                                     0,
-                                     mode=PTPMode.MOVJ_XYZ,
-                                     wait=self.wait
-                                     )
-
+        nx, ny, nz = self.safety_position_check(x, y, z)
+        self.coords.append((nx, ny))
+        self.custom_set_ptp_cmd(params=[nx, ny, nz, 0],
+                                mode=PTPMode.MOVJ_XYZ,
+                                wait=self.wait
+                                )
 
     ######################
     # DIGIBOT NOTATION FUNCTIONS
@@ -535,40 +519,40 @@ class Drawbot(Dobot):
       All of these notation functions need to call the Low level functions above.
       DO NOT CALL DOBOT PRIMATIVES DIRECTY!!
       """
-    def draw_stave(self, staves: int = 1):
-        """
-        Draws a  line across the middle of an A3 paper, symbolising a stave.
-        Has optional function to draw multiple staves.
-        Starts at right hand edge centre, and moves directly left.
-        Args:
-            staves: number of lines to draw. Default = 1
-        """
-
-        stave_gap = 2
-        x = 250 - ((staves * stave_gap) / 2)
-        y_start = 175
-        y_end = -175
-        z = 0
-        r = 0
-
-        # goto start position for line draw, without pen
-        self.bot_move_to(x, y_start, z, r)
-        input('place pen on paper, then press enter')
-
-        if staves >= 1:
-            # draw a line/ stave
-            for stave in range(staves):
-                print(f'drawing stave {stave + 1} out of {staves}')
-                self.bot_move_to(x, y_end, z, r)
-
-                if staves > 1:
-                    # reset to RH and draw the rest
-                    x += stave_gap
-
-                    if (stave + 1) < staves:
-                        self.jump_to(x, y_start, z, r)
-        else:
-            self.jump_to(x, y_end, z, r)
+    # def draw_stave(self, staves: int = 1):
+    #     """
+    #     Draws a  line across the middle of an A3 paper, symbolising a stave.
+    #     Has optional function to draw multiple staves.
+    #     Starts at right hand edge centre, and moves directly left.
+    #     Args:
+    #         staves: number of lines to draw. Default = 1
+    #     """
+    #
+    #     stave_gap = 2
+    #     x = 250 - ((staves * stave_gap) / 2)
+    #     y_start = 175
+    #     y_end = -175
+    #     z = 0
+    #     r = 0
+    #
+    #     # goto start position for line draw, without pen
+    #     self.bot_move_to(x, y_start, z, r)
+    #     input('place pen on paper, then press enter')
+    #
+    #     if staves >= 1:
+    #         # draw a line/ stave
+    #         for stave in range(staves):
+    #             print(f'drawing stave {stave + 1} out of {staves}')
+    #             self.bot_move_to(x, y_end, z, r)
+    #
+    #             if staves > 1:
+    #                 # reset to RH and draw the rest
+    #                 x += stave_gap
+    #
+    #                 if (stave + 1) < staves:
+    #                     self.jump_to(x, y_start, z, r)
+    #     else:
+    #         self.jump_to(x, y_end, z, r)
 
     def squiggle(self, arc_list: list):
         """
@@ -749,18 +733,20 @@ class Drawbot(Dobot):
         for i in range(num_vertices):
             x = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
             y = uniform(-self.irregular_shape_extents, self.irregular_shape_extents)
-            vertices.append((x,y))
-            self.coords.append((x,y))
+            vertices.append((x, y))
+            self.coords.append((x, y))
 
         for i in range(len(vertices)):
             # if self.hivemind.interrupt_bang:
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
-            self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+            # self.add_to_list_set_ptp_cmd(x, y, self.draw_position[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+            self.go_draw(x, y, self.wait)
 
         # if self.hivemind.interrupt_bang:
-        self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+        # self.add_to_list_set_ptp_cmd(pos[0], pos[1], pos[2], 0, mode=PTPMode.MOVJ_XYZ, wait=self.wait)
+        self.go_draw(pos[0], pos[1], self.wait)
 
         self.irregulars.append(vertices)
 

@@ -93,7 +93,7 @@ class Listener:
 
             if peak > 1000:
                 bars = "#" * int(50 * peak / 2 ** 16)
-                logging.info("MIC LISTENER: %05d %s" % (peak, bars))
+                logging.debug("MIC LISTENER: %05d %s" % (peak, bars))
 
                 # reset the silence listener
                 silence_timer = time() + 5   # 5 seconds ahead
@@ -109,7 +109,7 @@ class Listener:
             # if loud sound then 63% affect gesture manager
             if normalised_peak > 0.8:
                 if random() > 0.63:
-                    self.hivemind.interrupt_bang = False
+                    self.hivemind.interrupt_clear = False
                     self.hivemind.randomiser()
                     print("-----------------------------MICROPHONE INTERRUPT----------------------------")
 
