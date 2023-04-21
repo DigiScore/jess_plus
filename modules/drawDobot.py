@@ -99,7 +99,6 @@ class Drawbot(Dobot):
         then clears command_list
         """
         while self.hivemind.running:
-            print("UPDATING")
             if not self.hivemind.interrupt_clear:
 
                 self.clear_commands()
@@ -289,11 +288,14 @@ class Drawbot(Dobot):
         self._send_command(msg)  # empty response
 
     def clear_commands(self):
+        """
+        Clears all commands in Dobot buffer.
+        """
         # self.force_queued_stop()
         # self._set_queued_cmd_stop_exec()
         self._set_queued_cmd_clear()
-        # sleep(0.1)
-        # self._set_queued_cmd_start_exec()
+        sleep(0.1)
+        self._set_queued_cmd_start_exec()
 
     def get_pose(self):
         return self.pose()
@@ -1051,7 +1053,7 @@ class Drawbot(Dobot):
 
         rand_char = self.chars[randrange(0, len(self.chars))]
         print(rand_char)
-        print(self.chars)
+        # print(self.chars)
         self.draw_char(rand_char, size, self.wait)
 
     def create_shape_group(self, wait=True):
