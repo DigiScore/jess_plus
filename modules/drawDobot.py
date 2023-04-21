@@ -90,7 +90,7 @@ class Drawbot(Dobot):
         main loop thread for parsing command loop and rocker lock
         """
         print("Started Command List Thread")
-        list_thread = Thread(target=self.watch_interrupt_bang)
+        list_thread = Thread(target=self.manage_command_list)
         list_thread.start()
 
     # def add_to_list_set_ptp_cmd(self,
@@ -113,19 +113,24 @@ class Drawbot(Dobot):
     #     self.command_list.append(msg_item)
     #     print(len(self.command_list))
 
-    def watch_interrupt_bang(self):
+    def manage_command_list(self):
         """
         Watches hivemind.interrupt_bang for FALSE
         then clears command_list
         """
         while self.hivemind.running:
-            if not self.hivemind.interrupt_bang:
-                self.command_list.clear()
-                print("clearded commands")
-                self.hivemind.interrupt_bang = True
+            if not self.hivemind.interrupt_clear:
 
-            else:
-                sleep(0.01)
+                self.clear_commands()
+                # self.command_list.clear()
+                print("clearded commands")
+                self.hivemind.interrupt_clear = True
+
+            # elif not self.command_list_lock:
+            #     print("popping command")
+            #     self.pop_next_command()
+
+            sleep(0.01)
 
         # while self.hivemind.running:
         #     if not self.hivemind.interrupt_bang:
@@ -179,14 +184,24 @@ class Drawbot(Dobot):
         # msg.params.extend(bytearray(struct.pack('f', z)))
         # msg.params.extend(bytearray(struct.pack('f', r)))
         # return self._send_command(msg, self.wait)
-        self.command_list.append(msg)
-
-    def pop_next_command(self):
-        if self.hivemind.running:
-            msg = self.command_list.pop(0)
+        if self.hivemind.interrupt_clear:
+            print('sending message ', msg)
+            self.command_list.append(msg)
             self._send_command(msg=msg,
                                wait=self.wait
                                )
+
+    # def pop_next_command(self):
+    #     if self.hivemind.running:
+    #         if self.command_list:
+    #             logging.info('Sending command')
+    #             msg = self.command_list.pop(0)
+    #             self._send_command(msg=msg,
+    #                                wait=self.wait
+    #                                )
+    #
+    #             # lock command list
+    #             self.command_list_lock = True
 
     def _send_command(self,
                       msg: Message,
@@ -201,43 +216,41 @@ class Drawbot(Dobot):
         :param wait: wait for command to be executed
         :return: read response from Dobot
         """
-        # print("recieved msg", msg)
         self.lock.acquire()
         self._send_message(msg)
         response = self._read_message()
         self.lock.release()
 
-        if not wait:
-            return response
-
-        # wait until Dobot completes current command
-        try:
-            expected_idx = struct.unpack_from('L', response.params, 0)[0]
-            if self.verbose:
-                print('pydobot: waiting for command', expected_idx)
-
-            while True:
-                current_idx = self._get_queued_cmd_current_index()
-
-                if current_idx != expected_idx:
-                    sleep(0.1)
-                    continue
-
-                if self.verbose:
-                    print('pydobot: command %d executed' % current_idx)
-
-                # open command list lock
-                # self.command_list_lock = False
-                # print("Lock OPENED")
-                break
-
-        # the API through errors here, so this is a hacky fix
-        except:
-            print('pydobot -- command error')
-            # open command list lock
-            # self.command_list_lock = False
-
-        self.pop_next_command()
+        # if not wait:
+        #     return response
+        #
+        # # wait until Dobot completes current command
+        # try:
+        #     expected_idx = struct.unpack_from('L', response.params, 0)[0]
+        #     if self.verbose:
+        #         print('pydobot: waiting for command', expected_idx)
+        #
+        #     while True:
+        #         current_idx = self._get_queued_cmd_current_index()
+        #
+        #         if current_idx != expected_idx:
+        #             sleep(0.1)
+        #             continue
+        #
+        #         if self.verbose:
+        #             print('pydobot: command %d executed' % current_idx)
+        #
+        #         # open command list lock
+        #         # self.command_list_lock = False
+        #         # print("Lock OPENED")
+        #         break
+        #
+        # # the API through errors here, so this is a hacky fix
+        # except:
+        #     print('pydobot -- command error')
+        #
+        # # open command list lock
+        # self.command_list_lock = False
         return response
 
     def get_normalised_position(self):
@@ -345,12 +358,12 @@ class Drawbot(Dobot):
         msg.ctrl = 0x01
         self._send_command(msg)  # empty response
 
-    # def clear_commands(self):
-    #     # self.force_queued_stop()
-    #     # self._set_queued_cmd_stop_exec()
-    #     self._set_queued_cmd_clear()
-    #     sleep(0.1)
-    #     self._set_queued_cmd_start_exec()
+    def clear_commands(self):
+        # self.force_queued_stop()
+        # self._set_queued_cmd_stop_exec()
+        self._set_queued_cmd_clear()
+        # sleep(0.1)
+        # self._set_queued_cmd_start_exec()
 
     # def force_queued_stop(self):
     #     """
@@ -596,7 +609,7 @@ class Drawbot(Dobot):
 
         nx, ny, nz = self.safety_position_check(x, y, 0)
         self.coords.append((nx, ny))
-        print("Random draw pos above page x:",nx," y:",ny)
+        print("Random draw pos above page x:", nx, " y:", ny)
         # self.add_to_list_set_ptp_cmd(x, y, z, r, mode=PTPMode.JUMP_XYZ, wait=self.wait)
         self.custom_set_ptp_cmd(params=[nx, ny, 0, 0],
                                 mode=PTPMode.JUMP_XYZ,
@@ -613,9 +626,9 @@ class Drawbot(Dobot):
         x, y, z = self.get_pose()[:3]
         x += dx
         y += dy
-        z += dz       #calulate new position, used for checking
+        z += randrange(self.z_extents[1])       #calulate new position, used for checking
 
-        nx, ny, nz = self.safety_position_check(x, y, 0)
+        nx, ny, nz = self.safety_position_check(x, y, z)
         self.coords.append((nx, ny))
         # self.add_to_list_set_ptp_cmd(corrected_pose[0],
         #                              corrected_pose[1],

@@ -101,7 +101,7 @@ class DataBorg:
             # Running vars
             ######################
 
-            self.interrupt_bang: bool = True
+            self.interrupt_clear: bool = True
             """Signals an interrupt to the gesture manager"""
 
             self.running: bool = False
