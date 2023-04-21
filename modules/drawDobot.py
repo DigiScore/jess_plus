@@ -212,10 +212,10 @@ class Drawbot(Dobot):
             #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)
         
-        json_str = json.dumps(self.positions)
-        json_file = open("position_data.json", "w")
-        json_file.write(json_str)
-        json_file.close()
+        # json_str = json.dumps(self.positions)
+        # json_file = open("position_data.json", "w")
+        # json_file.write(json_str)
+        # json_file.close()
 
     def safety_position_check(self,
                               x: float,
