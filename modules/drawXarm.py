@@ -225,7 +225,7 @@ class DrawXarm(XArmAPI):
         else:
             z = pose[2]
 
-        self.move_to(x, y, z, self.wait)
+        self.bot_move_to(x, y, z, self.wait)
 
         return_pose = (x, y, z)
         return return_pose
@@ -286,7 +286,7 @@ class DrawXarm(XArmAPI):
     All of the notation functions ()below) need to call these here.
     Only 4 are required:
         arc: make an arc (inc circle)
-        move_to: draw a line of move to in a linear way to another coord
+        bot_move_to: draw a line of move to in a linear way to another coord
         jump_to: will arc between coords lifting z an amount (arc radius)
         tool_move: will rotate the tool head/ pen holder
     """
@@ -329,7 +329,7 @@ class DrawXarm(XArmAPI):
                              wait=wait
                              )
 
-    def move_to(self,
+    def bot_move_to(self,
                 x: float = None,
                 y: float = None,
                 z: float = None,
@@ -350,7 +350,7 @@ class DrawXarm(XArmAPI):
         :return:
         """
 
-        logging.info('move_to')
+        logging.info('bot_move_to')
         if self.command_list_active:
             cmd_list = [x,
                         y,
@@ -418,13 +418,13 @@ class DrawXarm(XArmAPI):
             x = (config.xarm_x_extents[1] - config.xarm_x_extents[0]) / 2
 
         logging.info(f'Move Y to x:{round(x)} y:{round(newy)} z:{round(z)}')
-        self.move_to(x=x,
-                     y=newy,
-                     z=self.z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=newy,
+                         z=self.z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
 
     def go_position_ready(self):
@@ -432,26 +432,26 @@ class DrawXarm(XArmAPI):
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.ready_position
-        self.move_to(x=x,
-                     y=y,
-                     z=z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.draw_position
-        self.move_to(x=x,
-                     y=y,
-                     z=z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
     def home(self):
         """
@@ -465,53 +465,53 @@ class DrawXarm(XArmAPI):
         Go to an x and y position with the pen touching the paper
         """
         self.coords.append((x, y))
-        self.move_to(x=x,
-                     y=y,
-                     z=self.z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=self.z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
     def go_draw_up(self,
                    x: float,
                    y: float,
-                   jump: float = 20,
                    wait: bool = False
                    ):
         """
         Lift the pen up, go to an x and y position, then lower the pen
         """
+        jump_height = 20
         # get current position, save to coords list
         old_x, old_y = self.get_pose()[:2]
         self.coords.append((x, y))
 
         # jump off page
-        self.move_to(x=old_x,
-                     y=old_y,
-                     z=self.z + jump,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=old_x,
+                         y=old_y,
+                         z=self.z + jump_height,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
         # move to new position
-        self.move_to(x=x,
-                     y=y,
-                     z=self.z + jump,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=self.z + jump_height,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
         # put pen on paper
-        self.move_to(x=x,
-                     y=y,
-                     z=self.z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=self.z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
     # -- creative go to position functions --#
     def go_random_draw(self):  # goes to random position on the page with pen touching page
@@ -524,13 +524,13 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print("Random draw pos x:", round(x, 2), " y:", round(y, 2))
-        self.move_to(x=x,
-                     y=y,
-                     z=self.z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait
-                     )
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=self.z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on
         """
@@ -548,7 +548,7 @@ class DrawXarm(XArmAPI):
                         )
 
     # -- move by functions --#
-    def position_move_by(self, x, y, z, wait=False):
+    def position_move_by(self, dx, dy, dz, wait=False):
         """
         Increment the robot cartesian position by x, y, z.
         Check that the arm isn't going out of x, y, z extents
@@ -556,7 +556,7 @@ class DrawXarm(XArmAPI):
 
         pose = self.get_pose()[:3]
 
-        newPose = [pose[0] + x, pose[1] + y, pose[2] + z]  # calulate new position, used for checking
+        new_pose = [pose[0] + dx, pose[1] + dy, pose[2] + dz]  # calulate new position, used for checking
 
         # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
         # if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:  # check x posiion
@@ -569,16 +569,16 @@ class DrawXarm(XArmAPI):
         #     print("delta z reset to 0")
         #     z = 0
 
-        self.coords.append(newPose[:2])
+        self.coords.append(new_pose[:2])
         # self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
-        self.move_to(x=x,
-                     y=y,
-                     z=z,
-                     speed=self.speed,
-                     mvacc=self.mvacc,
-                     wait=self.wait,
-                     relative=True
-                     )
+        self.bot_move_to(x=new_pose[0],
+                         y=new_pose[1],
+                         z=new_pose[2],
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait,
+                         relative=True
+                         )
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
     #     """moves specific joints by an amount."""
@@ -673,7 +673,7 @@ class DrawXarm(XArmAPI):
         """
         self.note_head(1)
 
-    def note_head(self, size: float = 3):
+    def note_head(self, size: float = 5):
         """
         draws a circle at the current position.
         Default is 5 pixels diameter.
@@ -683,7 +683,7 @@ class DrawXarm(XArmAPI):
             wait: True = wait till sequence finished
             """
 
-        x, y, z = self.get_pose()[:3]
+        x, y = self.get_pose()[:2]
         self.arc(pose1=[x + size, y, self.z, self.roll, self.pitch, self.yaw],
                  pose2=[x, y + size, self.z, self.roll, self.pitch, self.yaw],
                  percent=100,
@@ -1305,9 +1305,9 @@ class DrawXarm(XArmAPI):
                 self.draw_square(uniform(20, 29), True)
             else:  # draw a cross in the square
                 self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=False)
-                self.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=False)
+                self.bot_move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=False)
                 self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=False)
-                self.move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=False)
+                self.bot_move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=False)
 
                 # device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
             # device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
@@ -1331,10 +1331,10 @@ class DrawXarm(XArmAPI):
 
             if rand == 0:  # join up the ends of the sunburst lines
                 self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=False)
-                self.move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=False)
-                self.move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
-                self.move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=False)
-                self.move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=False)
+                self.bot_move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=False)
+                self.bot_move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
+                self.bot_move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=False)
+                self.bot_move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=False)
             else:  # go to the end of one of the sunburst lines and draw another sunburst
                 self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
                 self.draw_sunburst(20, True)

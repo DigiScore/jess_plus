@@ -303,7 +303,7 @@ class Conducter:
         jumps to a random spot and makes a mark inspired by Wolff
         """
         # get the current position
-        x, y, z = self.drawbot.get_pose()[:3]
+        x, y = self.drawbot.get_pose()[:2]
 
         # jump to a random location
         self.drawbot.go_random_jump()
@@ -315,9 +315,8 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Wolff: draw line')
-                self.drawbot.move_to(x + self.rnd(peak),
+                self.drawbot.go_draw(x + self.rnd(peak),
                                      y + self.rnd(peak),
-                                     z,
                                      False)
 
             case 1:
