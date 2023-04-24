@@ -85,7 +85,7 @@ class Conducter:
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
-            self.drawbot.manage_command_list()
+            self.drawbot.command_list_main_loop()
 
     def gesture_manager(self):
         """
@@ -116,7 +116,7 @@ class Conducter:
 
             # clear command list at start of each gesture cycle
             # self.drawbot.command_list.clear()
-            self.drawbot.clear_commands()
+            # self.drawbot.clear_commands()
 
             # get length of gesture
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
@@ -157,19 +157,19 @@ class Conducter:
                     break
 
                 # # 1. clear the alarms
-                # if self.drawbot:
-                #     self.drawbot.clear_alarms()
+                if self.drawbot:
+                    self.drawbot.clear_alarms()
 
                 # # generate rhythm rate here
-                rhythm_loop = time() + (randrange(500, 2000) / 1000)
-                logging.debug(f'end time = {rhythm_loop}')
+                rhythm_loop_end_time = time() + (randrange(500, 2000) / 1000)
+                logging.debug(f'end time = {rhythm_loop_end_time}')
 
                 # speed for this phrase
                 arm_speed = randrange(30, 500)
                 if self.DOBOT_CONNECTED or self.XARM_CONNECTED:
                     self.drawbot.set_speed(arm_speed)
 
-                while time() < rhythm_loop:
+                while time() < rhythm_loop_end_time:
                     #############################
                     # THis streams the chosen data around a loop
                     #############################
@@ -189,7 +189,7 @@ class Conducter:
                     #
                     ######################################
 
-                    if thought_train > 0.8 or not self.hivemind.interrupt_clear:
+                    if thought_train > 0.9 or not self.hivemind.interrupt_clear:
                         print('interrupt > HIGH !!!!!!!!!')
 
                         # A - refill dict with random
@@ -210,19 +210,19 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train <= 0.2 or not self.hivemind.interrupt_clear:
+                    elif thought_train < 0.1: # or not self.hivemind.interrupt_clear:
                         print('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if random() < 0.36:
                                 self.continuous(thought_train)
-                            else:
-                                sleep(0.1)
+                            # else:
+                            #     sleep(0.1)
 
                     else:
                         # MID response
                         if self.drawbot:
-                            match robot_mode:
+                            match robot_mode:  # determined at gesture loop point
                                 case RobotMode.Continuous:
                                     # move continuously using data streams from EMD, borg
                                     print("Continuous Mode")
@@ -292,7 +292,7 @@ class Conducter:
         #                 move_z = uniform(self.hivemind.flow2core_2d[1, -1], + self.hivemind.flow2core_2d[1, -1]) * self.joint_inc
         #
         #         move_y = 0
-
+        print("@drawing continuous")
         move_x = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
         move_y = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
         move_z = randrange(self.joint_inc) # * self.hivemind.mic_in

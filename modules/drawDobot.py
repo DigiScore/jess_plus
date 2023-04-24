@@ -1,4 +1,4 @@
-from random import getrandbits, randrange, uniform
+from random import choice, getrandbits, random, randrange, uniform
 from time import time, sleep
 from enum import Enum
 import logging
@@ -100,7 +100,7 @@ class Drawbot(Dobot):
         """
         while self.hivemind.running:
             # clear alarms
-            self.clear_alarms()
+            # self.clear_alarms()
 
             # clear commands?
             if not self.hivemind.interrupt_clear:
@@ -110,7 +110,15 @@ class Drawbot(Dobot):
                 print("clearded commands")
                 self.hivemind.interrupt_clear = True
 
-            sleep(0.01)
+            if self.command_list:
+                if random() >= 0.36:
+                    msg_to_send = self.command_list.pop(0)
+                else:
+                    msg_to_send = choice(self.command_list)
+                self._send_command(msg=msg_to_send,
+                                   wait=self.wait
+                                   )
+            sleep(0.05)
 
     def custom_set_ptp_cmd(self,
                            params: list,
@@ -138,9 +146,9 @@ class Drawbot(Dobot):
         if self.hivemind.interrupt_clear:
             print('sending message ', msg)
             self.command_list.append(msg)
-            self._send_command(msg=msg,
-                               wait=self.wait
-                               )
+            # self._send_command(msg=msg,
+            #                    wait=self.wait
+            #                    )
 
     def _send_command(self,
                       msg: Message,
@@ -211,7 +219,7 @@ class Drawbot(Dobot):
             self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
             self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
-            self.positions.append(norm_xyz)
+            # self.positions.append(norm_xyz)
 
             #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)
@@ -296,7 +304,8 @@ class Drawbot(Dobot):
         Clears all commands in Dobot buffer.
         """
         # self.force_queued_stop()
-        # self._set_queued_cmd_stop_exec()
+        self._set_queued_cmd_stop_exec()
+        sleep(0.1)
         self._set_queued_cmd_clear()
         sleep(0.1)
         self._set_queued_cmd_start_exec()
