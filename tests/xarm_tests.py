@@ -1,4 +1,10 @@
-# from xarm.wrapper.xarm_api import XArmAPI
+####################################################
+# Running the tests with pytest (pip install pytest)
+####################################################
+# Run the tests in the cmd from the root folder:
+# - running all the tests: $ tests/pytest xArm_test.py
+# - running a specific test: $ pytest tests/xArm_test.py::test_function
+
 from modules.drawXarm import DrawXarm
 import config
 from random import randrange, uniform
@@ -6,7 +12,6 @@ import logging
 
 
 logging.basicConfig(level=logging.INFO)
-N_REPEAT = 3
 
 
 port = config.xarm1_port
@@ -17,21 +22,12 @@ middle = [
     sum(config.xarm_y_extents)/2,
     sum(config.xarm_z_extents)/2
 ]
-middle_too_high = [
-    sum(config.xarm_x_extents)/2,
-    sum(config.xarm_y_extents)/2,
-    config.xarm_z_extents[1] + 50
-]
 pose1 = [drawbot.draw_position[0]+50, drawbot.draw_position[1], drawbot.z,
          drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose2 = [drawbot.draw_position[0], drawbot.draw_position[1]+50, drawbot.z,
          drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose3 = [drawbot.draw_position[0], drawbot.draw_position[1]+100, drawbot.z,
          drawbot.roll, drawbot.pitch, drawbot.yaw]
-pose_off_limit = [
-    400, config.xarm_y_extents[1] + 50, drawbot.z,
-    drawbot.roll, drawbot.pitch, drawbot.yaw
-]
 
 
 ################
@@ -41,13 +37,12 @@ def test_arc():
     drawbot.go_position_draw()
     drawbot.arc(pose1, pose2)
     drawbot.go_position_draw()
-    drawbot.arc(pose1, pose_off_limit)
+    drawbot.arc(pose1, pose3)
 
 
 def test_move_to():
-    for _ in range(N_REPEAT):
-        drawbot.move_to(*middle)
-        drawbot.move_to(*middle_too_high)
+    for _ in range(3):
+        drawbot.bot_move_to(*middle)
         drawbot.go_position_draw()
 
 
@@ -88,11 +83,11 @@ def test_go_draw():
 def test_go_draw_up():
     drawbot.go_position_draw()
     drawbot.go_draw_up(drawbot.draw_position[0] + 50,
-                       drawbot.draw_position[1] + 50,
-                       jump=30)
+                       drawbot.draw_position[1] + 50)
 
 
 def test_go_random_draw():
+    drawbot.go_position_draw()
     drawbot.go_random_draw()
 
 
@@ -112,12 +107,12 @@ def test_position_move_by():
 # Notation functions
 ####################
 def test_squiggle():
+    drawbot.go_position_draw()
     squiggle_list = [
         (uniform(-5, 5), uniform(-5, 5), uniform(-5, 5))
         for _ in range(randrange(3, 9))
     ]
-    for _ in range(N_REPEAT):
-        drawbot.squiggle(squiggle_list)
+    drawbot.squiggle(squiggle_list)
 
 
 def test_dot():
@@ -185,16 +180,9 @@ def test_draw_char():
     drawbot.draw_char('F', size=5)
     drawbot.draw_char('G', size=5)
     drawbot.draw_char('P', size=5)
+    drawbot.draw_char('Z', size=5)
 
 
 def test_create_shape_group():
     drawbot.go_random_jump()
     drawbot.create_shape_group()
-
-
-####################################################
-# Running the tests with pytest (pip install pytest)
-####################################################
-# Run the tests in the cmd from the root folder:
-# - running all the tests: $ tests/pytest xArm_test.py
-# - running a specific test: $ pytest tests/xArm_test.py::test_function
