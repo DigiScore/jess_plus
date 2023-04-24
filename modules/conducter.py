@@ -189,7 +189,7 @@ class Conducter:
                     #
                     ######################################
 
-                    if thought_train > 0.8 or not self.hivemind.interrupt_clear:
+                    if thought_train > 0.9 or not self.hivemind.interrupt_clear:
                         print('interrupt > HIGH !!!!!!!!!')
 
                         # A - refill dict with random
@@ -210,7 +210,7 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train < 0.2: # or not self.hivemind.interrupt_clear:
+                    elif thought_train < 0.1: # or not self.hivemind.interrupt_clear:
                         print('interrupt LOW ----------- no response')
 
                         if self.drawbot:

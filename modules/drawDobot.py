@@ -1,4 +1,4 @@
-from random import getrandbits, randrange, uniform
+from random import choice, getrandbits, random, randrange, uniform
 from time import time, sleep
 from enum import Enum
 import logging
@@ -110,6 +110,14 @@ class Drawbot(Dobot):
                 print("clearded commands")
                 self.hivemind.interrupt_clear = True
 
+            if self.command_list:
+                if random() >= 0.36:
+                    msg_to_send = self.command_list.pop(0)
+                else:
+                    msg_to_send = choice(self.command_list)
+                self._send_command(msg=msg_to_send,
+                                   wait=self.wait
+                                   )
             sleep(0.05)
 
     def custom_set_ptp_cmd(self,
@@ -138,9 +146,9 @@ class Drawbot(Dobot):
         if self.hivemind.interrupt_clear:
             print('sending message ', msg)
             self.command_list.append(msg)
-            self._send_command(msg=msg,
-                               wait=self.wait
-                               )
+            # self._send_command(msg=msg,
+            #                    wait=self.wait
+            #                    )
 
     def _send_command(self,
                       msg: Message,
