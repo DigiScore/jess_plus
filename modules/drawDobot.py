@@ -304,7 +304,8 @@ class Drawbot(Dobot):
         Clears all commands in Dobot buffer.
         """
         # self.force_queued_stop()
-        # self._set_queued_cmd_stop_exec()
+        self._set_queued_cmd_stop_exec()
+        sleep(0.1)
         self._set_queued_cmd_clear()
         sleep(0.1)
         self._set_queued_cmd_start_exec()
