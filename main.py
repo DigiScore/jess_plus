@@ -135,6 +135,7 @@ class Main(Visualiser):
         )
 
         # start Nebula AI Factory here after affect starts data moving
+        self.hivemind.running = True
         robot1.main_loop()
         nebula.main_loop()
 

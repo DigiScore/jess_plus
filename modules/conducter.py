@@ -85,7 +85,7 @@ class Conducter:
         if self.drawbot:
             position_thread = Thread(target=self.drawbot.get_normalised_position)
             position_thread.start()
-            self.drawbot.manage_command_list()
+            self.drawbot.command_list_main_loop()
 
     def gesture_manager(self):
         """
@@ -116,7 +116,7 @@ class Conducter:
 
             # clear command list at start of each gesture cycle
             # self.drawbot.command_list.clear()
-            self.drawbot.clear_commands()
+            # self.drawbot.clear_commands()
 
             # get length of gesture
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
@@ -210,14 +210,14 @@ class Conducter:
                         break
 
                         # LOW
-                    elif thought_train <= 0.2 or not self.hivemind.interrupt_clear:
+                    elif thought_train < 0.2: # or not self.hivemind.interrupt_clear:
                         print('interrupt LOW ----------- no response')
 
                         if self.drawbot:
                             if random() < 0.36:
                                 self.continuous(thought_train)
-                            else:
-                                sleep(0.1)
+                            # else:
+                            #     sleep(0.1)
 
                     else:
                         # MID response

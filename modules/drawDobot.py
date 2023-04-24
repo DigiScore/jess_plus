@@ -110,7 +110,7 @@ class Drawbot(Dobot):
                 print("clearded commands")
                 self.hivemind.interrupt_clear = True
 
-            sleep(0.01)
+            sleep(0.05)
 
     def custom_set_ptp_cmd(self,
                            params: list,
