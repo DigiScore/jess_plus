@@ -12,7 +12,6 @@ import logging
 
 
 logging.basicConfig(level=logging.INFO)
-N_REPEAT = 3
 
 
 port = config.dobot1_port
@@ -44,7 +43,7 @@ pose3 = [drawbot.draw_position[0], drawbot.draw_position[1]+30,
 
 
 def test_move_to():
-    for _ in range(N_REPEAT):
+    for _ in range(3):
         drawbot.bot_move_to(*middle)
         drawbot.go_position_draw()
 
@@ -81,6 +80,7 @@ def test_go_draw_up():
 
 
 def test_go_random_draw():
+    drawbot.go_position_draw()
     drawbot.go_random_draw()
 
 
@@ -100,12 +100,12 @@ def test_position_move_by():
 # Notation functions
 ####################
 def test_squiggle():
+    drawbot.go_position_draw()
     squiggle_list = [
         (uniform(-5, 5), uniform(-5, 5), uniform(-5, 5))
         for _ in range(randrange(3, 9))
     ]
-    for _ in range(N_REPEAT):
-        drawbot.squiggle(squiggle_list)
+    drawbot.squiggle(squiggle_list)
 
 
 def test_dot():
