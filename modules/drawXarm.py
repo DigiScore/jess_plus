@@ -577,7 +577,6 @@ class DrawXarm(XArmAPI):
                          speed=self.speed,
                          mvacc=self.mvacc,
                          wait=self.wait,
-                         relative=True
                          )
 
     # def joint_move_by(self, _j1, _j2, _j3, wait=True):
