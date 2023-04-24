@@ -21,7 +21,7 @@ class Visualiser:
         # build UI
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.canvas = tk.Canvas(self.root, height=500, width=500)
+        self.canvas = tk.Canvas(self.root, height=600, width=500)
         self.canvas.pack()
 
         # assign location points and colors for visuals
@@ -32,6 +32,7 @@ class Visualiser:
             'O2': [310, 350],
             'EDA': [250, 150]
         }
+        self.label_centre = [250, 500]
         self.colors = {
             'T3': '#ff6600',
             'T4': '#ff6600',
@@ -64,6 +65,26 @@ class Visualiser:
             self.canvas.create_text(
                 self.centers[ch], text=ch, font=('Helvetica', '15', 'bold'))
 
+        # stream label
+        label_xys = [self.label_centre[0]-150,
+                     self.label_centre[1]-50,
+                     self.label_centre[0]+150,
+                     self.label_centre[1]+50]
+        self.frame = self.canvas.create_rectangle(*label_xys, width=3)
+        self.label = self.canvas.create_text(
+            self.label_centre, text='STREAM', font=('Helvetica', '15', 'bold'))
+        self.stream_mapping = {
+               'mic_in': 'Microphone',
+               'rnd_poetry': 'Poetry',
+               'eeg2flow': 'Brain',
+               'flow2core': 'Brain groove',
+               'core2flow': 'Self awareness',
+               'audio2core': 'Audio groove',
+               'audio2flow': 'Audio flow',
+               'flow2audio': 'Brain audio',
+               'eda2flow': 'EDA'
+        }
+
         self.window_closed = False
 
     def on_close(self):
@@ -88,6 +109,11 @@ class Visualiser:
                          self.centers[ch][0]+100*self.sizes[ch],
                          self.centers[ch][1]+100*self.sizes[ch]]
             self.canvas.coords(self.items[ch], *items_xys)
+        new_label = 'Unknown'
+        if self.hivemind.thought_train_stream in self.stream_mapping:
+            new_label = self.stream_mapping[self.hivemind.thought_train_stream]
+        self.canvas.itemconfigure(
+            self.label, text=new_label)
 
     def make_viz(self):
         """
