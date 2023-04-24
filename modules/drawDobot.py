@@ -100,7 +100,7 @@ class Drawbot(Dobot):
         """
         while self.hivemind.running:
             # clear alarms
-            self.clear_alarms()
+            # self.clear_alarms()
 
             # clear commands?
             if not self.hivemind.interrupt_clear:
@@ -211,7 +211,7 @@ class Drawbot(Dobot):
             self.hivemind.current_robot_x_y = np.append(self.hivemind.current_robot_x_y, norm_xy_2d, axis=1)
             self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
-            self.positions.append(norm_xyz)
+            # self.positions.append(norm_xyz)
 
             #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)

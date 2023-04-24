@@ -157,8 +157,8 @@ class Conducter:
                     break
 
                 # # 1. clear the alarms
-                # if self.drawbot:
-                #     self.drawbot.clear_alarms()
+                if self.drawbot:
+                    self.drawbot.clear_alarms()
 
                 # # generate rhythm rate here
                 rhythm_loop_end_time = time() + (randrange(500, 2000) / 1000)
