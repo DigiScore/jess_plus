@@ -50,12 +50,14 @@ class DrawXarm(XArmAPI):
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        self.move_gohome(wait=True)
-        # boundary_limits = [config.xarm_x_extents[1], config.xarm_x_extents[0],
-        #                    config.xarm_y_extents[1], config.xarm_y_extents[0],
-        #                    config.xarm_z_extents[1], config.xarm_z_extents[0]
-        #                    ]
-        # self.set_reduced_tcp_boundary(boundary_limits)
+        self.home()
+        boundary_limits = [config.xarm_x_extents[1],
+                           config.xarm_x_extents[0],
+                           config.xarm_y_extents[1],
+                           config.xarm_y_extents[0],
+                           config.xarm_z_extents[1],
+                           config.xarm_z_extents[0]]
+        self.set_reduced_tcp_boundary(boundary_limits)
         # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
         # self.move_gohome(wait=True)
@@ -432,33 +434,38 @@ class DrawXarm(XArmAPI):
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.ready_position
+        self.set_fence_mode(False)
         self.bot_move_to(x=x,
                          y=y,
                          z=z,
                          speed=self.speed,
                          mvacc=self.mvacc,
-                         wait=self.wait
+                         wait=True
                          )
+        self.set_fence_mode(config.xarm_fenced)
 
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
         """
         x, y, z = self.draw_position
+        self.set_fence_mode(False)
         self.bot_move_to(x=x,
                          y=y,
                          z=z,
                          speed=self.speed,
                          mvacc=self.mvacc,
-                         wait=self.wait
+                         wait=True
                          )
+        self.set_fence_mode(config.xarm_fenced)
 
     def home(self):
         """
         Go directly to the home position 0, 0, 0, 0.
         Hopefully this accounts for world offset and gripper
         """
-        self.move_gohome()
+        self.set_fence_mode(False)
+        self.move_gohome(wait=True)
 
     def go_draw(self, x, y, wait=False):
         """
