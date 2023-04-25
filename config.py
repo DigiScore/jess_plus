@@ -30,7 +30,7 @@ xarm2_port = '192.168.1.223'
 
 xarm_x_extents = [350, 600]
 xarm_y_extents = [-250, 250]
-xarm_z_extents = [60, 400]
+xarm_z_extents = [39, 400]
 xarm_ballet_x_extents = [400, 400]
 xarm_ballet_y_extents = [-250, 250]
 xarm_ballet_z_extents = [150, 400]
