@@ -101,6 +101,11 @@ def test_go_random_draw():
     drawbot.go_random_draw()
 
 
+def test_go_random_3d():
+    drawbot.go_position_draw()
+    drawbot.go_random_3d()
+
+
 def test_go_random_jump():
     drawbot.go_position_draw()
     drawbot.go_random_jump()
@@ -196,5 +201,3 @@ def test_draw_char():
 def test_create_shape_group():
     drawbot.go_random_jump()
     drawbot.create_shape_group()
-
-test_move_to_offlimit()

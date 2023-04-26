@@ -1,4 +1,4 @@
-from random import getrandbits, randrange, uniform, random
+from random import choice, getrandbits, randrange, uniform, random
 from time import time, sleep
 from enum import Enum
 import logging
@@ -57,7 +57,7 @@ class DrawXarm(XArmAPI):
             config.xarm_y_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_y_extents[0] - config.xarm_irregular_shape_extents,
             config.xarm_z_extents[1] + config.xarm_irregular_shape_extents,
-            config.xarm_z_extents[0]]
+            config.xarm_z_extents[0] - 1]
         self.set_reduced_tcp_boundary(boundary_limits)
         # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
@@ -74,13 +74,21 @@ class DrawXarm(XArmAPI):
         self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
-        self.z = 40
-        self.roll = -180
-        self.pitch = 0
+        self.z = 90
+        self.roll = None
+        self.pitch = None
         self.yaw = 0
         self.wait = False  # global wait var
         self.speed = 100
         self.mvacc = 100
+
+        # pen roll and pitch
+        self.compass = [[180, 10],  # north
+                        [180, -10],  # south
+                        [190, 0],  # east
+                        [170, 0]  # west
+                        ]
+        self.random_pen()
 
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
@@ -136,7 +144,7 @@ class DrawXarm(XArmAPI):
         print(f"Clearing commands, ITEM: {item}")
         self.clear_alarms()
         if item['error_code'] == 35:
-            self.go_random_draw()
+            self.go_random_3d()
             # self.safety_position_move()
 
     def command_list_main_loop(self):
@@ -363,7 +371,7 @@ class DrawXarm(XArmAPI):
             ):
         """
         Calls xarm move_circle.
-        pose = [x, y, z, roll, tilt, yaw] e.g. [300,  0,   100, -180, 0, 0]
+        pose = [x, y, z, roll, pitch, yaw] e.g. [300,  0,   100, -180, 0, 0]
         from current position, in cartesian coords
 
         #pose1, pose2, percent, speed=None, mvacc=None, mvtime=None, is_radian=None,
@@ -371,25 +379,25 @@ class DrawXarm(XArmAPI):
         """
         logging.info('arc/ circle')
 
-        if self.command_list_active:
-            cmd_list = [pose1,
-                        pose2,
-                        percent,
-                        speed,
-                        mvacc,
-                        wait
-                        ]
-            self.add_to_command_list("move_circle",
-                                     cmd_list)
+        # if self.command_list_active:
+        #     cmd_list = [pose1,
+        #                 pose2,
+        #                 percent,
+        #                 speed,
+        #                 mvacc,
+        #                 wait
+        #                 ]
+        #     self.add_to_command_list("move_circle",
+        #                              cmd_list)
 
-        else:
-            self.move_circle(pose1=pose1,
-                             pose2=pose2,
-                             percent=percent,
-                             speed=speed,
-                             mvacc=mvacc,
-                             wait=wait
-                             )
+        # else:
+        self.move_circle(pose1=pose1,
+                        pose2=pose2,
+                        percent=percent,
+                        speed=speed,
+                        mvacc=mvacc,
+                        wait=wait
+                        )
 
     def bot_move_to(self,
                 x: float = None,
@@ -413,54 +421,50 @@ class DrawXarm(XArmAPI):
         """
 
         logging.info('bot_move_to')
-        if self.command_list_active:
-            cmd_list = [x,
-                        y,
-                        z,
-                        speed,
-                        mvacc,
-                        wait,
-                        relative
-                        ]
-            self.add_to_command_list("set_position",
-                                     cmd_list)
+        # if self.command_list_active:
+        #     cmd_list = [x,
+        #                 y,
+        #                 z,
+        #                 speed,
+        #                 mvacc,
+        #                 wait,
+        #                 relative
+        #                 ]
+        #     self.add_to_command_list("set_position",
+        #                              cmd_list)
 
-        else:
-            self.set_position(x=x,
-                          y=y,
-                          z=z,
-                          speed=speed,
-                          mvacc=mvacc,
-                          wait=wait,
-                          relative=relative
-                          )
+        # else:
+        self.set_position(x=x,
+                        y=y,
+                        z=z,
+                        roll=self.roll,
+                        pitch=self.pitch,
+                        yaw=self.yaw,
+                        speed=speed,
+                        mvacc=mvacc,
+                        wait=wait,
+                        relative=relative
+                        )
 
-    def tool_move(self,
-                  colour: str = None,
-                  ):
+    def tool_move(self, abs_angle: int):
         """
-        Moves the tool head to align a specific colour pen to the page.
+        Moves the tool to an absolute angle.
 
-        :param colour: "red", "blue", "black", "green"
+        :param abs_angle: absolute angle
         """
 
-        if colour == "black":
-            yaw = 0
-        elif colour == "blue":
-            yaw = 90
-        elif colour == "red":
-            yaw = 180
-        else:
-            yaw = 270
-
-        logging.info('tool move %c', colour)
-        self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=yaw,
-                               speed=self.speed, mvacc=self.mvacc, mvtime=None, is_radian=None,
-                               wait=False, timeout=None, radius=None)
+        logging.info('tool move %c', abs_angle)
+        self.set_servo_angle(servo_id=6,
+                             angle=abs_angle,
+                             relative=False
+                             )
 
     ######################
     # drawXarm ANCILLARY FUNCTIONS
     ######################
+    def random_pen(self):
+        random_pen = choice(self.compass)
+        self.roll, self.pitch = random_pen
 
     def move_y(self):
         """
@@ -581,7 +585,7 @@ class DrawXarm(XArmAPI):
                          )
 
     # -- creative go to position functions --#
-    def go_random_draw(self):  # goes to random position on the page with pen touching page
+    def go_random_draw(self):
         """
         Move to a random position within the x and y
         extents with the pen touching the page.
@@ -598,6 +602,30 @@ class DrawXarm(XArmAPI):
                          mvacc=self.mvacc,
                          wait=self.wait
                          )
+
+    def go_random_3d(self):
+        """
+        Move to a random position within the x, y and z
+        extents in 3D space.
+        """
+        x = uniform(config.xarm_x_extents[0], config.xarm_x_extents[1])
+        y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
+        z = uniform(config.xarm_z_extents[0], config.xarm_z_extents[1])
+
+        # compass_angles = [0, 90, 180, 270]
+        # angle = choice(compass_angles)
+        self.random_pen()
+
+        self.coords.append((x, y))
+        print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=True
+                         )
+        # self.tool_move(angle)
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on
         """
