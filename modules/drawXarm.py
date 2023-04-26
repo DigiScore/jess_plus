@@ -57,7 +57,7 @@ class DrawXarm(XArmAPI):
             config.xarm_y_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_y_extents[0] - config.xarm_irregular_shape_extents,
             config.xarm_z_extents[1] + config.xarm_irregular_shape_extents,
-            config.xarm_z_extents[0]]
+            config.xarm_z_extents[0] - 1]
         self.set_reduced_tcp_boundary(boundary_limits)
         # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
