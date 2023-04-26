@@ -74,7 +74,7 @@ class DrawXarm(XArmAPI):
         self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
-        self.z = 40
+        self.z = 90
         self.roll = -180
         self.pitch = 0
         self.yaw = 0
@@ -136,7 +136,7 @@ class DrawXarm(XArmAPI):
         print(f"Clearing commands, ITEM: {item}")
         self.clear_alarms()
         if item['error_code'] == 35:
-            self.go_random_draw()
+            self.go_random_3d()
             # self.safety_position_move()
 
     def command_list_main_loop(self):
@@ -581,7 +581,7 @@ class DrawXarm(XArmAPI):
                          )
 
     # -- creative go to position functions --#
-    def go_random_draw(self):  # goes to random position on the page with pen touching page
+    def go_random_draw(self):
         """
         Move to a random position within the x and y
         extents with the pen touching the page.
@@ -594,6 +594,25 @@ class DrawXarm(XArmAPI):
         self.bot_move_to(x=x,
                          y=y,
                          z=self.z,
+                         speed=self.speed,
+                         mvacc=self.mvacc,
+                         wait=self.wait
+                         )
+
+    def go_random_3d(self):
+        """
+        Move to a random position within the x, y and z
+        extents in 3D space.
+        """
+        x = uniform(config.xarm_x_extents[0], config.xarm_x_extents[1])
+        y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
+        z = uniform(config.xarm_z_extents[0], config.xarm_z_extents[1])
+
+        self.coords.append((x, y))
+        print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
+        self.bot_move_to(x=x,
+                         y=y,
+                         z=z,
                          speed=self.speed,
                          mvacc=self.mvacc,
                          wait=self.wait
