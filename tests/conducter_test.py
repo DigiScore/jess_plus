@@ -56,7 +56,7 @@ def interrupt():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    t1 = Thread(target=main, args=(2,))
+    t1 = Thread(target=main, args=(1,))
     t2 = Thread(target=interrupt)
 
     t1.start()

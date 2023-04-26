@@ -136,7 +136,8 @@ class DrawXarm(XArmAPI):
         print(f"Clearing commands, ITEM: {item}")
         self.clear_alarms()
         if item['error_code'] == 35:
-            self.safety_position_move()
+            self.go_random_draw()
+            # self.safety_position_move()
 
     def command_list_main_loop(self):
         """

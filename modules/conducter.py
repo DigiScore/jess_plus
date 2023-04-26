@@ -116,7 +116,7 @@ class Conducter:
 
             # clear command list at start of each gesture cycle
             # self.drawbot.command_list.clear()
-            # self.drawbot.clear_commands()
+            self.drawbot.clear_commands()
 
             # get length of gesture
             phrase_length = (randrange(300, 800) / 100) # + self.global_speed
@@ -243,7 +243,10 @@ class Conducter:
                                     print("Repetition Mode")
                                     self.repetition(thought_train)
 
-                    # and wait for a cycle
+                    # # and wait for a cycle
+                    # while self.drawbot.command_list_lock:
+                    #     sleep(0.1)
+                    # self.drawbot.command_list_lock = True
                     # sleep(rhythm_rate)
                     sleep(0.1)
 
