@@ -75,12 +75,20 @@ class DrawXarm(XArmAPI):
 
         # init coord params
         self.z = 90
-        self.roll = -180
-        self.pitch = 0
+        self.roll = None
+        self.pitch = None
         self.yaw = 0
         self.wait = False  # global wait var
         self.speed = 100
         self.mvacc = 100
+
+        # pen roll and pitch
+        self.compass = [[180, 10],  # north
+                        [180, -10],  # south
+                        [190, 0],  # east
+                        [170, 0]  # west
+                        ]
+        self.random_pen()
 
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
@@ -454,6 +462,9 @@ class DrawXarm(XArmAPI):
     ######################
     # drawXarm ANCILLARY FUNCTIONS
     ######################
+    def random_pen(self):
+        random_pen = choice(self.compass)
+        self.roll, self.pitch = random_pen
 
     def move_y(self):
         """
@@ -603,6 +614,7 @@ class DrawXarm(XArmAPI):
 
         # compass_angles = [0, 90, 180, 270]
         # angle = choice(compass_angles)
+        self.random_pen()
 
         self.coords.append((x, y))
         print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
