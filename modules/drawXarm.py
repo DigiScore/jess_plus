@@ -1,4 +1,4 @@
-from random import getrandbits, randrange, uniform, random
+from random import choice, getrandbits, randrange, uniform, random
 from time import time, sleep
 from enum import Enum
 import logging
@@ -363,7 +363,7 @@ class DrawXarm(XArmAPI):
             ):
         """
         Calls xarm move_circle.
-        pose = [x, y, z, roll, tilt, yaw] e.g. [300,  0,   100, -180, 0, 0]
+        pose = [x, y, z, roll, pitch, yaw] e.g. [300,  0,   100, -180, 0, 0]
         from current position, in cartesian coords
 
         #pose1, pose2, percent, speed=None, mvacc=None, mvtime=None, is_radian=None,
@@ -371,25 +371,25 @@ class DrawXarm(XArmAPI):
         """
         logging.info('arc/ circle')
 
-        if self.command_list_active:
-            cmd_list = [pose1,
-                        pose2,
-                        percent,
-                        speed,
-                        mvacc,
-                        wait
-                        ]
-            self.add_to_command_list("move_circle",
-                                     cmd_list)
+        # if self.command_list_active:
+        #     cmd_list = [pose1,
+        #                 pose2,
+        #                 percent,
+        #                 speed,
+        #                 mvacc,
+        #                 wait
+        #                 ]
+        #     self.add_to_command_list("move_circle",
+        #                              cmd_list)
 
-        else:
-            self.move_circle(pose1=pose1,
-                             pose2=pose2,
-                             percent=percent,
-                             speed=speed,
-                             mvacc=mvacc,
-                             wait=wait
-                             )
+        # else:
+        self.move_circle(pose1=pose1,
+                        pose2=pose2,
+                        percent=percent,
+                        speed=speed,
+                        mvacc=mvacc,
+                        wait=wait
+                        )
 
     def bot_move_to(self,
                 x: float = None,
@@ -413,50 +413,43 @@ class DrawXarm(XArmAPI):
         """
 
         logging.info('bot_move_to')
-        if self.command_list_active:
-            cmd_list = [x,
-                        y,
-                        z,
-                        speed,
-                        mvacc,
-                        wait,
-                        relative
-                        ]
-            self.add_to_command_list("set_position",
-                                     cmd_list)
+        # if self.command_list_active:
+        #     cmd_list = [x,
+        #                 y,
+        #                 z,
+        #                 speed,
+        #                 mvacc,
+        #                 wait,
+        #                 relative
+        #                 ]
+        #     self.add_to_command_list("set_position",
+        #                              cmd_list)
 
-        else:
-            self.set_position(x=x,
-                          y=y,
-                          z=z,
-                          speed=speed,
-                          mvacc=mvacc,
-                          wait=wait,
-                          relative=relative
-                          )
+        # else:
+        self.set_position(x=x,
+                        y=y,
+                        z=z,
+                        roll=self.roll,
+                        pitch=self.pitch,
+                        yaw=self.yaw,
+                        speed=speed,
+                        mvacc=mvacc,
+                        wait=wait,
+                        relative=relative
+                        )
 
-    def tool_move(self,
-                  colour: str = None,
-                  ):
+    def tool_move(self, abs_angle: int):
         """
-        Moves the tool head to align a specific colour pen to the page.
+        Moves the tool to an absolute angle.
 
-        :param colour: "red", "blue", "black", "green"
+        :param abs_angle: absolute angle
         """
 
-        if colour == "black":
-            yaw = 0
-        elif colour == "blue":
-            yaw = 90
-        elif colour == "red":
-            yaw = 180
-        else:
-            yaw = 270
-
-        logging.info('tool move %c', colour)
-        self.set_tool_position(x=0, y=0, z=0, roll=0, pitch=0, yaw=yaw,
-                               speed=self.speed, mvacc=self.mvacc, mvtime=None, is_radian=None,
-                               wait=False, timeout=None, radius=None)
+        logging.info('tool move %c', abs_angle)
+        self.set_servo_angle(servo_id=6,
+                             angle=abs_angle,
+                             relative=False
+                             )
 
     ######################
     # drawXarm ANCILLARY FUNCTIONS
@@ -608,6 +601,9 @@ class DrawXarm(XArmAPI):
         y = uniform(config.xarm_y_extents[0], config.xarm_y_extents[1])
         z = uniform(config.xarm_z_extents[0], config.xarm_z_extents[1])
 
+        # compass_angles = [0, 90, 180, 270]
+        # angle = choice(compass_angles)
+
         self.coords.append((x, y))
         print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
         self.bot_move_to(x=x,
@@ -615,8 +611,9 @@ class DrawXarm(XArmAPI):
                          z=z,
                          speed=self.speed,
                          mvacc=self.mvacc,
-                         wait=self.wait
+                         wait=True
                          )
+        # self.tool_move(angle)
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on
         """
