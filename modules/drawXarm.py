@@ -51,12 +51,13 @@ class DrawXarm(XArmAPI):
         self.set_mode(0)
         self.set_state(state=0)
         self.home()
-        boundary_limits = [config.xarm_x_extents[1],
-                           config.xarm_x_extents[0],
-                           config.xarm_y_extents[1],
-                           config.xarm_y_extents[0],
-                           config.xarm_z_extents[1],
-                           config.xarm_z_extents[0]]
+        boundary_limits = [
+            config.xarm_x_extents[1] + config.xarm_irregular_shape_extents,
+            config.xarm_x_extents[0] - config.xarm_irregular_shape_extents,
+            config.xarm_y_extents[1] + config.xarm_irregular_shape_extents,
+            config.xarm_y_extents[0] - config.xarm_irregular_shape_extents,
+            config.xarm_z_extents[1] + config.xarm_irregular_shape_extents,
+            config.xarm_z_extents[0]]
         self.set_reduced_tcp_boundary(boundary_limits)
         # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
@@ -69,7 +70,8 @@ class DrawXarm(XArmAPI):
         self.command_list_active = False # temp to avoid holding up Johann
 
         # setup call back for command list
-        self.register_cmdnum_changed_callback(callback=self.callback_cmdnum_changed)
+        # self.register_cmdnum_changed_callback(callback=self.callback_cmdnum_changed)
+        self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
         self.z = 40
@@ -77,8 +79,8 @@ class DrawXarm(XArmAPI):
         self.pitch = 0
         self.yaw = 0
         self.wait = False  # global wait var
-        self.speed = 80
-        self.mvacc = 80
+        self.speed = 100
+        self.mvacc = 100
 
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
@@ -127,30 +129,39 @@ class DrawXarm(XArmAPI):
         print('cmdnum changed:', item)
         self.command_list_lock = False
 
+    def callback_error_manager(self, item):
+        """
+        Listens to errors and clear alarms, and resets to go_poition_ready
+        """
+        print(f"Clearing commands, ITEM: {item}")
+        self.clear_alarms()
+        if item['error_code'] == 35:
+            self.safety_position_move()
+
     def command_list_main_loop(self):
         """
         main loop thread for parsing command loop and rocker lock
         """
         # if temp Bool is active
-        if self.command_list_active:
-            list_thread = Thread(target=self.process_command_list)
-            list_thread.start()
+        # if self.command_list_active:
+        list_thread = Thread(target=self.manage_command_list)
+        list_thread.start()
 
-    def add_to_command_list(self,
-                            command: str,
-                            arg_list: list):
-        """
-        Adds a base command to the command list. Must be
-        "move_circle", "set_position" or "set_tool_position"
-        :param command: the name of the API command
-        :param arg_list: list of args for specific command
-        """
-        package = (command, arg_list)
+    # def add_to_command_list(self,
+    #                         command: str,
+    #                         arg_list: list):
+    #     """
+    #     Adds a base command to the command list. Must be
+    #     "move_circle", "set_position" or "set_tool_position"
+    #     :param command: the name of the API command
+    #     :param arg_list: list of args for specific command
+    #     """
+    #     package = (command, arg_list)
 
-        self.command_list.append(package)
-        # print(len(self.command_list))
+    #     self.command_list.append(package)
+    #     # print(len(self.command_list))
 
-    def process_command_list(self):
+    def manage_command_list(self):
         while self.hivemind.running:
 
             # interrupt? clear list
@@ -159,33 +170,33 @@ class DrawXarm(XArmAPI):
                 logging.info('Clearing command list')
                 self.hivemind.interrupt_clear = True
 
-            elif self.command_list:
-                if not self.command_list_lock:
+            # elif self.command_list:
+            #     if not self.command_list_lock:
 
-                    msg = self.command_list.pop()
-                    command, arg_list = msg[0]
+            #         msg = self.command_list.pop()
+            #         command, arg_list = msg[0]
 
-                    match command:
-                        case "move_circle":
-                            self.move_circle(*arg_list)
+            #         match command:
+            #             case "move_circle":
+            #                 self.move_circle(*arg_list)
 
-                        case "set_position":
-                            self.set_position(*arg_list)
+            #             case "set_position":
+            #                 self.set_position(*arg_list)
 
-                        case "set_tool_position":
-                            self.set_tool_position(*arg_list)
+            #             case "set_tool_position":
+            #                 self.set_tool_position(*arg_list)
 
-                    self.command_list_lock = True
+            #         self.command_list_lock = True
 
-            else:
-                sleep(0.01)
+            # else:
+            sleep(0.05)
 
     def get_normalised_position(self):
         while self.hivemind.running:
-            original_pose = self.get_pose()[:3]
+            pose = self.position[:3]
 
-            # do a safety position check
-            pose = self.safety_position_check(original_pose)
+            # # do a safety position check
+            # pose = self.safety_position_check(original_pose)
 
             # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
             # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
@@ -203,34 +214,80 @@ class DrawXarm(XArmAPI):
             self.hivemind.current_robot_x_y = np.delete(self.hivemind.current_robot_x_y, 0, axis=1)
 
             logging.info(f'current x,y,z normalised  = {norm_xyz}')
+            sleep(0.1)
 
-    def safety_position_check(self, pose):
+    def safety_position_check(self, pose) -> tuple:
+        """
+        Checks generated move does not exceed defined extents,
+        if it does, adjust to remain inside
+        params:
+            x,
+            y,
+            z coords for evaluation
+        :return: corrected x, y, z
+        """
+        x, y , z = pose
+        pos_changed = False
+        if x < self.x_extents[0]:     # check x posiion
+            x = self.x_extents[0]
+            pos_changed = True
+        elif x > self.x_extents[1]:
+            x = self.x_extents[1]
+            pos_changed = True
+        # else:
+        #     x = pose[0]
+
+        if y < self.y_extents[0]:  # check y posiion
+            y = self.y_extents[0]
+            pos_changed = True
+        elif y > self.y_extents[1]:
+            y = self.y_extents[1]
+            pos_changed = True
+        # else:
+        #     y = pose[1]
+
+        if z < self.z_extents[0]:  # check x posiion
+            z = self.z_extents[0]
+            pos_changed = True
+        elif z > self.z_extents[1]:
+            z = self.z_extents[1]
+            pos_changed = True
+        # else:
+        #     z = pose[2]
+
+        # if pos_changed:
+        #     self.move_to(x, y, z, 0, False)
+
+        return_pose = (x, y, z)
+        return return_pose
+
+    def safety_position_move(self):
+        pose = self.position[:3]
         # todo -  hopefully this is now redundent because of def.reduced_tcp_limits()
         if pose[0] < self.x_extents[0]:  # check x posiion
-            x = self.x_extents[0]
+            x = self.x_extents[0] + 10
         elif pose[0] > self.x_extents[1]:
-            x = self.x_extents[1]
+            x = self.x_extents[1] - 10
         else:
             x = pose[0]
 
         if pose[1] < self.y_extents[0]:  # check y posiion
-            y = self.y_extents[0]
+            y = self.y_extents[0] + 10
         elif pose[1] > self.y_extents[1]:
-            y = self.y_extents[1]
+            y = self.y_extents[1] - 10
         else:
             y = pose[1]
 
         if pose[2] < self.z_extents[0]:  # check x posiion
             z = self.z_extents[0]
         elif pose[2] > self.z_extents[1]:
-            z = self.z_extents[1]
+            z = self.z_extents[1] - 10
         else:
             z = pose[2]
 
-        self.bot_move_to(x, y, z, self.wait)
-
-        return_pose = (x, y, z)
-        return return_pose
+        self.set_fence_mode(False)
+        self.bot_move_to(x, y, z, wait=True)
+        self.set_fence_mode(config.xarm_fenced)
 
     def rnd(self, power_of_command: int) -> int:
         """
@@ -273,6 +330,8 @@ class DrawXarm(XArmAPI):
 
     def get_pose(self):
         pose = self.last_used_position
+        logging.debug(f'POSITION: {self.position[:3]}')
+        logging.debug(f'LAST_USED: {pose[:3]}')
         return pose
 
     def set_speed(self, arm_speed):
@@ -564,23 +623,14 @@ class DrawXarm(XArmAPI):
         pose = self.get_pose()[:3]
 
         new_pose = [pose[0] + dx, pose[1] + dy, pose[2] + dz]  # calulate new position, used for checking
+        new_corrected_pose = self.safety_position_check(new_pose)
+        logging.debug(f'NEW_CORRECTED: {new_corrected_pose}')
 
-        # # todo (ADAM) - use this to make a new func (def.check_pos) that all funcs can call
-        # if newPose[0] < self.x_extents[0] or newPose[0] > self.x_extents[1]:  # check x posiion
-        #     print("delta x reset to 0")
-        #     x = 0
-        # if newPose[1] < self.y_extents[0] or newPose[1] > self.y_extents[1]:  # check y position
-        #     print("delta y reset to 0")
-        #     y = 0
-        # if newPose[2] < self.z_extents[0] or newPose[2] > self.z_extents[1]:  # check z height
-        #     print("delta z reset to 0")
-        #     z = 0
-
-        self.coords.append(new_pose[:2])
+        self.coords.append(new_corrected_pose[:2])
         # self.add_to_list_set_ptp_cmd(x, y, z, 0, mode=PTPMode.MOVJ_XYZ_INC, wait=wait)
-        self.bot_move_to(x=new_pose[0],
-                         y=new_pose[1],
-                         z=new_pose[2],
+        self.bot_move_to(x=new_corrected_pose[0],
+                         y=new_corrected_pose[1],
+                         z=new_corrected_pose[2],
                          speed=self.speed,
                          mvacc=self.mvacc,
                          wait=self.wait,

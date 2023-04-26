@@ -148,7 +148,7 @@ class Main(Visualiser):
     def __init__(self):
         Visualiser.__init__(self)
         # logging for all modules
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.WARNING)
 
         # init Conducter & Gesture management (controls Drawbot)
         robot1 = Conducter(

@@ -1,6 +1,6 @@
 # [HARDWARE]
-dobot_connected = True
-xarm_connected = False
+dobot_connected = False
+xarm_connected = True
 eeg_live = False
 eda_live = False
 

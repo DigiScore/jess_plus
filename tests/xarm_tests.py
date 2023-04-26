@@ -22,6 +22,11 @@ middle = [
     sum(config.xarm_y_extents)/2,
     sum(config.xarm_z_extents)/2
 ]
+offlimit = [
+    sum(config.xarm_x_extents)/2,
+    sum(config.xarm_y_extents)/2,
+    config.xarm_z_extents[1] + 70
+]
 pose1 = [drawbot.draw_position[0]+50, drawbot.draw_position[1], drawbot.z,
          drawbot.roll, drawbot.pitch, drawbot.yaw]
 pose2 = [drawbot.draw_position[0], drawbot.draw_position[1]+50, drawbot.z,
@@ -44,6 +49,11 @@ def test_move_to():
     for _ in range(3):
         drawbot.bot_move_to(*middle)
         drawbot.go_position_draw()
+
+
+def test_move_to_offlimit():
+    drawbot.go_position_draw()
+    drawbot.bot_move_to(*offlimit)
 
 
 def test_tool_move():
@@ -186,3 +196,5 @@ def test_draw_char():
 def test_create_shape_group():
     drawbot.go_random_jump()
     drawbot.create_shape_group()
+
+test_move_to_offlimit()
