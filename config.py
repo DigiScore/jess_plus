@@ -1,6 +1,6 @@
 # [HARDWARE]
-dobot_connected = True
-xarm_connected = False
+dobot_connected = False
+xarm_connected = True
 eeg_live = False
 eda_live = False
 
@@ -30,11 +30,12 @@ xarm2_port = '192.168.1.223'
 
 xarm_x_extents = [350, 600]
 xarm_y_extents = [-250, 250]
-xarm_z_extents = [60, 400]
+xarm_z_extents = [39, 400]
 xarm_ballet_x_extents = [400, 400]
 xarm_ballet_y_extents = [-250, 250]
 xarm_ballet_z_extents = [150, 400]
 xarm_irregular_shape_extents = 50
+xarm_fenced = True
 
 # play params
 silence_listener = False

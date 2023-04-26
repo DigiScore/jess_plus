@@ -10,16 +10,12 @@ test = Conducter()
 test.hivemind.running = True
 test.drawbot.command_list_main_loop()
 
+
 def main(mode=999):
 
     while True:
         rnd = random()
         print(rnd)
-        arm_speed = randrange(20, 200)
-        test.drawbot.speed(
-            velocity=arm_speed,
-            acceleration=arm_speed
-        )
 
         match mode:
             case 1:
@@ -60,9 +56,8 @@ def interrupt():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    t1 = Thread(target=main, args=(999,))
+    t1 = Thread(target=main, args=(1,))
     t2 = Thread(target=interrupt)
 
     t1.start()
     t2.start()
-
