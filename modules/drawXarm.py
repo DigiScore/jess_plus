@@ -210,9 +210,9 @@ class DrawXarm(XArmAPI):
             # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
             # new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
 
-            norm_x = ((pose[0] - config.x_extents[0]) / (config.x_extents[1] - config.x_extents[0])) * (1 - 0) + 0
-            norm_y = ((pose[1] - config.y_extents[0]) / (config.y_extents[1] - config.y_extents[0])) * (1 - 0) + 0
-            norm_z = ((pose[2] - config.z_extents[0]) / (config.z_extents[1] - config.z_extents[0])) * (1 - 0) + 0
+            norm_x = ((pose[0] - self.x_extents[0]) / (self.x_extents[1] - self.x_extents[0])) * (1 - 0) + 0
+            norm_y = ((pose[1] - self.y_extents[0]) / (self.y_extents[1] - self.y_extents[0])) * (1 - 0) + 0
+            norm_z = ((pose[2] - self.z_extents[0]) / (self.z_extents[1] - self.z_extents[0])) * (1 - 0) + 0
 
             norm_xyz = (norm_x, norm_y, norm_z)
             norm_xyz = tuple(np.clip(norm_xyz, 0.0, 1.0))
