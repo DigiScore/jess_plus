@@ -766,7 +766,7 @@ class DrawXarm(XArmAPI):
                      percent=randrange(40, 90),
                      speed=self.speed,
                      mvacc=self.mvacc,
-                     wait=self.wait
+                     wait=True
                      )
 
             # self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
