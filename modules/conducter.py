@@ -69,7 +69,7 @@ class Conducter:
 
         if self.drawbot:
             print('locating home')
-            self.drawbot.home()
+            self.drawbot.go_position_ready()
             input('remove pen lid, then press enter')
 
             # self.drawbot.draw_stave(staves=staves)
@@ -110,6 +110,8 @@ class Conducter:
             # Phrase-level gesture gate: 3 - 8 seconds
             #
             #############################
+            if self.XARM_CONNECTED:
+                self.drawbot.random_pen()
 
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_clear = True
@@ -425,7 +427,7 @@ class Conducter:
         """
         print('TERMINATING')
         self.drawbot.clear_commands()
-        self.drawbot.home()
+        self.drawbot.go_position_ready()
         self.drawbot.close()
 
     def rnd(self, power_of_command: int) -> int:

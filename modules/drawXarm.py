@@ -50,7 +50,7 @@ class DrawXarm(XArmAPI):
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        self.home()
+        # self.home()
         boundary_limits = [
             config.xarm_x_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_x_extents[0] - config.xarm_irregular_shape_extents,
@@ -75,7 +75,7 @@ class DrawXarm(XArmAPI):
         self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
-        self.z = 90
+        self.z = 145.5
         self.roll = None
         self.pitch = None
         self.yaw = 0
@@ -94,7 +94,7 @@ class DrawXarm(XArmAPI):
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
-                               self.z + 20
+                               self.z + 100
                                 ]
         self.draw_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
@@ -120,6 +120,7 @@ class DrawXarm(XArmAPI):
 
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
+        self.go_position_ready()
 
         # calculate the world offset
         # self.calc_world_offset()
