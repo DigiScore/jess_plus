@@ -480,7 +480,10 @@ class DrawXarm(XArmAPI):
     # drawXarm ANCILLARY FUNCTIONS
     ######################
     def random_pen(self):
-        random_pen = choice(self.compass)
+        if config.xarm_multi_pen:
+            random_pen = choice(self.compass)
+        else:
+            random_pen = self.compass[1]
         self.roll, self.pitch = random_pen
 
     def move_y(self):
@@ -635,6 +638,7 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
+        self.set_fence_mode(False)
         self.bot_move_to(x=x,
                          y=y,
                          z=z,
@@ -642,6 +646,7 @@ class DrawXarm(XArmAPI):
                          mvacc=self.mvacc,
                          wait=True
                          )
+        self.set_fence_mode(config.xarm_fenced)
         # self.tool_move(angle)
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on

@@ -36,6 +36,7 @@ xarm_ballet_y_extents = [-250, 250]
 xarm_ballet_z_extents = [150, 400]
 xarm_irregular_shape_extents = 50
 xarm_fenced = True
+xarm_multi_pen = False
 
 # play params
 silence_listener = False
