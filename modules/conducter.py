@@ -355,23 +355,24 @@ class Conducter:
         """
         randomly chooses a shape inspired by Cardew
         """
-        x, y, z = self.drawbot.get_pose()[:3]
+        x, y = self.drawbot.get_pose()[:2]
 
         # move Y along
-        self.drawbot.move_y()
+        # self.drawbot.move_y()
+        self.drawbot.go_random_draw()
 
         # randomly choose from the following choices
         randchoice = randrange(6)
         logging.debug(f'randchoice CARDEW == {randchoice}')
 
+        arc_range = peak * 10
         match randchoice:
             case 0:
                 logging.info('Cardew: draw arc')
-                are_range = peak * 10
-                self.drawbot.arc2D(x + uniform(-are_range, are_range),
-                                   y + uniform(-are_range, are_range),
-                                   x + uniform(-are_range, are_range),
-                                   y + uniform(-are_range, are_range)
+                self.drawbot.arc2D(x + uniform(-arc_range, arc_range),
+                                   y + uniform(-arc_range, arc_range),
+                                   x + uniform(-arc_range, arc_range),
+                                   y + uniform(-arc_range, arc_range)
                                    )
 
             case 1:
@@ -387,14 +388,14 @@ class Conducter:
             case 2:
                 logging.info('Cardew: draw circle')
                 side = randrange(2)
-                self.drawbot.draw_circle(int(peak * 10),
+                self.drawbot.draw_circle(int(arc_range),
                                          side
                                          )
 
             case 3:
                 logging.info('Cardew: line')
-                self.drawbot.go_draw(x + self.rnd(peak * 10),
-                                     y + self.rnd(peak * 10)
+                self.drawbot.go_draw(x + self.rnd(arc_range),
+                                     y + self.rnd(arc_range)
                                      )
 
             case 4:
