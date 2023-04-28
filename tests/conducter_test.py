@@ -1,12 +1,13 @@
 from modules.conducter import Conducter
 from time import sleep
-from random import random, randrange
+from random import randrange, uniform
 import logging
 import config
 from threading import Thread
 
 
 test = Conducter()
+test.drawbot.go_position_ready()
 test.hivemind.running = True
 test.drawbot.command_list_main_loop()
 
@@ -14,7 +15,7 @@ test.drawbot.command_list_main_loop()
 def main(mode=999):
 
     while True:
-        rnd = random()
+        rnd = uniform(0.1, 0.9)
         print(rnd)
 
         match mode:
@@ -54,9 +55,9 @@ def interrupt():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.CRITICAL)
 
-    t1 = Thread(target=main, args=(1,))
+    t1 = Thread(target=main, args=(999,))
     t2 = Thread(target=interrupt)
 
     t1.start()

@@ -142,12 +142,13 @@ class DrawXarm(XArmAPI):
         """
         Listens to errors and clear alarms, and resets to go_poition_ready
         """
-        print(f"Clearing commands, ITEM: {item}")
+        print(f'NUMBER OF CMD IN CACHE: {self.cmd_num}')
+        print(f"Clearing commands, ITEM: {item}, STATE: {self.get_state()}")
         self.clear_alarms()
-        if item['error_code'] == 35:
+        if item['error_code'] == 35 or item['error_code'] == 24:
             # pose = self.get_pose()[:3]
             # print(f'BEFORE RESET: {pose}')
-            self.go_random_draw()
+            self.go_random_3d()
             # pose = self.get_pose()[:3]
             # print(f'AFTER RESET: {pose}')
             # self.bot_move_to(*pose)
@@ -324,6 +325,7 @@ class DrawXarm(XArmAPI):
         if self.has_warn:
             self.clean_warn()
         if self.has_error:
+            self.set_state(state=4)
             self.clean_error()
             self.motion_enable(enable=True)
             self.set_state(state=0)
@@ -807,9 +809,11 @@ class DrawXarm(XArmAPI):
         :param new_x2: new x position for arc point 2
         :param new_y2: new y position for arc point 2
         """
-        pose1 = [pose1_x, pose1_y, self.z, self.roll, self.pitch, self.yaw]
-        pose2 = [pose2_x, pose2_y, self.z, self.roll, self.pitch, self.yaw]
-        rnd_percent = int(random() * 100)
+        current_x, current_y = self.get_pose()[:2]
+        dx = pose1_x - current_x
+        pose1 = [pose1_x, current_y, self.z, self.roll, self.pitch, self.yaw]
+        pose2 = [pose1_x, current_y + dx, self.z, self.roll, self.pitch, self.yaw]
+        rnd_percent = randrange(40, 90)
 
         self.arc(pose1=pose1,
                  pose2=pose2,

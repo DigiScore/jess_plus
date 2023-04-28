@@ -318,8 +318,8 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Wolff: draw line')
-                self.drawbot.go_draw(x + self.rnd(peak),
-                                     y + self.rnd(peak),
+                self.drawbot.go_draw(x + self.rnd(peak*10),
+                                     y + self.rnd(peak*10),
                                      False)
 
             case 1:
@@ -345,7 +345,7 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=True)    # draw small line from note head
+                self.drawbot.position_move_by(self.rnd(peak*10), self.rnd(peak*10), 0, wait=True)    # draw small line from note head
 
             case 5:
                 logging.info('Wolff: dot')
@@ -369,19 +369,19 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Cardew: draw arc')
-                self.drawbot.arc2D(x + uniform(-arc_range, arc_range),
-                                   y + uniform(-arc_range, arc_range),
-                                   x + uniform(-arc_range, arc_range),
-                                   y + uniform(-arc_range, arc_range)
+                self.drawbot.arc2D(x + self.rnd(arc_range),
+                                   y + self.rnd(arc_range),
+                                   x + self.rnd(arc_range),
+                                   y + self.rnd(arc_range)
                                    )
 
             case 1:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((uniform(-5, 5),
-                                          uniform(-5, 5),
-                                          uniform(-5, 5))
+                    squiggle_list.append((self.rnd(arc_range),
+                                          self.rnd(arc_range),
+                                          self.rnd(arc_range))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
@@ -406,9 +406,9 @@ class Conducter:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((uniform(-5, 5),
-                                          uniform(-5, 5),
-                                          uniform(-5, 5))
+                    squiggle_list.append((self.rnd(arc_range),
+                                          self.rnd(arc_range),
+                                          self.rnd(arc_range))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
@@ -440,5 +440,7 @@ class Conducter:
         if random() >= 0.5:
             pos = -1
         result = (randrange(1, 5) + randrange(power_of_command)) * pos
+        if result == 0:
+            result = 1
         logging.debug(f'Rnd result = {result}')
         return result
