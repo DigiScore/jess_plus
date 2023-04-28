@@ -1018,13 +1018,13 @@ class DrawXarm(XArmAPI):
         x, y, z = self.get_pose()[:3]
         self.coords.append((x, y))
 
-        if True:  # side == 0
+        if side == 0:
             pose1 = [x + size, y, self.z, self.roll, self.pitch, self.yaw]
             pose2 = [x, y + size, self.z, self.roll, self.pitch, self.yaw]
 
-        # elif side == 1:
-        #     pose1 = [x - size, y, self.z, self.roll, self.pitch, self.yaw]
-        #     pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]
+        elif side == 1:
+            pose1 = [x - size, y, self.z, self.roll, self.pitch, self.yaw]
+            pose2 = [x, y - size, self.z, self.roll, self.pitch, self.yaw]
 
         self.arc(pose1=pose1,
                  pose2=pose2,
