@@ -50,7 +50,7 @@ class DrawXarm(XArmAPI):
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        self.home()
+        # self.home()
         boundary_limits = [
             config.xarm_x_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_x_extents[0] - config.xarm_irregular_shape_extents,
@@ -59,6 +59,7 @@ class DrawXarm(XArmAPI):
             config.xarm_z_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_z_extents[0] - 1]
         self.set_reduced_tcp_boundary(boundary_limits)
+        self.set_fence_mode(False)
         # self.set_world_offset([0, 0, 100, 0, 0, 0])
         # self.set_collision_sensitivity(value=0)
         # self.move_gohome(wait=True)
@@ -74,7 +75,7 @@ class DrawXarm(XArmAPI):
         self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
-        self.z = 90
+        self.z = 145.5
         self.roll = None
         self.pitch = None
         self.yaw = 0
@@ -93,7 +94,7 @@ class DrawXarm(XArmAPI):
         # make a shared list/ dict
         self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
-                               self.z + 20
+                               self.z + 100
                                 ]
         self.draw_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
                                0,
@@ -119,6 +120,7 @@ class DrawXarm(XArmAPI):
 
         self.duration_of_piece = config.duration_of_piece
         self.start_time = time()
+        self.go_position_ready()
 
         # calculate the world offset
         # self.calc_world_offset()
@@ -141,10 +143,16 @@ class DrawXarm(XArmAPI):
         """
         Listens to errors and clear alarms, and resets to go_poition_ready
         """
-        print(f"Clearing commands, ITEM: {item}")
+        print(f'NUMBER OF CMD IN CACHE: {self.cmd_num}')
+        print(f"Clearing commands, ITEM: {item}, STATE: {self.get_state()}")
         self.clear_alarms()
-        if item['error_code'] == 35:
+        if item['error_code'] == 35 or item['error_code'] == 24:
+            # pose = self.get_pose()[:3]
+            # print(f'BEFORE RESET: {pose}')
             self.go_random_3d()
+            # pose = self.get_pose()[:3]
+            # print(f'AFTER RESET: {pose}')
+            # self.bot_move_to(*pose)
             # self.safety_position_move()
 
     def command_list_main_loop(self):
@@ -318,6 +326,7 @@ class DrawXarm(XArmAPI):
         if self.has_warn:
             self.clean_warn()
         if self.has_error:
+            self.set_state(state=4)
             self.clean_error()
             self.motion_enable(enable=True)
             self.set_state(state=0)
@@ -366,7 +375,7 @@ class DrawXarm(XArmAPI):
             pose2: list = None,
             percent: int = 100,
             speed: int = 100,
-            mvacc: int = 1000,
+            mvacc: int = 100,
             wait: bool = False
             ):
         """
@@ -396,15 +405,17 @@ class DrawXarm(XArmAPI):
                         percent=percent,
                         speed=speed,
                         mvacc=mvacc,
-                        wait=wait
+                        wait=True
                         )
+        pose = self.position[:3]
+        self.bot_move_to(*pose)
 
     def bot_move_to(self,
                 x: float = None,
                 y: float = None,
                 z: float = None,
                 speed: int = 100,
-                mvacc: int = 1000,
+                mvacc: int = 100,
                 wait: bool = False,
                 relative: bool = False,
                 ):
@@ -446,7 +457,11 @@ class DrawXarm(XArmAPI):
                         relative=relative
                         )
 
-    def tool_move(self, abs_angle: int):
+    def tool_move(self,
+                  abs_angle: int,
+                  speed: int = 100,
+                  mvacc: int = 100,
+                  wait: bool = False):
         """
         Moves the tool to an absolute angle.
 
@@ -456,6 +471,9 @@ class DrawXarm(XArmAPI):
         logging.info('tool move %c', abs_angle)
         self.set_servo_angle(servo_id=6,
                              angle=abs_angle,
+                             speed=speed,
+                             mvacc=mvacc,
+                             wait=wait,
                              relative=False
                              )
 
@@ -463,7 +481,10 @@ class DrawXarm(XArmAPI):
     # drawXarm ANCILLARY FUNCTIONS
     ######################
     def random_pen(self):
-        random_pen = choice(self.compass)
+        if config.xarm_multi_pen:
+            random_pen = choice(self.compass)
+        else:
+            random_pen = self.compass[1]
         self.roll, self.pitch = random_pen
 
     def move_y(self):
@@ -618,6 +639,7 @@ class DrawXarm(XArmAPI):
 
         self.coords.append((x, y))
         print(f"Random 3D pos x: {round(x, 2)}, y: {round(y, 2)}, z: {round(z, 2)}")
+        self.set_fence_mode(False)
         self.bot_move_to(x=x,
                          y=y,
                          z=z,
@@ -625,6 +647,7 @@ class DrawXarm(XArmAPI):
                          mvacc=self.mvacc,
                          wait=True
                          )
+        self.set_fence_mode(config.xarm_fenced)
         # self.tool_move(angle)
 
     def go_random_jump(self):  # goes to random positon on page with pen above page then back on
@@ -737,20 +760,21 @@ class DrawXarm(XArmAPI):
         self.coords.append((x, y))
 
         for arc in arc_list:
-            circumference, dx, dy = arc[0], arc[1], arc[2]
+            _, dx, dy = arc[0], arc[1], arc[2]
 
-            self.arc(pose1=[x + circumference, y, self.z, self.roll, self.pitch, self.yaw],
+            self.arc(pose1=[x + dx, y, self.z, self.roll, self.pitch, self.yaw],
                      pose2=[x + dx, y + dy, self.z, self.roll, self.pitch, self.yaw],
-                     percent=100,
+                     percent=randrange(40, 90),
                      speed=self.speed,
                      mvacc=self.mvacc,
-                     wait=self.wait
+                     wait=True
                      )
 
             # self.arc(x + circumference, y, z, r, x + dx, y + dy, z, r)
-            x += dx
-            y += dy
-            sleep(0.1)
+            x, y = self.position[:2]
+            # x += dx
+            # y += dy
+            # sleep(0.1)
 
     def dot(self):
         """
@@ -791,16 +815,18 @@ class DrawXarm(XArmAPI):
         :param new_x2: new x position for arc point 2
         :param new_y2: new y position for arc point 2
         """
-        pose1 = [pose1_x, pose1_y, self.z, self.roll, self.pitch, self.yaw]
-        pose2 = [pose2_x, pose2_y, self.z, self.roll, self.pitch, self.yaw]
-        rnd_percent = int(random() * 100)
+        current_x, current_y = self.get_pose()[:2]
+        dx = pose1_x - current_x
+        pose1 = [pose1_x, current_y, self.z, self.roll, self.pitch, self.yaw]
+        pose2 = [pose1_x, current_y + dx, self.z, self.roll, self.pitch, self.yaw]
+        rnd_percent = randrange(40, 90)
 
         self.arc(pose1=pose1,
                  pose2=pose2,
                  percent=rnd_percent,
                  speed=self.speed,
                  mvacc=self.mvacc,
-                 wait=wait
+                 wait=self.wait
                  )
 
     # -- shape drawing functions --#
@@ -1044,15 +1070,15 @@ class DrawXarm(XArmAPI):
             ]
         elif _char == "B" or _char == "b":
             print("B")
-            self.draw_b(size=size, wait=wait)
+            self.draw_b(size=size, wait=self.wait)
             return None
 
         elif _char == "C" or _char == "c":  # for characters with curves, defer to specific functions
-            self.draw_c(size=size, wait=wait)
+            self.draw_c(size=size, wait=self.wait)
             return None  # everything else is handled in draw_c, can exit function here
 
         elif _char == "D" or _char == "d":
-            self.draw_d(size=size, wait=wait)
+            self.draw_d(size=size, wait=self.wait)
             return None
 
         elif _char == "E" or _char == "e":
@@ -1079,11 +1105,11 @@ class DrawXarm(XArmAPI):
             jump_num = 3
 
         elif _char == "G" or _char == "g":
-            self.draw_g(size=size, wait=wait)
+            self.draw_g(size=size, wait=self.wait)
             return None
 
         elif _char == "P" or _char == "p":
-            self.draw_p(size=size, wait=wait)
+            self.draw_p(size=size, wait=self.wait)
             return None
 
         elif _char == "Z" or _char == "z":
@@ -1108,10 +1134,10 @@ class DrawXarm(XArmAPI):
                 if i == jump_num:
                     self.go_draw_up(next_pos[0], next_pos[1])
                 else:
-                    self.go_draw(next_pos[0], next_pos[1], wait=True)
+                    self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
 
             else:  # the rest of the letters can be drawn in a continuous line
-                self.go_draw(next_pos[0], next_pos[1], wait=True)
+                self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
 
             char.append(next_pos)  # append the current position to the letter
             self.coords.append(next_pos)
@@ -1145,7 +1171,7 @@ class DrawXarm(XArmAPI):
         self.go_draw(world_pos[1][0], world_pos[1][1])
 
         # if self.hivemind.interrupt_bang:
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
+        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=self.wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -1178,9 +1204,9 @@ class DrawXarm(XArmAPI):
             (pos[0] + local_pos[4][0], pos[1] + local_pos[4][1])
         ]
         # if self.hivemind.interrupt_bang:
-        self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=wait)
-        self.arc2D(world_pos[4][0], world_pos[4][1], world_pos[0][0], world_pos[0][1], wait=wait)
+        self.go_draw(world_pos[1][0], world_pos[1][1], wait=self.wait)
+        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[3][0], world_pos[3][1], wait=self.wait)
+        self.arc2D(world_pos[4][0], world_pos[4][1], world_pos[0][0], world_pos[0][1], wait=self.wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -1208,7 +1234,7 @@ class DrawXarm(XArmAPI):
             (pos[0] + local_pos[2][0], pos[1] + local_pos[2][1])
         ]
         # if self.hivemind.interrupt_bang:
-        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
+        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=self.wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -1237,8 +1263,8 @@ class DrawXarm(XArmAPI):
         ]
 
         # if self.hivemind.interrupt_bang:
-        self.go_draw(world_pos[1][0], world_pos[1][1], wait=wait)
-        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[0][0], world_pos[0][1], wait=wait)
+        self.go_draw(world_pos[1][0], world_pos[1][1], wait=self.wait)
+        self.arc2D(world_pos[2][0], world_pos[2][1], world_pos[0][0], world_pos[0][1], wait=self.wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -1273,9 +1299,9 @@ class DrawXarm(XArmAPI):
         ]
 
         # if self.hivemind.interrupt_bang:
-        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=wait)
-        self.go_draw(world_pos[3][0], world_pos[3][1], wait=wait)
-        self.go_draw(world_pos[4][0], world_pos[4][1], wait=wait)
+        self.arc2D(world_pos[1][0], world_pos[1][1], world_pos[2][0], world_pos[2][1], wait=self.wait)
+        self.go_draw(world_pos[3][0], world_pos[3][1], wait=self.wait)
+        self.go_draw(world_pos[4][0], world_pos[4][1], wait=self.wait)
 
         char.append(world_pos)
         self.chars.append(char)
@@ -1386,13 +1412,13 @@ class DrawXarm(XArmAPI):
                 randCorner = uniform(0, 3)
                 self.go_draw_up(square[randCorner][0], square[randCorner][1], square[randCorner][2],
                                 square[randCorner][3],
-                                wait=False)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
+                                wait=self.wait)  # go to a random corner of the square (top right = 0, goes anti-clockwise)
                 self.draw_square(uniform(20, 29), True)
             else:  # draw a cross in the square
-                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=False)
-                self.bot_move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=False)
-                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=False)
-                self.bot_move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=False)
+                self.go_draw_up(square[0][0], square[0][1], square[0][2], square[0][3], wait=self.wait)
+                self.bot_move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=self.wait)
+                self.go_draw_up(square[1][0], square[1][1], square[1][2], square[1][3], wait=self.wait)
+                self.bot_move_to(square[3][0], square[3][1], square[3][2], square[3][3], wait=self.wait)
 
                 # device.move_to(square[1][0], square[1][1], square[1][2], square[1][3], wait=True)  #redraw the square from top right corner anti-clockwise
             # device.move_to(square[2][0], square[2][1], square[2][2], square[2][3], wait=True)
@@ -1415,13 +1441,13 @@ class DrawXarm(XArmAPI):
             rand = uniform(0, 1)  # randomly choose between two behaviours
 
             if rand == 0:  # join up the ends of the sunburst lines
-                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=False)
-                self.bot_move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=False)
-                self.bot_move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
-                self.bot_move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=False)
-                self.bot_move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=False)
+                self.go_draw_up(sunburst[0][0], sunburst[0][1], sunburst[0][2], sunburst[0][3], wait=self.wait)
+                self.bot_move_to(sunburst[1][0], sunburst[1][1], sunburst[1][2], sunburst[1][3], wait=self.wait)
+                self.bot_move_to(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=self.wait)
+                self.bot_move_to(sunburst[3][0], sunburst[3][1], sunburst[3][2], sunburst[3][3], wait=self.wait)
+                self.bot_move_to(sunburst[4][0], sunburst[4][1], sunburst[4][2], sunburst[4][3], wait=self.wait)
             else:  # go to the end of one of the sunburst lines and draw another sunburst
-                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=False)
+                self.go_draw_up(sunburst[2][0], sunburst[2][1], sunburst[2][2], sunburst[2][3], wait=self.wait)
                 self.draw_sunburst(20, True)
 
         else:

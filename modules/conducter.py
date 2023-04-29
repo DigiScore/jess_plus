@@ -69,7 +69,7 @@ class Conducter:
 
         if self.drawbot:
             print('locating home')
-            self.drawbot.home()
+            self.drawbot.go_position_ready()
             input('remove pen lid, then press enter')
 
             # self.drawbot.draw_stave(staves=staves)
@@ -110,6 +110,8 @@ class Conducter:
             # Phrase-level gesture gate: 3 - 8 seconds
             #
             #############################
+            if self.XARM_CONNECTED:
+                self.drawbot.random_pen()
 
             # flag for breaking a phrase from big affect signal
             self.hivemind.interrupt_clear = True
@@ -318,8 +320,8 @@ class Conducter:
         match randchoice:
             case 0:
                 logging.info('Wolff: draw line')
-                self.drawbot.go_draw(x + self.rnd(peak),
-                                     y + self.rnd(peak),
+                self.drawbot.go_draw(x + self.rnd(peak*10),
+                                     y + self.rnd(peak*10),
                                      False)
 
             case 1:
@@ -345,7 +347,7 @@ class Conducter:
                 logging.info('Wolff: note head and line')
                 note_size = randrange(1, 10)
                 self.drawbot.note_head(size=note_size)
-                self.drawbot.position_move_by(self.rnd(peak), self.rnd(peak), 0, wait=True)    # draw small line from note head
+                self.drawbot.position_move_by(self.rnd(peak*10), self.rnd(peak*10), 0, wait=True)    # draw small line from note head
 
             case 5:
                 logging.info('Wolff: dot')
@@ -355,46 +357,47 @@ class Conducter:
         """
         randomly chooses a shape inspired by Cardew
         """
-        x, y, z = self.drawbot.get_pose()[:3]
+        x, y = self.drawbot.get_pose()[:2]
 
         # move Y along
-        self.drawbot.move_y()
+        # self.drawbot.move_y()
+        self.drawbot.go_random_draw()
 
         # randomly choose from the following choices
         randchoice = randrange(6)
         logging.debug(f'randchoice CARDEW == {randchoice}')
 
+        arc_range = peak * 10
         match randchoice:
             case 0:
                 logging.info('Cardew: draw arc')
-                are_range = peak * 10
-                self.drawbot.arc2D(x + uniform(-are_range, are_range),
-                                   y + uniform(-are_range, are_range),
-                                   x + uniform(-are_range, are_range),
-                                   y + uniform(-are_range, are_range)
+                self.drawbot.arc2D(x + self.rnd(arc_range),
+                                   y + self.rnd(arc_range),
+                                   x + self.rnd(arc_range),
+                                   y + self.rnd(arc_range)
                                    )
 
             case 1:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((uniform(-5, 5),
-                                          uniform(-5, 5),
-                                          uniform(-5, 5))
+                    squiggle_list.append((self.rnd(arc_range),
+                                          self.rnd(arc_range),
+                                          self.rnd(arc_range))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
             case 2:
                 logging.info('Cardew: draw circle')
                 side = randrange(2)
-                self.drawbot.draw_circle(int(peak * 10),
+                self.drawbot.draw_circle(int(arc_range),
                                          side
                                          )
 
             case 3:
                 logging.info('Cardew: line')
-                self.drawbot.go_draw(x + self.rnd(peak * 10),
-                                     y + self.rnd(peak * 10)
+                self.drawbot.go_draw(x + self.rnd(arc_range),
+                                     y + self.rnd(arc_range)
                                      )
 
             case 4:
@@ -405,9 +408,9 @@ class Conducter:
                 logging.info('Cardew: small squiggle')
                 squiggle_list = []
                 for n in range(randrange(3, 9)):
-                    squiggle_list.append((uniform(-5, 5),
-                                          uniform(-5, 5),
-                                          uniform(-5, 5))
+                    squiggle_list.append((self.rnd(arc_range),
+                                          self.rnd(arc_range),
+                                          self.rnd(arc_range))
                                          )
                 self.drawbot.squiggle(squiggle_list)
 
@@ -424,7 +427,7 @@ class Conducter:
         """
         print('TERMINATING')
         self.drawbot.clear_commands()
-        self.drawbot.home()
+        self.drawbot.go_position_ready()
         self.drawbot.close()
 
     def rnd(self, power_of_command: int) -> int:
@@ -439,5 +442,7 @@ class Conducter:
         if random() >= 0.5:
             pos = -1
         result = (randrange(1, 5) + randrange(power_of_command)) * pos
+        if result == 0:
+            result = 1
         logging.debug(f'Rnd result = {result}')
         return result
