@@ -36,7 +36,7 @@ class DrawXarm(XArmAPI):
     be updated. All others classes should remain the same
     """
 
-    def __init__(self,
+    def  __init__(self,
                  port: str,
                  ):
 
@@ -75,7 +75,7 @@ class DrawXarm(XArmAPI):
         self.register_error_warn_changed_callback(callback=self.callback_error_manager)
 
         # init coord params
-        self.z = 145.5
+        self.z = 155.5
         self.roll = None
         self.pitch = None
         self.yaw = 0
