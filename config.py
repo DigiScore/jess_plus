@@ -1,7 +1,7 @@
 # [HARDWARE]
 dobot_connected = False
 xarm_connected = True
-eeg_live = False
+eeg_live = True
 eda_live = False
 
 """
@@ -39,8 +39,8 @@ xarm_fenced = True
 xarm_multi_pen = True
 
 # play params
-silence_listener = False
-duration_of_piece = 360
+silence_listener = True
+duration_of_piece = 300
 continuous_line = False
 speed = 5
 staves = 0

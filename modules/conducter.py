@@ -191,7 +191,7 @@ class Conducter:
                     #
                     ######################################
 
-                    if thought_train > 0.9 or not self.hivemind.interrupt_clear:
+                    if thought_train > 0.7 or not self.hivemind.interrupt_clear:
                         print('interrupt > HIGH !!!!!!!!!')
 
                         # A - refill dict with random
@@ -298,10 +298,13 @@ class Conducter:
         #
         #         move_y = 0
         print("@drawing continuous")
-        move_x = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
-        move_y = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
-        move_z = randrange(self.joint_inc) # * self.hivemind.mic_in
-        self.drawbot.position_move_by(move_x, move_y, move_z, wait=True)
+        if self.DOBOT_CONNECTED:
+            move_x = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
+            move_y = uniform(-self.joint_inc, self.joint_inc) # * self.hivemind.mic_in
+            move_z = randrange(self.joint_inc) # * self.hivemind.mic_in
+            self.drawbot.position_move_by(move_x, move_y, move_z, wait=True)
+        if self.XARM_CONNECTED:
+            self.drawbot.go_random_3d()
 
     def wolff_inspiration(self, peak):
         """
@@ -426,6 +429,7 @@ class Conducter:
         Smart collapse of all threads and comms
         """
         print('TERMINATING')
+        self.drawbot.go_position_ready()
         self.drawbot.clear_commands()
         self.drawbot.go_position_ready()
         self.drawbot.close()

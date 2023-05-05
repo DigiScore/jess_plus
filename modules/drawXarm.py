@@ -84,11 +84,21 @@ class DrawXarm(XArmAPI):
         self.mvacc = 100
 
         # pen roll and pitch
-        self.compass = [[180, 10],  # north
-                        [180, -10],  # south
-                        [190, 0],  # east
-                        [170, 0]  # west
-                        ]
+        # with pens
+        if config.xarm_multi_pen:
+            self.compass = [[180, 10],  # north
+                            [180, -10],  # south
+                            [190, 0],  # east
+                            [170, 0]  # west
+                            ]
+        else:
+            # as free dance
+            self.compass = [[90, 100],  # north
+                            [270, -100],  # south
+                            [90, 0],  # east
+                            [180, 0]  # west
+                            ]
+
         self.random_pen()
 
         # make a shared list/ dict
