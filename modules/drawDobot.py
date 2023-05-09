@@ -54,6 +54,8 @@ class Drawbot(Dobot):
         # make a shared list/ dict
         self.ready_position = [250, 0, 20, 0]
         self.draw_position = [250, 0, 0, 0]
+        self.position_one = [250, config.y_extents[0], 0, 0]
+        self.position_two = [250, config.xarm_y_extents[1], 0, 0]
         self.end_position = (250, 0, 50, 0)
 
         self.x_extents = config.x_extents
@@ -67,7 +69,7 @@ class Drawbot(Dobot):
         self.circles = []
         self.triangles = []
         self.chars = ["A", "B", "C", "D", "E", "F", "G", "P", "Z"]
-        
+
         self.shape_groups = []  # list of shape groups [shape type, size, pos]
         self.coords = []        # list of coordinates drawn
         self.positions = []
@@ -223,7 +225,7 @@ class Drawbot(Dobot):
 
             #logging.info(f'current x,y,z normalised  = {norm_xyz}')
             sleep(0.1)
-        
+
         # json_str = json.dumps(self.positions)
         # json_file = open("position_data.json", "w")
         # json_file.write(json_str)
@@ -398,6 +400,13 @@ class Drawbot(Dobot):
         """
         x, y, z, r = self.ready_position[:4]
         self.bot_move_to(x, y, z, r, wait=self.wait)
+
+    def go_position_one_two(self):
+        """
+        moves to prep positions one two with jumps
+        """
+        self.go_draw_up(*self.position_one[:2], wait=True)
+        self.go_draw_up(*self.position_two[:2], wait=True)
 
     def go_position_draw(self):
         """

@@ -50,7 +50,6 @@ class DrawXarm(XArmAPI):
         self.motion_enable(enable=True)
         self.set_mode(0)
         self.set_state(state=0)
-        # self.home()
         boundary_limits = [
             config.xarm_x_extents[1] + config.xarm_irregular_shape_extents,
             config.xarm_x_extents[0] - config.xarm_irregular_shape_extents,
@@ -85,32 +84,26 @@ class DrawXarm(XArmAPI):
 
         # pen roll and pitch
         # with pens
-        if config.xarm_multi_pen:
-            self.compass = [[180, 10],  # north
-                            [180, -10],  # south
-                            [190, 0],  # east
-                            [170, 0]  # west
-                            ]
-        else:
-            # as free dance
-            self.compass = [[90, 100],  # north
-                            [270, -100],  # south
-                            [90, 0],  # east
-                            [180, 0]  # west
-                            ]
+        self.compass = [[180, 10],  # north
+                        [180, -10],  # south
+                        [190, 0],  # east
+                        [170, 0]]  # west
+        # as free dance
+        self.compass_range = [[270, 90],  # roll min-max
+                              [-100, 100]]  # pitch min-max
 
+        self.home()
         self.random_pen()
 
         # make a shared list/ dict
-        self.ready_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
-                               0,
-                               self.z + 100
-                                ]
-        self.draw_position = [(config.xarm_x_extents[1] + config.xarm_x_extents[0]) / 2,
-                               0,
-                               self.z
-                                ]
-
+        self.ready_position = [sum(config.xarm_x_extents)/2, 0, self.z + 100]
+        self.draw_position = [sum(config.xarm_x_extents)/2, 0, self.z]
+        self.position_one = [sum(config.xarm_x_extents)/2,
+                             config.xarm_y_extents[0],
+                             self.z]
+        self.position_two = [sum(config.xarm_x_extents)/2,
+                             config.xarm_y_extents[1],
+                             self.z]
         self.x_extents = config.xarm_x_extents
         self.y_extents = config.xarm_y_extents
         self.z_extents = config.xarm_z_extents
@@ -494,7 +487,8 @@ class DrawXarm(XArmAPI):
         if config.xarm_multi_pen:
             random_pen = choice(self.compass)
         else:
-            random_pen = self.compass[1]
+            random_pen = [uniform(*self.compass_range[0]),
+                          uniform(*self.compass_range[1])]
         self.roll, self.pitch = random_pen
 
     def move_y(self):
@@ -539,6 +533,13 @@ class DrawXarm(XArmAPI):
                          )
         self.set_fence_mode(config.xarm_fenced)
 
+    def go_position_one_two(self):
+        """
+        moves to prep positions one two with jumps
+        """
+        self.go_draw_up(*self.position_one[:2], wait=True)
+        self.go_draw_up(*self.position_two[:2], wait=True)
+
     def go_position_draw(self):
         """
         moves directly to pre-defined position 'Ready Position'
@@ -560,7 +561,7 @@ class DrawXarm(XArmAPI):
         Hopefully this accounts for world offset and gripper
         """
         self.set_fence_mode(False)
-        self.move_gohome(wait=True)
+        self.bot_move_to(x=180, y=0, z=500, wait=True)
 
     def go_draw(self, x, y, wait=False):
         """

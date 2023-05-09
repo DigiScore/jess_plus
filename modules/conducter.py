@@ -74,6 +74,7 @@ class Conducter:
 
             # self.drawbot.draw_stave(staves=staves)
             self.drawbot.go_position_ready()
+            self.drawbot.go_position_one_two()
 
     def main_loop(self):
         """
@@ -429,10 +430,15 @@ class Conducter:
         Smart collapse of all threads and comms
         """
         print('TERMINATING')
+        self.drawbot.go_position_one_two()
         self.drawbot.go_position_ready()
         self.drawbot.clear_commands()
         self.drawbot.go_position_ready()
-        self.drawbot.close()
+        if self.DOBOT_CONNECTED:
+            self.drawbot.close()
+        elif self.XARM_CONNECTED:
+            self.drawbot.set_fence_mode(False)
+            self.drawbot.disconnect()
 
     def rnd(self, power_of_command: int) -> int:
         """
