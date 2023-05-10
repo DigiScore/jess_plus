@@ -39,7 +39,7 @@ class BrainbitReader:
         except:
             logging.info("BrainBit ALT started")
 
-    def read(self):
+    def read(self, num_points):
         if self.brain_bit:
             raw_data = self.board.get_board_data()[1:5]
             parse_data = raw_data.tolist()

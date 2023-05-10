@@ -231,7 +231,7 @@ class Conducter:
         logging.info('quitting dobot director thread')
         self.terminate()
 
-    def repetition(self):
+    def repetition(self, peak):
         """
         Create a shape group and repeat it a random number of times.
         """
@@ -241,7 +241,7 @@ class Conducter:
             logging.debug("repetition of shape")
             self.drawbot.repeat_shape_group()
 
-    def continuous(self):
+    def continuous(self, peak):
         """
         Performs continuous movement in 2 different modes and from 3 different
         data sources, all randomised when the mode is randomised.
