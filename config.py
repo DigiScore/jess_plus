@@ -61,6 +61,5 @@ To check available ports, run the following code:
     available_ports = list_ports.comports()
     print(f'available ports: {[x.device for x in available_ports]}')
 
-May need
-sudo chmod 666 /dev/ttyACM0
+May need `sudo chmod 666 /dev/ttyACM0`
 """
