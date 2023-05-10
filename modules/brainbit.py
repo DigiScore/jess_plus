@@ -1,8 +1,7 @@
-from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-import numpy as np
-from time import sleep
-from random import random
 import logging
+from brainflow.board_shim import BoardIds, BoardShim, BrainFlowInputParams
+from random import random
+from time import sleep
 
 from nebula.hivemind import DataBorg
 
@@ -16,16 +15,16 @@ class BrainbitReader:
         self.params.board_id = BoardIds.BRAINBIT_BOARD
         print(self.params.board_id)
 
-        # set it logging
+        # Set it logging
         BoardShim.enable_dev_board_logger()
         logging.info('BrainBit reader ready')
         self.brain_bit = False
 
-        # get dataclass
+        # Get dataclass
         self.hivemind = DataBorg()
 
     def start(self):
-        # instantiate the board reading
+        # Instantiate the board reading
         try:
             self.board = BoardShim(BoardIds.BRAINBIT_BOARD,
                                    self.params)
@@ -33,14 +32,14 @@ class BrainbitReader:
 
             self.board.prepare_session()
 
-            # board.start_stream () # use this for default options
-            self.board.start_stream(450000) # removed 2
+            # board.start_stream ()  # use this for default options
+            self.board.start_stream(450000)  # removed 2
             logging.info('BrainBit stream started')
             self.brain_bit = True
         except:
             logging.info("BrainBit ALT started")
 
-    def read(self, num_points):
+    def read(self):
         if self.brain_bit:
             raw_data = self.board.get_board_data()[1:5]
             parse_data = raw_data.tolist()
@@ -50,23 +49,15 @@ class BrainbitReader:
                 t4 = parse_data[1][0:1][0]
                 n1 = parse_data[2][0:1][0]
                 n2 = parse_data[3][0:1][0]
-                self.data = [t2,
-                             t4,
-                             n1,
-                             n2]
+                self.data = [t2, t4, n1, n2]
             else:
                 self.data = [0, 0, 0, 0]
 
         else:
-            """get dummy data instead of Brainbit stream."""
-            self.data = [random(),
-                         random(),
-                         random(),
-                         random()
-                         ]
+            # Get dummy data instead of Brainbit stream
+            self.data = [random(), random(), random(), random()]
 
         logging.debug(f"BrainBit data = {self.data}")
-        self.hivemind.eeg = self.data
         return self.data
 
     def terminate(self):
