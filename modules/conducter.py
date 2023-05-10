@@ -69,12 +69,13 @@ class Conducter:
 
         if self.drawbot:
             print('locating home')
+            self.drawbot.home()
             self.drawbot.go_position_ready()
             input('remove pen lid, then press enter')
 
             # self.drawbot.draw_stave(staves=staves)
-            self.drawbot.go_position_ready()
             self.drawbot.go_position_one_two()
+            self.drawbot.go_position_ready()
 
     def main_loop(self):
         """
@@ -430,10 +431,10 @@ class Conducter:
         Smart collapse of all threads and comms
         """
         print('TERMINATING')
+        self.drawbot.go_position_ready()
         self.drawbot.go_position_one_two()
-        self.drawbot.go_position_ready()
         self.drawbot.clear_commands()
-        self.drawbot.go_position_ready()
+        self.drawbot.home()
         if self.DOBOT_CONNECTED:
             self.drawbot.close()
         elif self.XARM_CONNECTED:
