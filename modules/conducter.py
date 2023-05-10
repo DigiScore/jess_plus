@@ -69,7 +69,6 @@ class Conducter:
 
         if self.drawbot:
             print('locating home')
-            self.drawbot.home()
             self.drawbot.go_position_ready()
             input('remove pen lid, then press enter')
 
@@ -433,8 +432,8 @@ class Conducter:
         print('TERMINATING')
         self.drawbot.go_position_ready()
         self.drawbot.go_position_one_two()
-        self.drawbot.clear_commands()
         self.drawbot.home()
+        self.drawbot.clear_commands()
         if self.DOBOT_CONNECTED:
             self.drawbot.close()
         elif self.XARM_CONNECTED:
