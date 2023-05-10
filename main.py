@@ -1,30 +1,26 @@
-# import python modules
 import logging
+import time
+import tkinter as tk
 
 import config
-# import project modules
 from modules.conducter import Conducter
-from nebula.nebula import Nebula
 from nebula.hivemind import DataBorg
-
-
-import tkinter as tk
-import time
+from nebula.nebula import Nebula
 
 
 class Visualiser:
 
     def __init__(self):
-        # build initial dataclass fill with random numbers
+        # Build initial dataclass filled with random numbers
         self.hivemind = DataBorg()
 
-        # build UI
+        # Build UI
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas = tk.Canvas(self.root, height=600, width=500)
         self.canvas.pack()
 
-        # assign location points and colors for visuals
+        # Assign location points and colors for visuals
         self.centers = {
             'T3': [100, 250],
             'T4': [400, 250],
@@ -41,7 +37,7 @@ class Visualiser:
             'EDA': '#0099ff'
         }
 
-        # assign initial sizes of the circles (between 0 and 1)
+        # Assign initial sizes of the circles (between 0 and 1)
         self.sizes = {
             'T3': 0.5,
             'T4': 0.5,
@@ -50,7 +46,7 @@ class Visualiser:
             'EDA': 0.5,
         }
 
-        # build graphics
+        # Build graphics
         self.items = {}
         for ch in self.centers:
             items_xys = [self.centers[ch][0]-100*self.sizes[ch],
@@ -60,12 +56,12 @@ class Visualiser:
             self.items[ch] = self.canvas.create_oval(
                 *items_xys, fill=self.colors[ch], outline=self.colors[ch])
 
-        # add labels
+        # Add labels
         for ch in self.centers:
             self.canvas.create_text(
                 self.centers[ch], text=ch, font=('Helvetica', '15', 'bold'))
 
-        # stream label
+        # Stream label
         label_xys = [self.label_centre[0]-150,
                      self.label_centre[1]-50,
                      self.label_centre[0]+150,
@@ -95,8 +91,8 @@ class Visualiser:
 
     def callback(self):
         """
-        Callback function for updating the circle sizes based on the
-        hivemind data.
+        Callback function for updating the circle sizes based on the hivemind
+        data.
         """
         self.sizes['T3'] = self.hivemind.eeg_buffer[0][-10:].mean()
         self.sizes['T4'] = self.hivemind.eeg_buffer[1][-10:].mean()
@@ -126,47 +122,38 @@ class Visualiser:
                 self.root.destroy()
                 break
             self.callback()
-
-            # print(f'self.hivemind.eeg_buffer = {self.hivemind.eeg_buffer}')
-
             time.sleep(0.1)
 
 
 class Main(Visualiser):
     """
-    The main script to start the robot arm drawing digital score work.
-    Affect calls the local interpreter for project specific functions.
-    This communicates directly to the pydobot library.
-    Nebula kick-starts the AI Factory for generating NNet data and affect flows.
+    Main script to start the robot arm drawing digital score work.
+    Conducter calls the local interpreter for project specific functions. This
+    communicates directly to the robot libraries.
+    Nebula kick-starts the AI Factory for generating NNet data and affect
+    flows.
     This script also controls the live mic audio analyser.
-    Args:
-        duration_of_piece: the duration in seconds of the drawing
-        continuous_line: Bool: True = will not jump between points
-        speed: int the dynamic tempo of the all processes. 1 = slow, 10 = fast
-        pen: bool - True for pen, false for pencil
+    Paramaters are to be modified in config.py.
     """
     def __init__(self):
         Visualiser.__init__(self)
-        # logging for all modules
+        # Logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
-        # init Conducter & Gesture management (controls Drawbot)
-        robot1 = Conducter(
-            speed=config.speed,
-        )
+        # Init Conducter & Gesture management (controls Drawbot)
+        robot1 = Conducter(speed=config.speed)
 
-        # init the AI factory (inherits AIFactory, Listener)
-        nebula = Nebula(
-            speed=config.speed
-        )
+        # Init the AI factory (inherits AIFactory, Listener)
+        nebula = Nebula(speed=config.speed)
 
-        # start Nebula AI Factory here after affect starts data moving
+        # Start Nebula AI Factory after conducter starts data moving
         self.hivemind.running = True
         robot1.main_loop()
         nebula.main_loop()
 
         # start visualiser
-        self.make_viz()
+        if config.viz:
+            self.make_viz()
 
 
 if __name__ == "__main__":
