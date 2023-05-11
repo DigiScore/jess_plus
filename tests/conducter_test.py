@@ -1,9 +1,9 @@
-from modules.conducter import Conducter
-from time import sleep
-from random import randrange, uniform
 import logging
-import config
+from random import randrange, uniform
+from time import sleep
 from threading import Thread
+
+from modules.conducter import Conducter
 
 
 test = Conducter()
@@ -45,6 +45,7 @@ def main(mode=999):
                         test.cardew_inspiration(rnd)
                     case 5:
                         test.high_energy_response()
+
 
 def interrupt():
     while True:

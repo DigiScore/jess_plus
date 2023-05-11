@@ -1,7 +1,8 @@
-from brainflow.board_shim import BoardShim, BrainFlowInputParams
 import logging
 from time import sleep
+
 from modules.brainbit import BrainbitReader
+
 
 logging.basicConfig(level=logging.DEBUG)
 
