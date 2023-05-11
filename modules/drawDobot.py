@@ -73,7 +73,7 @@ class Drawbot(Dobot):
     ###########################################################################
     def command_list_main_loop(self):
         """
-        Main loop thread for parsing command loop and rocker lock
+        Main loop thread for parsing command loop and rocker lock.
         """
         print("Started command list thread")
         list_thread = Thread(target=self.manage_command_list)
@@ -235,8 +235,8 @@ class Drawbot(Dobot):
 
     def rnd(self, power_of_command: int) -> int:
         """
-        Return a randomly generated positive or negative integer, influenced
-        by the incoming power factor.
+        Return a randomly generated positive or negative integer, influenced by
+        the incoming power factor.
         """
         pos = 1
         if getrandbits(1):
@@ -312,7 +312,7 @@ class Drawbot(Dobot):
 
         # Get current y-value
         (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
-        newy = (((elapsed - 0) * (2*175)) / (self.duration_of_piece - 0)) - 175
+        newy = ((elapsed * (2*175)) / (self.duration_of_piece)) - 175
         logging.debug(f'x:{x} y:{y} z:{z} j1:{j1} j2:{j2} j3:{j3} j4:{j4}')
 
         # Check x-axis is in range
@@ -358,7 +358,7 @@ class Drawbot(Dobot):
 
     def go_position_draw(self):
         """
-        Move directly to pre-defined draw position.
+        Move directly to pre-defined drawing position.
         """
         x, y, z, r = self.draw_position[:4]
         self.bot_move_to(x, y, z, r, wait=self.wait)
@@ -499,13 +499,13 @@ class Drawbot(Dobot):
 
     def note_head(self, size: float = 5):
         """
-        Draws a circle at the current position.
-        Default is 5 pixels diameter.
-        Args:
-            size: radius in pixels
-            drawing: True = pen on paper
-            wait: True = wait till sequence finished
-            """
+        Draws a circle at the current position. Default is 5 pixels diameter.
+        
+        Parameters
+        ----------
+        size : float
+            Radius in pixels.
+        """
         (x, y, z, r, j1, j2, j3, j4) = self.get_pose()
         self.arc(x + size, y, z, r, x + 0.01, y + 0.01, z, r)
 
@@ -664,10 +664,9 @@ class Drawbot(Dobot):
 
     def draw_circle(self, size, side=0, wait=True):
         """
-        Draws a circle from the current pen position.
-        'side' is used to determine which direction the circle is drawn relative
-        to the pen position, allows for creation of figure-8 patterns.
-        The start position, size, and side are saved to the circles list.
+        Draw a circle from the current pen position, following the 'side'
+        direction. Allows for creation of figure-8 patterns. The start
+        position, size, and side are saved to the circles list.
         """
         pos = self.get_pose()[:4]
 
@@ -958,7 +957,6 @@ class Drawbot(Dobot):
         """
         Draw a random character from the list of available characters.
         """
-
         rand_char = self.chars[randrange(0, len(self.chars))]
         logging.info(rand_char)
         self.draw_char(rand_char, size, self.wait)
