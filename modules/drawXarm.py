@@ -101,7 +101,6 @@ class DrawXarm(XArmAPI):
         self.start_time = time()
         self.go_position_ready()
 
-
     ###########################################################################
     # Command queue control & safety checks
     ###########################################################################
@@ -583,7 +582,6 @@ class DrawXarm(XArmAPI):
                  speed=self.speed,
                  mvacc=self.mvacc,
                  wait=self.wait)
-
 
     def draw_square(self, size):
         """

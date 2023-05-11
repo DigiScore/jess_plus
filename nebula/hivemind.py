@@ -69,7 +69,6 @@ class DataBorg:
             ######################
             # Additional streams
             ######################
-
             self.master_stream: float = random()
             """Master output from the affect process"""
 
@@ -85,7 +84,6 @@ class DataBorg:
             ######################
             # Robot vars
             ######################
-
             self.current_robot_x_y_z: tuple = (0, 0, 0)
             """Actual cartesian coords reported by Dobot"""
 
@@ -93,14 +91,13 @@ class DataBorg:
             """Actual cartesian coords reported by Dobot"""
 
             self.current_nnet_x_y_z: tuple = (0, 0, 0)
-            # TODO: 2 first elements could be assigned based on the nnets out
+            # TODO: 2 first elements could be assigned based on the NNets out
             # eg. flow2core or audio2core
             """Generated output of robot movement from NNets"""
 
             ######################
             # Running vars
             ######################
-
             self.interrupt_clear: bool = True
             """Signals an interrupt to the gesture manager"""
 

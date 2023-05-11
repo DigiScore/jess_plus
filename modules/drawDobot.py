@@ -500,7 +500,7 @@ class Drawbot(Dobot):
     def note_head(self, size: float = 5):
         """
         Draws a circle at the current position. Default is 5 pixels diameter.
-        
+
         Parameters
         ----------
         size : float
