@@ -1,13 +1,12 @@
 import logging
-from random import random
 import numpy as np
 import pyaudio
+from random import random
 from scipy import signal
 from time import time
 
-#  import local methods
-from nebula.hivemind import DataBorg
 import config
+from nebula.hivemind import DataBorg
 
 
 def buffer_scaler(in_feature, mins, maxs):
@@ -30,53 +29,40 @@ class Listener:
         self.connected = False
         self.logging = False
 
-        # set up mic listening func
+        # Set up mic listening
         self.CHUNK = 2**11
         self.RATE = 44100
         self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(
-            format=pyaudio.paInt16,
-            channels=1,
-            rate=self.RATE,
-            input=True,
-            frames_per_buffer=self.CHUNK,
-        )
-
-        # plug into the hive mind data borg
-        self.hivemind = DataBorg()
-
-# set up mic listening funcs
-        self.CHUNK = 2 ** 11
-        self.RATE = 44100
-        p = pyaudio.PyAudio()
-        self.stream = p.open(format=pyaudio.paInt16,
+        self.stream = self.p.open(format=pyaudio.paInt16,
                                   channels=1,
                                   rate=self.RATE,
                                   input=True,
                                   frames_per_buffer=self.CHUNK)
 
+        # Plug into the hive mind data borg
+        self.hivemind = DataBorg()
 
     def snd_listen(self):
-        """Loop thread that listens to live sound and analyses amplitude.
-        Normalises then stores this into the nebula dataclass for shared use."""
-
-        print("Starting mic listening stream & thread")
+        """
+        Loop thread listening to live sound and analysing amplitude. Normalises
+        then stores this into the nebula dataclass for shared use.
+        """
+        logging.info("Starting mic listening stream & thread")
         data_buffer = np.empty(0)
 
-        # set silence listener to 10 seconds in future
+        # Set silence listener to 10 seconds in future
         silence_timer = time() + 10
         first_minute = time() + 60
 
-        # main loop
+        # Main loop
         while self.hivemind.running:
-
-            # get amplitude from mic input
+            # Get amplitude from mic input
             data = np.frombuffer(self.stream.read(
                 self.CHUNK,
                 exception_on_overflow=False),
                 dtype=np.int16)
 
-            # make audio envelope buffer
+            # Make audio envelope buffer
             data_buffer = np.append(data_buffer, data)
             if len(data_buffer) > self.RATE*5:  # 5 sec buffer
                 data_buffer = data_buffer[-(self.RATE*5):]
@@ -93,29 +79,27 @@ class Listener:
 
             if peak > 1000:
                 bars = "#" * int(50 * peak / 2 ** 16)
-                logging.debug("MIC LISTENER: %05d %s" % (peak, bars))
-                # print("MIC LISTENER: %05d %s" % (peak, bars))
+                logging.debug(f"MIC LISTENER: {peak} {bars}")
 
-                # reset the silence listener
+                # Reset the silence listener
                 silence_timer = time() + 5   # 5 seconds ahead
 
-            # normalise it for range 0.0 - 1.0
-            normalised_peak = ((peak - 0) / (20000 - 0)) * (1 - 0) + 0
+            # Normalise it for range 0.0 - 1.0
+            normalised_peak = peak / 20000
             if normalised_peak > 1.0:
                 normalised_peak = 1.0
 
-            # put normalised amplitude into Nebula's dictionary for use
+            # Put normalised amplitude into Nebula's dictionary for use
             self.hivemind.mic_in = normalised_peak
 
-            # if loud sound then 63% affect gesture manager
+            # If loud sound then 63% affect gesture manager
             if normalised_peak > 0.7:
                 if random() > 0.63:
                     self.hivemind.interrupt_clear = False
                     self.hivemind.randomiser()
-                    print("-----------------------------MICROPHONE INTERRUPT----------------------------")
+                    print("-------------- MICROPHONE INTERRUPT --------------")
 
-
-            # check human musician induced ending (wait for 5 secs)
+            # Check human musician induced ending (wait for 5 secs)
             if config.silence_listener:
                 if time() > first_minute:
                     if time() >= silence_timer:
