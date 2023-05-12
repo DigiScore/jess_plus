@@ -5,10 +5,12 @@
 # - running all the tests: $ tests/pytest xArm_test.py
 # - running a specific test: $ pytest tests/xArm_test.py::test_function
 
-from modules.drawXarm import DrawXarm
-import config
-from random import randrange, uniform
 import logging
+from random import randrange, uniform
+from time import sleep
+
+import config
+from modules.drawXarm import DrawXarm
 
 
 logging.basicConfig(level=logging.INFO)
@@ -58,11 +60,8 @@ def test_move_to_offlimit():
 
 def test_tool_move():
     drawbot.go_position_draw()
-    drawbot.tool_move('black')
-    drawbot.tool_move('blue')
-    drawbot.tool_move('red')
-    drawbot.tool_move('green')
-    drawbot.tool_move('undefined_colour')
+    drawbot.tool_move(90)
+    drawbot.tool_move(-120)
 
 
 #####################

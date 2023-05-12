@@ -5,10 +5,11 @@
 # - running all the tests: $ tests/pytest dobot_test.py
 # - running a specific test: $ pytest tests/dobot_test.py::test_function
 
-from modules.drawDobot import Drawbot
-import config
-from random import randrange, uniform
 import logging
+from random import randrange, uniform
+
+import config
+from modules.drawDobot import Drawbot
 
 
 logging.basicConfig(level=logging.INFO)
