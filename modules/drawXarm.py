@@ -56,8 +56,8 @@ class DrawXarm(XArmAPI):
         self.pitch = None
         self.yaw = 0
         self.wait = False
-        self.speed = 100
-        self.mvacc = 100
+        self.speed = 150
+        self.mvacc = 150
 
         # Roll and pitch with pens
         self.compass = [[180, 10],  # north
@@ -407,7 +407,7 @@ class DrawXarm(XArmAPI):
         """
         Lift the pen up, go to an x and y position, then lower the pen.
         """
-        jump_height = 20
+        jump_height = abs(self.ready_position[-1] - self.z)
         old_x, old_y = self.get_pose()[:2]
         self.coords.append((x, y))
 

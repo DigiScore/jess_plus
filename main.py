@@ -118,7 +118,7 @@ class Visualiser:
         while self.hivemind.running:
             self.root.update_idletasks()
             self.root.update()
-            if self.window_closed is True:
+            if self.window_closed is True or not config.viz:
                 self.root.destroy()
                 break
             self.callback()
@@ -152,8 +152,7 @@ class Main(Visualiser):
         nebula.main_loop()
 
         # start visualiser
-        if config.viz:
-            self.make_viz()
+        self.make_viz()
 
 
 if __name__ == "__main__":
