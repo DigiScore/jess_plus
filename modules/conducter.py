@@ -102,7 +102,7 @@ class Conducter:
                 self.drawbot.random_pen()
 
             # Flag for breaking a phrase from big affect signal
-            self.hivemind.interrupt_clear = True
+            self.hivemind.interrupted = False
 
             # Clear command list at start of each gesture cycle
             self.drawbot.clear_commands()
@@ -140,7 +140,7 @@ class Conducter:
                 ###############################################################
 
                 # if a major break out then go to Daddy cycle and restart
-                if not self.hivemind.interrupt_clear:
+                if self.hivemind.interrupted:
                     print("----------------STREAM INTERRUPT----------------")
                     break
 
@@ -175,19 +175,17 @@ class Conducter:
                     # Makes a response to chosen thought stream
                     ###########################################################
                     # [HIGH response]
-                    if thought_train > 0.7 or not self.hivemind.interrupt_clear:
+                    if thought_train > 0.7 or self.hivemind.interrupted:
                         print('Interrupt > !!! HIGH !!!')
 
                         # A - Refill dict with random
                         self.hivemind.randomiser()
 
                         # B - Jumps out of this loop into daddy
-                        self.hivemind.interrupt_clear = False
+                        # (will clear commands by detecting interupt_clear)
+                        self.hivemind.interrupted = True
 
-                        # C - Clears the command list in drawbot
-                        self.drawbot.command_list.clear()
-
-                        # D - Respond
+                        # C - Respond
                         if self.drawbot:
                             self.high_energy_response()
 

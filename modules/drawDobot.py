@@ -84,10 +84,10 @@ class Drawbot(Dobot):
         Watches hivemind.interrupt_bang for `False` then clears command_list.
         """
         while self.hivemind.running:
-            if not self.hivemind.interrupt_clear:
+            if self.hivemind.interrupted:
                 self.clear_commands()
                 logging.info("Cleared commands")
-                self.hivemind.interrupt_clear = True
+                self.hivemind.interrupted = False
 
             if self.command_list:
                 if random() >= 0.36:
@@ -129,7 +129,7 @@ class Drawbot(Dobot):
         for _p in params:
             msg.params.extend(bytearray(struct.pack('f', _p)))
 
-        if self.hivemind.interrupt_clear:
+        if not self.hivemind.interrupted:
             print('Sending message ', msg)
             self.command_list.append(msg)
 

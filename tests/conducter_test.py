@@ -52,7 +52,7 @@ def interrupt():
         rnd = randrange(10, 20)
         sleep(rnd)
         print("INTERRUPTING")
-        test.hivemind.interrupt_clear = False
+        test.hivemind.interrupted = True
 
 
 if __name__ == "__main__":

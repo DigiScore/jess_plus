@@ -95,7 +95,7 @@ class Listener:
             # If loud sound then 63% affect gesture manager
             if normalised_peak > 0.7:
                 if random() > 0.63:
-                    self.hivemind.interrupt_clear = False
+                    self.hivemind.interrupted = True
                     self.hivemind.randomiser()
                     print("-------------- MICROPHONE INTERRUPT --------------")
 

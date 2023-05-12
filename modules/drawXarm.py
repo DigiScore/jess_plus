@@ -124,10 +124,10 @@ class DrawXarm(XArmAPI):
 
     def manage_command_list(self):
         while self.hivemind.running:
-            if not self.hivemind.interrupt_clear:
+            if self.hivemind.interrupted:
                 self.clear_commands()
                 logging.info('Clearing command list')
-                self.hivemind.interrupt_clear = True
+                self.hivemind.interrupted = False
 
             sleep(0.05)
 
