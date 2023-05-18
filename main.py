@@ -10,10 +10,8 @@ from nebula.nebula import Nebula
 
 class Visualiser:
 
-    def __init__(self):
-        # Build initial dataclass filled with random numbers
-        self.hivemind = DataBorg()
-
+    def __init__(self, hivemind):
+        self.hivemind = hivemind
         # Build UI
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -105,7 +103,7 @@ class Visualiser:
                          self.centers[ch][0]+100*self.sizes[ch],
                          self.centers[ch][1]+100*self.sizes[ch]]
             self.canvas.coords(self.items[ch], *items_xys)
-        new_label = 'Unknown'
+        new_label = 'NO STREAM'
         if self.hivemind.thought_train_stream in self.stream_mapping:
             new_label = self.stream_mapping[self.hivemind.thought_train_stream]
         self.canvas.itemconfigure(
@@ -118,14 +116,14 @@ class Visualiser:
         while self.hivemind.running:
             self.root.update_idletasks()
             self.root.update()
-            if self.window_closed is True or not config.viz:
+            if self.window_closed is True:
                 self.root.destroy()
                 break
             self.callback()
             time.sleep(0.1)
 
 
-class Main(Visualiser):
+class Main:
     """
     Main script to start the robot arm drawing digital score work.
     Conducter calls the local interpreter for project specific functions. This
@@ -136,7 +134,9 @@ class Main(Visualiser):
     Paramaters are to be modified in config.py.
     """
     def __init__(self):
-        Visualiser.__init__(self)
+        # Build initial dataclass filled with random numbers
+        self.hivemind = DataBorg()
+
         # Logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
@@ -151,8 +151,10 @@ class Main(Visualiser):
         robot1.main_loop()
         nebula.main_loop()
 
-        # start visualiser
-        self.make_viz()
+        # Visualiser
+        if config.viz:
+            viz = Visualiser(self.hivemind)
+            viz.make_viz()
 
 
 if __name__ == "__main__":
