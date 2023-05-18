@@ -105,7 +105,8 @@ class Conducter:
             self.hivemind.interrupted = False
 
             # Clear command list at start of each gesture cycle
-            self.drawbot.clear_commands()
+            if self.drawbot:
+                self.drawbot.clear_commands()
 
             # Get length of gesture
             phrase_length = (randrange(300, 800) / 100)  # + self.global_speed
@@ -365,15 +366,16 @@ class Conducter:
         Smart collapse of all threads and comms.
         """
         print('TERMINATING')
-        self.drawbot.go_position_ready()
-        self.drawbot.go_position_one_two()
-        self.drawbot.home()
-        self.drawbot.clear_commands()
-        if self.DOBOT_CONNECTED:
-            self.drawbot.close()
-        elif self.XARM_CONNECTED:
-            self.drawbot.set_fence_mode(False)
-            self.drawbot.disconnect()
+        if self.drawbot:
+            self.drawbot.go_position_ready()
+            self.drawbot.go_position_one_two()
+            self.drawbot.home()
+            self.drawbot.clear_commands()
+            if self.DOBOT_CONNECTED:
+                self.drawbot.close()
+            elif self.XARM_CONNECTED:
+                self.drawbot.set_fence_mode(False)
+                self.drawbot.disconnect()
 
     def rnd(self, power_of_command: int) -> int:
         """

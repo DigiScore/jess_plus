@@ -1,5 +1,6 @@
 import logging
 from brainflow.board_shim import BoardIds, BoardShim, BrainFlowInputParams
+from brainflow.board_shim import BrainFlowError
 from random import random
 from time import sleep
 
@@ -32,12 +33,13 @@ class BrainbitReader:
 
             self.board.prepare_session()
 
-            # board.start_stream ()  # use this for default options
+            # self.board.start_stream ()  # use this for default options
             self.board.start_stream(450000)  # removed 2
-            logging.info('BrainBit stream started')
+            print('BrainBit stream started')
             self.brain_bit = True
-        except:
-            logging.info("BrainBit ALT started")
+
+        except BrainFlowError:
+            print("Unable to prepare streaming session\nBrainBit ALT started")
 
     def read(self, num_points):
         if self.brain_bit:
@@ -61,8 +63,9 @@ class BrainbitReader:
         return self.data
 
     def terminate(self):
-        self.board.stop_stream()
-        self.board.release_session()
+        if self.brain_bit:
+            self.board.stop_stream()
+            self.board.release_session()
 
 
 if __name__ == "__main__":
