@@ -116,14 +116,11 @@ class Nebula(Listener, AIFactoryRework):
                 # Get raw data
                 eda_raw = [self.eda.read(1)[0][-1]]
                 logging.debug(f"eda data raw = {eda_raw}")
-                # # Replace min and max for scaling
-                # if eda_raw[0] > self.hivemind.eda_maxs[0]:
-                #     self.hivemind.eda_maxs[0] = eda_raw[0]
-                # if eda_raw[0] < self.hivemind.eda_mins[0]:
-                #     self.hivemind.eda_mins[0] = eda_raw[0]
+
                 # Rescale between 0 and 1
                 eda_norm = scaler(eda_raw, self.hivemind.eda_mins,
                                   self.hivemind.eda_maxs)
+
                 # Buffer append and pop
                 eda_2d = eda_norm[:, np.newaxis]
                 self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer,
@@ -139,21 +136,27 @@ class Nebula(Listener, AIFactoryRework):
                 # Get raw data
                 eeg = self.eeg_board.read(1)
                 logging.debug(f"eeg data raw = {eeg}")
-                # # Replace mins and maxs for scaling
-                # for i_ch, eeg_ch in enumerate(eeg):
-                #     if eeg_ch > self.hivemind.eeg_maxs[i_ch]:
-                #         self.hivemind.eeg_maxs[i_ch] = eeg_ch
-                #     if eeg_ch < self.hivemind.eeg_mins[i_ch]:
-                #         self.hivemind.eeg_mins[i_ch] = eeg_ch
+
+                # Update raw EEG buffer
+                eeg_2d = np.array(eeg)[:, np.newaxis]
+                self.hivemind.eeg_buffer_raw = np.append(
+                    self.hivemind.eeg_buffer_raw, eeg_2d, axis=1)
+                self.hivemind.eeg_buffer_raw = np.delete(
+                    self.hivemind.eeg_buffer_raw, 0, axis=1)
+
+                # Get min and max from raw EEG buffer
+                raw_mins = np.min(self.hivemind.eeg_buffer_raw, axis=1)
+                raw_maxs = np.max(self.hivemind.eeg_buffer_raw, axis=1)
+
                 # Rescale between 0 and 1
-                eeg_norm = scaler(eeg, self.hivemind.eeg_mins,
-                                  self.hivemind.eeg_maxs)
-                # Buffer append and pop
-                eeg_2d = eeg_norm[:, np.newaxis]
-                self.hivemind.eeg_buffer = np.append(self.hivemind.eeg_buffer,
-                                                     eeg_2d, axis=1)
-                self.hivemind.eeg_buffer = np.delete(self.hivemind.eeg_buffer,
-                                                     0, axis=1)
+                eeg_norm = scaler(eeg, raw_mins, raw_maxs)
+
+                # Update normalised EEG buffer
+                eeg_norm_2d = eeg_norm[:, np.newaxis]
+                self.hivemind.eeg_buffer = np.append(
+                    self.hivemind.eeg_buffer, eeg_norm_2d, axis=1)
+                self.hivemind.eeg_buffer = np.delete(
+                    self.hivemind.eeg_buffer, 0, axis=1)
             else:
                 # Random data if no brainbit
                 self.hivemind.eeg_buffer = np.random.uniform(size=(4, 50))

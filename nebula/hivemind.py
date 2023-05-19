@@ -55,6 +55,9 @@ class DataBorg:
             self.eeg_mins: list = eeg_mins
             self.eeg_maxs: list = eeg_maxs
 
+            self.eeg_buffer_raw: np.array = np.random.uniform(size=(4, 50))
+            """Live 5 sec buffered raw data from brainbit"""
+
             self.eeg_buffer: np.array = np.random.uniform(size=(4, 50))
             """Live 5 sec buffered data from brainbit"""
 

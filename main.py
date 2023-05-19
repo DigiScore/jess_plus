@@ -48,10 +48,10 @@ class Visualiser:
         # Build graphics
         self.items = {}
         for ch in self.centers:
-            items_xys = [self.centers[ch][0]-100*self.sizes[ch],
-                         self.centers[ch][1]-100*self.sizes[ch],
-                         self.centers[ch][0]+100*self.sizes[ch],
-                         self.centers[ch][1]+100*self.sizes[ch]]
+            items_xys = [self.centers[ch][0]-80*self.sizes[ch],
+                         self.centers[ch][1]-80*self.sizes[ch],
+                         self.centers[ch][0]+80*self.sizes[ch],
+                         self.centers[ch][1]+80*self.sizes[ch]]
             self.items[ch] = self.canvas.create_oval(
                 *items_xys, fill=self.colors[ch], outline=self.colors[ch])
 
@@ -93,16 +93,16 @@ class Visualiser:
         Callback function for updating the circle sizes based on the hivemind
         data.
         """
-        self.sizes['T3'] = self.hivemind.eeg_buffer[0][-5:].mean()
-        self.sizes['T4'] = self.hivemind.eeg_buffer[1][-5:].mean()
-        self.sizes['O1'] = self.hivemind.eeg_buffer[2][-5:].mean()
-        self.sizes['O2'] = self.hivemind.eeg_buffer[3][-5:].mean()
-        self.sizes['EDA'] = self.hivemind.eda_buffer[0][-5:].mean()
+        self.sizes['T3'] = self.hivemind.eeg_buffer[0][-10:].mean()
+        self.sizes['T4'] = self.hivemind.eeg_buffer[1][-10:].mean()
+        self.sizes['O1'] = self.hivemind.eeg_buffer[2][-10:].mean()
+        self.sizes['O2'] = self.hivemind.eeg_buffer[3][-10:].mean()
+        self.sizes['EDA'] = self.hivemind.eda_buffer[0][-10:].mean()
         for ch in self.centers:
-            items_xys = [self.centers[ch][0]-100*self.sizes[ch],
-                         self.centers[ch][1]-100*self.sizes[ch],
-                         self.centers[ch][0]+100*self.sizes[ch],
-                         self.centers[ch][1]+100*self.sizes[ch]]
+            items_xys = [self.centers[ch][0]-80*self.sizes[ch],
+                         self.centers[ch][1]-80*self.sizes[ch],
+                         self.centers[ch][0]+80*self.sizes[ch],
+                         self.centers[ch][1]+80*self.sizes[ch]]
             self.canvas.coords(self.items[ch], *items_xys)
         new_label = 'NO STREAM'
         if self.hivemind.thought_train_stream in self.stream_mapping:
