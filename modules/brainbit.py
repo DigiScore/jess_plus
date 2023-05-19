@@ -14,7 +14,7 @@ class BrainbitReader:
 
         # Assign the BrainBit as the board
         self.params.board_id = BoardIds.BRAINBIT_BOARD
-        print(self.params.board_id)
+        logging.debug(self.params.board_id)
 
         # Set it logging
         BoardShim.enable_dev_board_logger()
@@ -27,19 +27,17 @@ class BrainbitReader:
     def start(self):
         # Instantiate the board reading
         try:
-            self.board = BoardShim(BoardIds.BRAINBIT_BOARD,
-                                   self.params)
+            self.board = BoardShim(BoardIds.BRAINBIT_BOARD, self.params)
             self.board_id = self.board.get_board_id()
 
             self.board.prepare_session()
 
-            # self.board.start_stream ()  # use this for default options
-            self.board.start_stream(450000)  # removed 2
+            self.board.start_stream()  # with default options
             print('BrainBit stream started')
             self.brain_bit = True
 
         except BrainFlowError:
-            print("Unable to prepare streaming session\nBrainBit ALT started")
+            logging.warning("Unable to prepare streaming session")
 
     def read(self, num_points):
         if self.brain_bit:

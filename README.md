@@ -18,6 +18,8 @@ pip install -r requirements.txt
 - Connect the BrainBit and BITalino to the computer via bluetooth
 - Run `main.py`
 
+*Note: if the BrainBit EEG is connected but the streaming session cannot be started, try unpairing the device, restart the computer, and repair it. The BrainBit should normally display a blinking light when connected but not in use, and have a solid light when actually being used by the script.*
+
 ### About `main.py`
 The main script to start the robot arm drawing digital score work.
 Digibot calls the local interpreter for project specific functions.
