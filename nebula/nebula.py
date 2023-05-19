@@ -13,6 +13,8 @@ Dedicated to Fabrizio Poltronieri
 """
 import logging
 import numpy as np
+import warnings
+from scipy import signal
 from threading import Thread
 from time import sleep, time
 
@@ -24,12 +26,21 @@ from nebula.ai_factory import AIFactoryRework
 
 
 def scaler(in_feature, mins, maxs):
+    """
+    Min-max scaler with clipping.
+    """
+    warnings.filterwarnings('error')
     in_feature = np.array(in_feature)
     mins = np.array(mins)
     maxs = np.array(maxs)
-    in_feature = (in_feature - mins) / (maxs - mins)
-    in_feature = in_feature.clip(0, 1)
-    return in_feature
+    try:
+        norm_feature = (in_feature - mins) / (maxs - mins)
+    except RuntimeWarning:
+        logging.warning("Scaler encountered zero division")
+        norm_feature = in_feature
+    norm_feature = norm_feature.clip(0, 1)
+    warnings.simplefilter("always")
+    return norm_feature
 
 
 class Nebula(Listener, AIFactoryRework):
@@ -117,11 +128,25 @@ class Nebula(Listener, AIFactoryRework):
                 eda_raw = [self.eda.read(1)[0][-1]]
                 logging.debug(f"eda data raw = {eda_raw}")
 
-                # Rescale between 0 and 1
-                eda_norm = scaler(eda_raw, self.hivemind.eda_mins,
-                                  self.hivemind.eda_maxs)
+                # Update raw EDA buffer
+                eda_2d = np.array(eda_raw)[:, np.newaxis]
+                self.hivemind.eda_buffer_raw = np.append(
+                    self.hivemind.eda_buffer_raw, eda_2d, axis=1)
+                self.hivemind.eda_buffer_raw = np.delete(
+                    self.hivemind.eda_buffer_raw, 0, axis=1)
 
-                # Buffer append and pop
+                # Detrend on the buffer time window
+                eda_detrend = signal.detrend(self.hivemind.eda_buffer_raw)
+
+                # Get min and max from raw EDA buffer
+                eda_mins = np.min(eda_detrend, axis=1)
+                eda_maxs = np.max(eda_detrend, axis=1)
+                eda_mins = eda_mins - 0.05 * (eda_maxs - eda_mins)
+
+                # Rescale between 0 and 1
+                eda_norm = scaler(eda_detrend[:, -1], eda_mins, eda_maxs)
+
+                # Update normalised EDA buffer
                 eda_2d = eda_norm[:, np.newaxis]
                 self.hivemind.eda_buffer = np.append(self.hivemind.eda_buffer,
                                                      eda_2d, axis=1)
@@ -144,12 +169,16 @@ class Nebula(Listener, AIFactoryRework):
                 self.hivemind.eeg_buffer_raw = np.delete(
                     self.hivemind.eeg_buffer_raw, 0, axis=1)
 
+                # Detrend on the buffer time window
+                eeg_detrend = signal.detrend(self.hivemind.eeg_buffer_raw)
+
                 # Get min and max from raw EEG buffer
-                raw_mins = np.min(self.hivemind.eeg_buffer_raw, axis=1)
-                raw_maxs = np.max(self.hivemind.eeg_buffer_raw, axis=1)
+                eeg_mins = np.min(eeg_detrend, axis=1)
+                eeg_maxs = np.max(eeg_detrend, axis=1)
+                eeg_mins = eeg_mins - 0.05 * (eeg_maxs - eeg_mins)
 
                 # Rescale between 0 and 1
-                eeg_norm = scaler(eeg, raw_mins, raw_maxs)
+                eeg_norm = scaler(eeg_detrend[:, -1], eeg_mins, eeg_maxs)
 
                 # Update normalised EEG buffer
                 eeg_norm_2d = eeg_norm[:, np.newaxis]

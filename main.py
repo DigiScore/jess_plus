@@ -15,6 +15,7 @@ class Visualiser:
         self.hivemind = hivemind
         # Build UI
         self.root = tk.Tk()
+        self.root.title("Jess +")
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas = tk.Canvas(self.root, height=600, width=500)
         self.canvas.pack()
@@ -93,11 +94,11 @@ class Visualiser:
         Callback function for updating the circle sizes based on the hivemind
         data.
         """
-        self.sizes['T3'] = self.hivemind.eeg_buffer[0][-10:].mean()
-        self.sizes['T4'] = self.hivemind.eeg_buffer[1][-10:].mean()
-        self.sizes['O1'] = self.hivemind.eeg_buffer[2][-10:].mean()
-        self.sizes['O2'] = self.hivemind.eeg_buffer[3][-10:].mean()
-        self.sizes['EDA'] = self.hivemind.eda_buffer[0][-10:].mean()
+        self.sizes['T3'] = self.hivemind.eeg_buffer[0][-5:].mean()
+        self.sizes['T4'] = self.hivemind.eeg_buffer[1][-5:].mean()
+        self.sizes['O1'] = self.hivemind.eeg_buffer[2][-5:].mean()
+        self.sizes['O2'] = self.hivemind.eeg_buffer[3][-5:].mean()
+        self.sizes['EDA'] = self.hivemind.eda_buffer[0][-5:].mean()
         for ch in self.centers:
             items_xys = [self.centers[ch][0]-80*self.sizes[ch],
                          self.centers[ch][1]-80*self.sizes[ch],
