@@ -166,8 +166,9 @@ class Conducter:
                     # Make master output the current value of affect stream
                     # 1. Go get the current value from dict
                     thought_train = getattr(self.hivemind, rnd_stream)
-                    print(f'======== RHYTHM cycle 2 ========', end=' ')
-                    print(f'Affect stream output {rnd_stream} == {thought_train}')
+                    logging.debug(f'======== RHYTHM cycle ========'
+                                  f'|Affect stream output {rnd_stream}'
+                                  f' == {thought_train}')
 
                     # 2. Send to Master Output
                     self.hivemind.master_stream = thought_train

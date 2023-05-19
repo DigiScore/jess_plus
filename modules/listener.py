@@ -23,7 +23,7 @@ class Listener:
         """
         controls audio listening by opening up a stream in Pyaudio.
         """
-        print("starting listener")
+        print("Starting listener")
 
         self.running = True
         self.connected = False

@@ -17,7 +17,7 @@ class BrainbitReader:
         logging.debug(self.params.board_id)
 
         # Set it logging
-        BoardShim.enable_dev_board_logger()
+        BoardShim.disable_board_logger()
         logging.info('BrainBit reader ready')
         self.brain_bit = False
 
@@ -26,18 +26,25 @@ class BrainbitReader:
 
     def start(self):
         # Instantiate the board reading
-        try:
-            self.board = BoardShim(BoardIds.BRAINBIT_BOARD, self.params)
-            self.board_id = self.board.get_board_id()
+        started = False
+        print("Starting BrainBit stream...")
+        while not started:
+            try:
+                self.board = BoardShim(BoardIds.BRAINBIT_BOARD, self.params)
+                self.board_id = self.board.get_board_id()
 
-            self.board.prepare_session()
+                self.board.prepare_session()
 
-            self.board.start_stream()  # with default options
-            print('BrainBit stream started')
-            self.brain_bit = True
+                self.board.start_stream()  # with default options
+                print(f"BrainBit stream started")
+                self.brain_bit = True
+                started = True
 
-        except BrainFlowError:
-            logging.warning("Unable to prepare streaming session")
+            except BrainFlowError:
+                print("Unable to prepare streaming session")
+                retry = input("Retry (y/N)? ")
+                if retry.lower() != "y" and retry.lower() != "yes":
+                    started = True
 
     def read(self, num_points):
         if self.brain_bit:

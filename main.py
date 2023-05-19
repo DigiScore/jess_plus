@@ -1,3 +1,4 @@
+import art
 import logging
 import time
 import tkinter as tk
@@ -134,17 +135,18 @@ class Main:
     Paramaters are to be modified in config.py.
     """
     def __init__(self):
+        art.tprint("Jess +")
         # Build initial dataclass filled with random numbers
         self.hivemind = DataBorg()
 
         # Logging for all modules
         logging.basicConfig(level=logging.WARNING)
 
-        # Init Conducter & Gesture management (controls Drawbot)
-        robot1 = Conducter(speed=config.speed)
-
         # Init the AI factory (inherits AIFactory, Listener)
         nebula = Nebula(speed=config.speed)
+
+        # Init Conducter & Gesture management (controls Drawbot)
+        robot1 = Conducter(speed=config.speed)
 
         # Start Nebula AI Factory after conducter starts data moving
         self.hivemind.running = True

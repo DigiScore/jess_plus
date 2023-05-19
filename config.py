@@ -1,7 +1,7 @@
 # [HARDWARE]
 dobot_connected = False
 xarm_connected = True
-eeg_live = False
+eeg_live = True
 eda_live = False
 
 # [PLAY PARAMS]
@@ -11,7 +11,7 @@ continuous_line = False  # set to `True` to not jump between points
 speed = 5  # dynamic tempo of the all processes: 1 = slow, 10 = fast
 staves = 0
 temperature = 0
-viz = False
+viz = True
 
 # [DOBOT]
 dobot1_port = 'COM4'  # 'COM4' or 'COM10' (Windows), '/dev/ttyACM0' (Linux)
