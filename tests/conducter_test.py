@@ -1,9 +1,9 @@
-from modules.conducter import Conducter
-from time import sleep
-from random import randrange, uniform
 import logging
-import config
+from random import randrange, uniform
+from time import sleep
 from threading import Thread
+
+from modules.conducter import Conducter
 
 
 test = Conducter()
@@ -46,12 +46,13 @@ def main(mode=999):
                     case 5:
                         test.high_energy_response()
 
+
 def interrupt():
     while True:
         rnd = randrange(10, 20)
         sleep(rnd)
         print("INTERRUPTING")
-        test.hivemind.interrupt_clear = False
+        test.hivemind.interrupted = True
 
 
 if __name__ == "__main__":

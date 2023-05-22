@@ -50,26 +50,21 @@ class DataBorg:
 
             self.audio_buffer: np.array = np.random.uniform(size=(1, 50))
 
-            with open('./nebula/models/eeg2flow_minmax.pickle', 'rb') as f:
-                eeg_mins, eeg_maxs = pickle.load(f)
-            self.eeg_mins: list = eeg_mins
-            self.eeg_maxs: list = eeg_maxs
+            self.eeg_buffer_raw: np.array = np.random.uniform(size=(4, 50))
+            """Live 5 sec buffered raw data from brainbit"""
 
             self.eeg_buffer: np.array = np.random.uniform(size=(4, 50))
-            """Live 5 sec buffered data from brainbit"""
+            """Live 5 sec buffered normalised data from brainbit"""
 
-            with open('./nebula/models/eda2flow_minmax.pickle', 'rb') as f:
-                eda_mins, eda_maxs = pickle.load(f)
-            self.eda_mins: list = eda_mins
-            self.eda_maxs: list = eda_maxs
+            self.eda_buffer_raw: np.array = np.random.uniform(size=(1, 50))
+            """Live 5 sec buffered raw data from bitalino"""
 
             self.eda_buffer: np.array = np.random.uniform(size=(1, 50))
-            """Live 5 sec buffered data from bitalino"""
+            """Live 5 sec buffered normalised data from bitalino"""
 
             ######################
             # Additional streams
             ######################
-
             self.master_stream: float = random()
             """Master output from the affect process"""
 
@@ -85,7 +80,6 @@ class DataBorg:
             ######################
             # Robot vars
             ######################
-
             self.current_robot_x_y_z: tuple = (0, 0, 0)
             """Actual cartesian coords reported by Dobot"""
 
@@ -93,15 +87,14 @@ class DataBorg:
             """Actual cartesian coords reported by Dobot"""
 
             self.current_nnet_x_y_z: tuple = (0, 0, 0)
-            # TODO: 2 first elements could be assigned based on the nnets out
+            # TODO: 2 first elements could be assigned based on the NNets out
             # eg. flow2core or audio2core
             """Generated output of robot movement from NNets"""
 
             ######################
             # Running vars
             ######################
-
-            self.interrupt_clear: bool = True
+            self.interrupted: bool = False
             """Signals an interrupt to the gesture manager"""
 
             self.running: bool = False

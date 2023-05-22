@@ -1,6 +1,8 @@
-from nebula.nebula import Nebula
 import logging
 from time import sleep
+
+from nebula.nebula import Nebula
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -13,4 +15,3 @@ while True:
           test.hivemind.self_awareness,
           test.hivemind.eda)
     sleep(0.1)
-

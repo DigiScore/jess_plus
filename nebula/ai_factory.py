@@ -1,16 +1,10 @@
-# install python modules
 import logging
-from random import random, randrange
 import numpy as np
-import pickle
+import torch
+from random import random
 from time import sleep
 
-# install local modules
 from nebula.hivemind import DataBorg
-import config
-
-# Libraries for rework
-import torch
 from nebula.models.pt_models import Hourglass
 
 
@@ -18,15 +12,21 @@ class NNetRework:
     def __init__(self,
                  name: str,
                  model: str,
-                 in_feature: str,
-                 ):
-        """Makes an object  for each neural net in AI factory.
-        Args:
-            name: name of NNet - must align to name of object
-            model: location of ML model for this NNet
-            nnet_feed: NNet output value from DataBorg to use as input value
-            live_feed: Human input value from DataBorg to use as input value
-            """
+                 in_feature: str):
+        """
+        Make an object  for each neural net in AI factory.
+
+        Parameters
+        ----------
+        name
+            Name of the NNet, must align with the name of the object.
+
+        model
+            Location of the ML model for this NNet.
+
+        in_feature
+            NNet input from DataBorg to use.
+        """
         self.hivemind = DataBorg()
         self.name = name
         self.in_feature = in_feature
@@ -38,74 +38,68 @@ class NNetRework:
         pt_model.load_state_dict(state_dict)
         pt_model.eval()
         self.model = pt_model
-
-        print(f"{name} initialized")
+        logging.info(f"{name} initialized")
 
     def make_prediction(self, in_val):
-        """Makes a prediction for this NNet.
-        Args:
-            in_val: 2D input value for this NNet"""
-        # make prediction
+        """
+        Make a prediction for this NNet.
+
+        Parameters
+        ----------
+        in_val
+            2D input value for this NNet
+        """
+        # Make prediction
         prediction = self.model(torch.tensor(in_val[np.newaxis, :, :]))
         prediction = np.squeeze(prediction.detach().numpy(), axis=0)
-        setattr(self.hivemind, f'{self.name}_2D', prediction)
+        setattr(self.hivemind, f'{self.name}_2d', prediction)
 
-        # get average from prediction and save to data dict
+        # Get average from prediction and save to data dict
         individual_val = np.mean(prediction)
         setattr(self.hivemind, self.name, individual_val)
         logging.debug(f"NNet {self.name} in: {in_val} predicted {individual_val}")
 
 
 class AIFactoryRework:
-    def __init__(self,
-                 speed: float = 1,
-                 ):
-        """Builds the individual neural nets that constitute the AI factory.
-        This will need modifying if and when a new AI factory design is implemented.
-        NB - the list of netnames will also need updating"""
-
-        print('Building the AI Factory')
+    def __init__(self, speed: float = 1):
+        """
+        Builds the individual neural nets that constitute the AI factory.
+        """
+        print('Building the AI Factory...')
 
         self.net_logging = False
         self.hivemind = DataBorg()
         self.global_speed = speed
 
-        # instantiate nets as objects and make models
-        print('NNetRework1 - EEG to flow initialization')
+        # Instantiate nets as objects and make models
+        logging.info('NNetRework1 - EEG to flow initialization')
         self.eeg2flow = NNetRework(name="eeg2flow",
-                             model='nebula/models/eeg2flow.pt',
-                             in_feature='eeg_buffer'
-                             )
-        print('NNetRework2 - Flow to core initialization')
+                                   model='nebula/models/eeg2flow.pt',
+                                   in_feature='eeg_buffer')
+        logging.info('NNetRework2 - Flow to core initialization')
         self.flow2core = NNetRework(name="flow2core",
-                              model='nebula/models/flow2core.pt',
-                              in_feature='eeg2flow_2d'
-                              )
-        print('NNetRework3 - Core to flow initialization')
+                                    model='nebula/models/flow2core.pt',
+                                    in_feature='eeg2flow_2d')
+        logging.info('NNetRework3 - Core to flow initialization')
         self.core2flow = NNetRework(name="core2flow",
-                              model='nebula/models/core2flow.pt',
-                              in_feature='current_robot_x_y'
-                              )
-        print('NNetRework4 - Audio to core initialization')
+                                    model='nebula/models/core2flow.pt',
+                                    in_feature='current_robot_x_y')
+        logging.info('NNetRework4 - Audio to core initialization')
         self.audio2core = NNetRework(name="audio2core",
-                               model='nebula/models/audio2core.pt',
-                               in_feature='audio_buffer'
-                               )
-        print('NNetRework5 - Audio to flow initialization')
+                                     model='nebula/models/audio2core.pt',
+                                     in_feature='audio_buffer')
+        logging.info('NNetRework5 - Audio to flow initialization')
         self.audio2flow = NNetRework(name="audio2flow",
-                               model='nebula/models/audio2flow.pt',
-                               in_feature='audio_buffer'
-                               )
-        print('NNetRework6 - Flow to audio initialization')
+                                     model='nebula/models/audio2flow.pt',
+                                     in_feature='audio_buffer')
+        logging.info('NNetRework6 - Flow to audio initialization')
         self.flow2audio = NNetRework(name="flow2audio",
-                               model='nebula/models/flow2audio.pt',
-                               in_feature='eeg2flow_2d'
-                               )
-        print('NNetRework7 - EDA to flow initialization')
+                                     model='nebula/models/flow2audio.pt',
+                                     in_feature='eeg2flow_2d')
+        logging.info('NNetRework7 - EDA to flow initialization')
         self.eda2flow = NNetRework(name="eda2flow",
-                             model='nebula/models/eda2flow.pt',
-                             in_feature='eda_buffer'
-                             )
+                                   model='nebula/models/eda2flow.pt',
+                                   in_feature='eda_buffer')
 
         self.netlist = [self.eeg2flow,
                         self.flow2core,
@@ -113,35 +107,37 @@ class AIFactoryRework:
                         self.audio2core,
                         self.audio2flow,
                         self.flow2audio,
-                        self.eda2flow
-                        ]
+                        self.eda2flow]
+        print("AI factory initialized")
 
     def make_data(self):
-        """Makes a prediction for each NNet in the AI factory.
-
-        Do not disturb - it has its own life cycle"""
-
+        """
+        Makes a prediction for each NNet in the AI factory while hivemind is
+        running.
+        """
         while self.hivemind.running:
-            # make a prediction for each of the NNets in the factory
-            # if config.all_nets_predicting:
             for net in self.netlist:
                 in_val = self.get_seed(net)
                 net.make_prediction(in_val)
 
-            # creates a stream of random poetry
+            # Create a stream of random poetry
             rnd = random()
             self.hivemind.rnd_poetry = rnd
 
             sleep(0.1)  # 10 Hz
 
     def get_seed(self, net_name):
-        """gets the seed data for a given NNet"""
+        """
+        Get the seed data for a given NNet.
+        """
         seed_source = net_name.in_feature
         seed = getattr(self.hivemind, seed_source)
         return seed
 
     def quit(self):
-        """Quit the loop like a grown up"""
+        """
+        Quit the loop like a grown up.
+        """
         self.hivemind.running = False
 
 
