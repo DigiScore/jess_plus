@@ -52,7 +52,7 @@ class NNetRework:
         # Make prediction
         prediction = self.model(torch.tensor(in_val[np.newaxis, :, :]))
         prediction = np.squeeze(prediction.detach().numpy(), axis=0)
-        setattr(self.hivemind, f'{self.name}_2D', prediction)
+        setattr(self.hivemind, f'{self.name}_2d', prediction)
 
         # Get average from prediction and save to data dict
         individual_val = np.mean(prediction)
