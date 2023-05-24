@@ -36,7 +36,7 @@ def scaler(in_feature, mins, maxs):
     try:
         norm_feature = (in_feature - mins) / (maxs - mins)
     except RuntimeWarning:
-        logging.warning("Scaler encountered zero division")
+        logging.info("Scaler encountered zero division")
         norm_feature = in_feature
     norm_feature = norm_feature.clip(0, 1)
     warnings.simplefilter("always")
@@ -92,7 +92,17 @@ class Nebula(Listener, AIFactoryRework):
             BITALINO_BAUDRATE = config.baudrate
             BITALINO_ACQ_CHANNELS = config.channels
 
-            self.eda = BITalino(BITALINO_MAC_ADDRESS)
+            eda_started = False
+            while not eda_started:
+                try:
+                    self.eda = BITalino(BITALINO_MAC_ADDRESS)
+                    eda_started = True
+                except OSError:
+                    print("Unable to connect to Bitalino")
+                    retry = input("Retry (y/N)? ")
+                    if retry.lower() != "y" and retry.lower() != "yes":
+                        eda_started = True
+
             self.eda.start(BITALINO_BAUDRATE, BITALINO_ACQ_CHANNELS)
             first_eda_data = self.eda.read(1)[0]
             logging.info(f'Data from BITalino = {first_eda_data}')

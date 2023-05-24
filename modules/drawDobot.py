@@ -40,7 +40,7 @@ class Drawbot(Dobot):
         self.ready_position = [250, 0, 20, 0]
         self.draw_position = [250, 0, 0, 0]
         self.position_one = [250, config.y_extents[0], 0, 0]
-        self.position_two = [250, config.xarm_y_extents[1], 0, 0]
+        self.position_two = [250, config.y_extents[1], 0, 0]
         self.end_position = (250, 0, 50, 0)
 
         self.x_extents = config.x_extents
@@ -354,6 +354,7 @@ class Drawbot(Dobot):
         Move to prep positions one two with jumps.
         """
         self.go_draw_up(*self.position_one[:2], wait=True)
+        input('Adjust pen height, then press ENTER')
         self.go_draw_up(*self.position_two[:2], wait=True)
 
     def go_position_draw(self):

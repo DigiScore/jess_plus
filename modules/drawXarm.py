@@ -51,7 +51,7 @@ class DrawXarm(XArmAPI):
         )
 
         # Init coord params
-        self.z = 155.5
+        self.z = 158
         self.roll = None
         self.pitch = None
         self.yaw = 0
@@ -60,10 +60,10 @@ class DrawXarm(XArmAPI):
         self.mvacc = 150
 
         # Roll and pitch with pens
-        self.compass = [[180, 10],  # north
-                        [180, -10],  # south
-                        [190, 0],  # east
-                        [170, 0]]  # west
+        self.compass = [[180, 15],  # north
+                        [180, -15],  # south
+                        [195, 0],  # east
+                        [165, 0]]  # west
         # Roll and pitch as free dance
         self.compass_range = [[270, 90],  # roll min-max
                               [-100, 100]]  # pitch min-max

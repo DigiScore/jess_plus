@@ -6,7 +6,7 @@ eda_live = True
 
 # [PLAY PARAMS]
 silence_listener = False
-duration_of_piece = 300  # in sec
+duration_of_piece = 240  # in sec
 continuous_line = False  # set to `True` to not jump between points
 speed = 5  # dynamic tempo of the all processes: 1 = slow, 10 = fast
 staves = 0
@@ -14,7 +14,7 @@ temperature = 0
 viz = True
 
 # [DOBOT]
-dobot1_port = 'COM4'  # 'COM4' or 'COM10' (Windows), '/dev/ttyACM0' (Linux)
+dobot1_port = 'COM10'  # 'COM4' or 'COM10' (Windows), '/dev/ttyACM0' (Linux)
 dobot_verbose = False
 x_extents = [160, 350]
 y_extents = [-150, 150]
@@ -26,7 +26,7 @@ xarm1_port = '192.168.1.222'
 xarm2_port = '192.168.1.223'
 xarm_x_extents = [350, 600]
 xarm_y_extents = [-250, 250]
-xarm_z_extents = [90, 600]
+xarm_z_extents = [155, 600]
 xarm_ballet_x_extents = [400, 400]
 xarm_ballet_y_extents = [-250, 250]
 xarm_ballet_z_extents = [150, 400]
