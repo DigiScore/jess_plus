@@ -41,7 +41,7 @@ class BrainbitReader:
                 started = True
 
             except BrainFlowError:
-                print("Unable to prepare streaming session")
+                print("Unable to prepare BrainBit streaming session")
                 retry = input("Retry (y/N)? ")
                 if retry.lower() != "y" and retry.lower() != "yes":
                     started = True

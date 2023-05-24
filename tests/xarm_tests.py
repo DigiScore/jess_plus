@@ -205,3 +205,9 @@ def test_draw_char():
 def test_create_shape_group():
     drawbot.go_random_jump()
     drawbot.create_shape_group()
+
+
+def test_pen_setup():
+    drawbot.roll = 180
+    drawbot.pitch = 0
+    drawbot.bot_move_to(middle[0], middle[1], 165)
