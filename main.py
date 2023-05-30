@@ -5,6 +5,7 @@ import tkinter as tk
 
 import config
 from modules.conducter import Conducter
+from modules.data_writer import DataWriter
 from nebula.hivemind import DataBorg
 from nebula.nebula import Nebula
 
@@ -147,12 +148,16 @@ class Main:
         nebula = Nebula(speed=config.speed)
 
         # Init Conducter & Gesture management (controls Drawbot)
-        robot1 = Conducter(speed=config.speed)
+        robot = Conducter(speed=config.speed)
+
+        # Init data writer
+        dw = DataWriter()
 
         # Start Nebula AI Factory after conducter starts data moving
         self.hivemind.running = True
-        robot1.main_loop()
+        robot.main_loop()
         nebula.main_loop()
+        dw.main_loop()
 
         # Visualiser
         if config.viz:

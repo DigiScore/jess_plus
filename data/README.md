@@ -1,0 +1,1 @@
+JSON data created with the DataWriter is stored in this folder.
