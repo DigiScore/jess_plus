@@ -81,10 +81,10 @@ class DataBorg:
             # Robot vars
             ######################
             self.current_robot_x_y_z: tuple = (0, 0, 0)
-            """Actual cartesian coords reported by Dobot"""
+            """Normalised cartesian robot coords"""
 
             self.current_robot_x_y: np.array = np.zeros((2, 50))
-            """Actual cartesian coords reported by Dobot"""
+            """Normalised 5 sec xy cartesian robot coords buffer"""
 
             self.current_nnet_x_y_z: tuple = (0, 0, 0)
             # TODO: 2 first elements could be assigned based on the NNets out
