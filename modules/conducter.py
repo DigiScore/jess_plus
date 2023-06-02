@@ -57,9 +57,11 @@ class Conducter:
         self.temperature = config.temperature
 
         if self.drawbot:
-            print('Going to ready position...')
-            self.drawbot.go_position_ready()
-            input('Remove pen lid, then press ENTER')
+            self.drawbot.home()
+            input('Remove pen, then press ENTER')
+            print('Going to draw position...')
+            self.drawbot.go_position_draw()
+            input('Adjust pen height, then press ENTER')
             self.drawbot.go_position_one_two()
             self.drawbot.go_position_ready()
 

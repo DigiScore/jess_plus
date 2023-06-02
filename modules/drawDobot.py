@@ -62,7 +62,7 @@ class Drawbot(Dobot):
 
         # Create a command list
         self.command_list = []
-        self.wait = True  # TODO: potential issue with the Dobot wait method
+        self.wait_commands = True
 
         # Timing vars
         self.duration_of_piece = config.duration_of_piece
@@ -94,7 +94,7 @@ class Drawbot(Dobot):
                     msg_to_send = self.command_list.pop(0)
                 else:
                     msg_to_send = choice(self.command_list)
-                self._send_command(msg=msg_to_send, wait=self.wait)
+                self._send_command(msg=msg_to_send, wait=self.wait_commands)
             sleep(0.05)
 
     def custom_set_ptp_cmd(self,
@@ -320,7 +320,7 @@ class Drawbot(Dobot):
             x = 250
 
         # Which mode
-        self.bot_move_to(x, newy, z, r, self.wait)
+        self.bot_move_to(x, newy, z, r, self.wait_commands)
 
         logging.info(f'Move to x:{round(x)} y:{round(newy)} z:{round(z)}')
 
@@ -340,21 +340,20 @@ class Drawbot(Dobot):
         if x <= 200 or x >= 300:
             x = 250
 
-        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, self.wait)
+        self.jump_to(x + self.rnd(10), newy + self.rnd(10), 0, r, self.wait_commands)
 
     def go_position_ready(self):
         """
         Move directly to pre-defined ready position.
         """
         x, y, z, r = self.ready_position[:4]
-        self.bot_move_to(x, y, z, r, wait=self.wait)
+        self.bot_move_to(x, y, z, r, wait=self.wait_commands)
 
     def go_position_one_two(self):
         """
         Move to prep positions one two with jumps.
         """
         self.go_draw_up(*self.position_one[:2], wait=True)
-        input('Adjust pen height, then press ENTER')
         self.go_draw_up(*self.position_two[:2], wait=True)
 
     def go_position_draw(self):
@@ -362,20 +361,20 @@ class Drawbot(Dobot):
         Move directly to pre-defined drawing position.
         """
         x, y, z, r = self.draw_position[:4]
-        self.bot_move_to(x, y, z, r, wait=self.wait)
+        self.bot_move_to(x, y, z, r, wait=self.wait_commands)
 
     def go_position_end(self):
         """
         Moves directly to pre-defined end position.
         """
         x, y, z, r = self.end_position[:4]
-        self.bot_move_to(x, y, z, r, wait=self.wait)
+        self.bot_move_to(x, y, z, r, wait=self.wait_commands)
 
     def joint_move_to(self, j1, j2, j3, j4, wait=True):
         """
         Move specific joints direct to new angles.
         """
-        self.joint_move_to(j1, j2, j3, j4, self.wait)
+        self.joint_move_to(j1, j2, j3, j4, self.wait_commands)
 
     def home(self):
         """
@@ -387,7 +386,7 @@ class Drawbot(Dobot):
         return self._send_command(msg, wait=True)
 
     def bot_move_to(self, x, y, z, r, wait=True):
-        self.move_to(x, y, z, r, self.wait)
+        self.move_to(x, y, z, r, self.wait_commands)
 
     def set_speed(self, arm_speed: float = 100):
         self.speed(velocity=arm_speed, acceleration=arm_speed)
@@ -403,7 +402,7 @@ class Drawbot(Dobot):
         self.coords.append((nx, ny))
         self.custom_set_ptp_cmd(params=[x, y, self.draw_position[2], 0],
                                 mode=PTPMode.MOVJ_XYZ,
-                                wait=self.wait)
+                                wait=self.wait_commands)
 
     def go_draw_up(self, x, y, wait=True):
         """
@@ -413,7 +412,7 @@ class Drawbot(Dobot):
         self.coords.append((nx, ny))
         self.custom_set_ptp_cmd(params=[x, y, self.draw_position[2], 0],
                                 mode=PTPMode.JUMP_XYZ,
-                                wait=self.wait)
+                                wait=wait)
 
     def go_random_draw(self):
         """
@@ -446,7 +445,7 @@ class Drawbot(Dobot):
         logging.info("Random draw pos above page x:", nx, " y:", ny)
         self.custom_set_ptp_cmd(params=[nx, ny, 0, 0],
                                 mode=PTPMode.JUMP_XYZ,
-                                wait=self.wait)
+                                wait=self.wait_commands)
 
     def position_move_by(self, dx, dy, dz, wait=True):
         """
@@ -462,7 +461,7 @@ class Drawbot(Dobot):
         self.coords.append((nx, ny))
         self.custom_set_ptp_cmd(params=[nx, ny, nz, 0],
                                 mode=PTPMode.MOVJ_XYZ,
-                                wait=self.wait)
+                                wait=self.wait_commands)
 
     ###########################################################################
     # Notation functions
@@ -534,7 +533,7 @@ class Drawbot(Dobot):
             square.append(next_pos)
             self.coords.append(next_pos)
 
-        self.go_draw(pos[0], pos[1], wait=self.wait)
+        self.go_draw(pos[0], pos[1], wait=self.wait_commands)
         self.squares.append(square)
 
     def draw_triangle(self, size):
@@ -567,7 +566,7 @@ class Drawbot(Dobot):
             next_pos = [pos[0] + local_pos[i][0],
                         pos[1] + local_pos[i][1]]
 
-            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait_commands)
 
             triangle.append(next_pos)
             self.coords.append(next_pos)
@@ -625,8 +624,8 @@ class Drawbot(Dobot):
             sunburst.append(next_pos)
             self.coords.append(next_pos)
 
-            self.go_draw(next_pos[0], next_pos[1], wait=self.wait)  # draw line from centre point outwards
-            self.go_draw(pos[0], pos[1], wait=self.wait)  # return to centre point to then draw another line
+            self.go_draw(next_pos[0], next_pos[1], wait=self.wait_commands)  # draw line from centre point outwards
+            self.go_draw(pos[0], pos[1], wait=self.wait_commands)  # return to centre point to then draw another line
 
         self.sunbursts.append(sunburst)
 
@@ -657,9 +656,9 @@ class Drawbot(Dobot):
             x, y = vertices[i]
             x = pos[0] + x
             y = pos[1] + y
-            self.go_draw(x, y, self.wait)
+            self.go_draw(x, y, self.wait_commands)
 
-        self.go_draw(pos[0], pos[1], self.wait)
+        self.go_draw(pos[0], pos[1], self.wait_commands)
 
         self.irregulars.append(vertices)
 
@@ -680,7 +679,7 @@ class Drawbot(Dobot):
                      pos[1] + 0.01,
                      pos[2],
                      pos[3],
-                     wait=self.wait)
+                     wait=self.wait_commands)
         elif side == 1:
             self.arc(pos[0] - size,
                      pos[1] + size,
@@ -690,7 +689,7 @@ class Drawbot(Dobot):
                      pos[1] + 0.01,
                      pos[2],
                      pos[3],
-                     wait=self.wait)
+                     wait=self.wait_commands)
 
         circle = []
         circle.append(pos)
@@ -729,15 +728,15 @@ class Drawbot(Dobot):
                 (size, - size * 0.25)    # mid left
             ]
         elif _char == "B" or _char == "b":
-            self.draw_b(size=size, wait=self.wait)
+            self.draw_b(size=size, wait=self.wait_commands)
             return None
 
         elif _char == "C" or _char == "c":  # for characters with curves, defer to specific functions
-            self.draw_c(size=size, wait=self.wait)
+            self.draw_c(size=size, wait=self.wait_commands)
             return None
 
         elif _char == "D" or _char == "d":
-            self.draw_d(size=size, wait=self.wait)
+            self.draw_d(size=size, wait=self.wait_commands)
             return None
 
         elif _char == "E" or _char == "e":
@@ -764,11 +763,11 @@ class Drawbot(Dobot):
             jump_num = 3
 
         elif _char == "G" or _char == "g":
-            self.draw_g(size=size, wait=self.wait)
+            self.draw_g(size=size, wait=self.wait_commands)
             return None
 
         elif _char == "P" or _char == "p":
-            self.draw_p(size=size, wait=self.wait)
+            self.draw_p(size=size, wait=self.wait_commands)
             return None
 
         elif _char == "Z" or _char == "z":
@@ -793,7 +792,7 @@ class Drawbot(Dobot):
                 if i == jump_num:
                     self.go_draw_up(next_pos[0], next_pos[1])
                 else:
-                    self.go_draw(next_pos[0], next_pos[1], wait=self.wait)
+                    self.go_draw(next_pos[0], next_pos[1], wait=self.wait_commands)
 
             else:  # the rest of the letters can be drawn in a continuous line
                 self.go_draw(next_pos[0], next_pos[1], wait=True)
@@ -960,7 +959,7 @@ class Drawbot(Dobot):
         """
         rand_char = self.chars[randrange(0, len(self.chars))]
         logging.info(rand_char)
-        self.draw_char(rand_char, size, self.wait)
+        self.draw_char(rand_char, size, self.wait_commands)
 
     def create_shape_group(self, wait=True):
         """
