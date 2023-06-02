@@ -10,14 +10,14 @@ from random import randrange, uniform
 from time import sleep
 
 import config
-from modules.drawXarm import DrawXarm
+from modules.draw_xarm import Drawbot
 
 
 logging.basicConfig(level=logging.INFO)
 
 
 port = config.xarm1_port
-drawbot = DrawXarm(port)
+drawbot = Drawbot(port)
 
 middle = [
     sum(config.xarm_x_extents)/2,

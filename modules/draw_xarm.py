@@ -21,7 +21,7 @@ class Shapes(Enum):
     Line = 5
 
 
-class DrawXarm(XArmAPI):
+class Drawbot(XArmAPI):
     """
     Translation class for xArm control and primitive commands of robot arm.
     """

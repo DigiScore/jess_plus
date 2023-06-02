@@ -29,16 +29,16 @@ class Conducter:
 
         # Start robot communication,  may need `sudo chmod 666 /dev/ttyACM0`
         if self.DOBOT_CONNECTED:
-            from modules.drawDobot import Drawbot
+            from modules.draw_dobot import Drawbot
 
             port = config.dobot1_port
             self.drawbot = Drawbot(port=port, verbose=verbose)
 
         elif self.XARM_CONNECTED:
-            from modules.drawXarm import DrawXarm
+            from modules.draw_xarm import Drawbot
 
             port = config.xarm1_port
-            self.drawbot = DrawXarm(port)
+            self.drawbot = Drawbot(port)
 
         else:
             self.drawbot = None
