@@ -131,35 +131,10 @@ class Drawbot(Dobot):
 
         if not self.hivemind.interrupted:
             print('Sending message ', msg)
-            self.command_list.append(msg)
-
-    def _send_command(self,
-                      msg: Message,
-                      wait: bool = False):
-        """
-        Override the Dobot function, but still sends and receives Messages to
-        Dobot. Controls all wait commands using command_id. Implements a
-        try-except to avoid struct errors. Pops next command in Q.
-
-        Parameters
-        ----------
-        msg : Message
-            A message object.
-
-        wait : bool
-            Whether to wait for the command to be executed.
-
-        Returns
-        -------
-        response
-            Read response from the Dobot.
-        """
-        self.lock.acquire()
-        self._send_message(msg)
-        response = self._read_message()
-        self.lock.release()
-
-        return response
+            if wait:
+                self._send_command(msg=msg, wait=wait)
+            else:
+                self.command_list.append(msg)
 
     def get_normalised_position(self):
         """
@@ -383,7 +358,7 @@ class Drawbot(Dobot):
         msg = Message()
         msg.id = CommunicationProtocolIDs.SET_HOME_CMD
         msg.ctrl = ControlValues.THREE
-        return self._send_command(msg, wait=True)
+        self._send_command(msg, wait=True)
 
     def bot_move_to(self, x, y, z, r, wait=True):
         self.move_to(x, y, z, r, self.wait_commands)
