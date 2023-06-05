@@ -9,7 +9,7 @@ import logging
 from random import randrange, uniform
 
 import config
-from modules.drawDobot import Drawbot
+from modules.draw_dobot import Drawbot
 
 
 logging.basicConfig(level=logging.INFO)

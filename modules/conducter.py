@@ -29,16 +29,16 @@ class Conducter:
 
         # Start robot communication,  may need `sudo chmod 666 /dev/ttyACM0`
         if self.DOBOT_CONNECTED:
-            from modules.drawDobot import Drawbot
+            from modules.draw_dobot import Drawbot
 
             port = config.dobot1_port
             self.drawbot = Drawbot(port=port, verbose=verbose)
 
         elif self.XARM_CONNECTED:
-            from modules.drawXarm import DrawXarm
+            from modules.draw_xarm import Drawbot
 
             port = config.xarm1_port
-            self.drawbot = DrawXarm(port)
+            self.drawbot = Drawbot(port)
 
         else:
             self.drawbot = None
@@ -57,9 +57,11 @@ class Conducter:
         self.temperature = config.temperature
 
         if self.drawbot:
-            print('Going to ready position...')
-            self.drawbot.go_position_ready()
-            input('Remove pen lid, then press ENTER')
+            self.drawbot.home()
+            input('Remove pen, then press ENTER')
+            print('Going to draw position...')
+            self.drawbot.go_position_draw()
+            input('Adjust pen height, then press ENTER')
             self.drawbot.go_position_one_two()
             self.drawbot.go_position_ready()
 
