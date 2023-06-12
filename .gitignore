@@ -161,3 +161,8 @@ cython_debug/
 
 # Data files
 *.json
+nebula/ai_training/checkpoints/*.pickle
+nebula/ai_training/dataset/*.json
+nebula/ai_training/dataset/*.wav
+nebula/ai_training/dataset/no_audio/*.json
+nebula/ai_training/src/*.png
