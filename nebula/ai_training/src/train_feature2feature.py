@@ -77,21 +77,21 @@ def train_feature2feature(feature_in_name, feature_out_name, lr,
     split = train_test_split(range(min_sample_size), test_size=0.25)
 
     # Split dataset
-    f_in_train, f_in_test = feature_in[split[0]], feature_in[split[1]]
-    f_out_train, f_out_test = feature_out[split[0]], feature_out[split[1]]
-    print(f_in_train.shape, f_in_test.shape)
-    print(f_out_train.shape, f_out_test.shape)
+    f_in_train, f_in_val = feature_in[split[0]], feature_in[split[1]]
+    f_out_train, f_out_val = feature_out[split[0]], feature_out[split[1]]
+    print(f_in_train.shape, f_in_val.shape)
+    print(f_out_train.shape, f_out_val.shape)
 
     # Min-max scaling
-    f_in_train, f_in_test = scaler(model_name, f_in_train, f_in_test)
-    f_out_train, f_out_test = scaler(None, f_out_train, f_out_test)
+    f_in_train, f_in_val = scaler(model_name, f_in_train, f_in_val)
+    f_out_train, f_out_val = scaler(None, f_out_train, f_out_val)
 
     # Load training set
     dataset_train = DatasetFromNumPy(f_in_train, f_out_train)
     train_loader = DataLoader(dataset=dataset_train, batch_size=batch_size,
                               shuffle=True)
     # Load validation set
-    datanirs_val = DatasetFromNumPy(f_in_test, f_out_test)
+    datanirs_val = DatasetFromNumPy(f_in_val, f_out_val)
     val_loader = DataLoader(dataset=datanirs_val, batch_size=batch_size,
                             shuffle=False)
 
