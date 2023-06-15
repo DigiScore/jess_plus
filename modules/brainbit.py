@@ -4,8 +4,6 @@ from brainflow.board_shim import BrainFlowError
 from random import random
 from time import sleep
 
-from nebula.hivemind import DataBorg
-
 
 class BrainbitReader:
     def __init__(self):
@@ -20,9 +18,6 @@ class BrainbitReader:
         BoardShim.disable_board_logger()
         logging.info('BrainBit reader ready')
         self.brain_bit = False
-
-        # Get dataclass
-        self.hivemind = DataBorg()
 
     def start(self):
         # Instantiate the board reading
@@ -52,11 +47,11 @@ class BrainbitReader:
             parse_data = raw_data.tolist()
 
             if len(parse_data[0][0:1]) > 0:
-                t2 = parse_data[0][0:1][0]
+                t3 = parse_data[0][0:1][0]
                 t4 = parse_data[1][0:1][0]
-                n1 = parse_data[2][0:1][0]
-                n2 = parse_data[3][0:1][0]
-                self.data = [t2, t4, n1, n2]
+                o1 = parse_data[2][0:1][0]
+                o2 = parse_data[3][0:1][0]
+                self.data = [t3, t4, o1, o2]
             else:
                 self.data = [0, 0, 0, 0]
 
