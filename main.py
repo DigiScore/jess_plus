@@ -154,6 +154,7 @@ class Main:
         dw = DataWriter()
 
         # Start Nebula AI Factory after conducter starts data moving
+        nebula.endtime = time.time() + config.duration_of_piece
         self.hivemind.running = True
         robot.main_loop()
         nebula.main_loop()

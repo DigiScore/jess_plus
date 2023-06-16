@@ -108,7 +108,7 @@ class Nebula(Listener, AIFactoryRework):
             logging.info(f'Data from BITalino = {first_eda_data}')
 
         # Work out master timing then collapse hivemind.running
-        self.endtime = time() + config.duration_of_piece
+        self.endtime = None
 
     def main_loop(self):
         """
