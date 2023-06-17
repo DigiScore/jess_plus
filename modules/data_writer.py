@@ -1,7 +1,9 @@
 import json
 import logging
+import numpy as np
 import os
 from datetime import datetime
+from scipy import signal
 from threading import Thread
 from time import sleep
 
@@ -12,8 +14,7 @@ class DataWriter:
 
     def __init__(self):
         self.hivemind = DataBorg()
-        dt = datetime.now()
-        self.data_file = open(dt.strftime("data/%Y_%m_%d_%H%M.json"), "a")
+        self.data_file = open(f"data/{self.hivemind.session_date}.json", "a")
         self.data_file.write("[")
 
     def json_update(self):
@@ -43,7 +44,7 @@ class DataWriter:
         self.data_file.write(json_object)
         self.data_file.write(',\n')
 
-    def terminate(self):
+    def terminate_data_writter(self):
         """
         Terminate the json writer and close file.
         """
@@ -51,6 +52,9 @@ class DataWriter:
         self.data_file.truncate()  # remove ",\n"
         self.data_file.write("]")
         self.data_file.close()
+        f, t, Sxx = signal.spectrogram(self.hivemind.audio_buffer_raw, 44100)
+        np.savetxt(f'data/{self.hivemind.session_date}.csv',
+                   Sxx.transpose(), delimiter=',')
 
     def main_loop(self):
         """
@@ -67,4 +71,4 @@ class DataWriter:
             self.json_update()
             sleep(0.1)
         logging.info("quitting data writer thread")
-        self.terminate()
+        self.terminate_data_writter()

@@ -3,6 +3,7 @@ import numpy as np
 import pyaudio
 from random import random
 from scipy import signal
+from scipy.io import wavfile
 from time import time
 
 import config
@@ -64,6 +65,8 @@ class Listener:
 
             # Make audio envelope buffer
             data_buffer = np.append(data_buffer, data)
+            self.hivemind.audio_buffer_raw = np.append(
+                self.hivemind.audio_buffer_raw, data)
             if len(data_buffer) > self.RATE*5:  # 5 sec buffer
                 data_buffer = data_buffer[-(self.RATE*5):]
                 hb_data = signal.hilbert(data_buffer)
@@ -104,11 +107,12 @@ class Listener:
                 if time() > first_minute:
                     if time() >= silence_timer:
                         self.hivemind.running = False
-
         logging.info('quitting listener thread')
-        self.terminate()
+        self.terminate_listener()
 
-    def terminate(self):
+    def terminate_listener(self):
+        wavfile.write(f'data/{self.hivemind.session_date}.wav', self.RATE,
+                      self.hivemind.audio_buffer_raw.astype(np.int16))
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()

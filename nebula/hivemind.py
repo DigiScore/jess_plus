@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+from datetime import datetime
 from random import random, randrange
 
 
@@ -12,6 +13,8 @@ class DataBorg:
     def __init__(self):
         if not DataBorg.__hivemind:
             DataBorg.__hivemind = self.__dict__
+
+            self.session_date = datetime.now().strftime("%Y_%m_%d_%H%M")
 
             ######################
             # Outputs from NNets in AI Factory rework
@@ -48,6 +51,7 @@ class DataBorg:
             self.audio_mins: list = audio_mins
             self.audio_maxs: list = audio_maxs
 
+            self.audio_buffer_raw = np.empty(0)
             self.audio_buffer: np.array = np.random.uniform(size=(1, 50))
 
             self.eeg_buffer_raw: np.array = np.random.uniform(size=(4, 50))
