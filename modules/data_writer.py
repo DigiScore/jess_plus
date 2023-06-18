@@ -44,7 +44,7 @@ class DataWriter:
         self.data_file.write(json_object)
         self.data_file.write(',\n')
 
-    def terminate_data_writter(self):
+    def terminate_data_writer(self):
         """
         Terminate the json writer and close file.
         """
@@ -71,4 +71,4 @@ class DataWriter:
             self.json_update()
             sleep(0.1)
         logging.info("quitting data writer thread")
-        self.terminate_data_writter()
+        self.terminate_data_writer()
