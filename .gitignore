@@ -160,7 +160,9 @@ cython_debug/
 .idea/
 
 # Data files
-*.json
+data/*.json
+data/*.csv
+data/*.wav
 nebula/ai_training/checkpoints/*.pickle
 nebula/ai_training/dataset/*.json
 nebula/ai_training/dataset/*.wav

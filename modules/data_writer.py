@@ -12,8 +12,7 @@ class DataWriter:
 
     def __init__(self):
         self.hivemind = DataBorg()
-        dt = datetime.now()
-        self.data_file = open(dt.strftime("data/%Y_%m_%d_%H%M.json"), "a")
+        self.data_file = open(f"data/{self.hivemind.session_date}.json", "a")
         self.data_file.write("[")
 
     def json_update(self):
@@ -43,7 +42,7 @@ class DataWriter:
         self.data_file.write(json_object)
         self.data_file.write(',\n')
 
-    def terminate(self):
+    def terminate_data_writer(self):
         """
         Terminate the json writer and close file.
         """
@@ -67,4 +66,4 @@ class DataWriter:
             self.json_update()
             sleep(0.1)
         logging.info("quitting data writer thread")
-        self.terminate()
+        self.terminate_data_writer()
