@@ -94,7 +94,10 @@ class Drawbot(Dobot):
                     msg_to_send = self.command_list.pop(0)
                 else:
                     msg_to_send = choice(self.command_list)
-                self._send_command(msg=msg_to_send, wait=self.wait_commands)
+                try:
+                    self._send_command(msg=msg_to_send, wait=self.wait_commands)
+                except AttributeError:
+                    logging.warning("Caught Dobot exception!")
             sleep(0.05)
 
     def custom_set_ptp_cmd(self,
@@ -132,7 +135,10 @@ class Drawbot(Dobot):
         if not self.hivemind.interrupted:
             print('Sending message ', msg)
             if wait:
-                self._send_command(msg=msg, wait=wait)
+                try:
+                    self._send_command(msg=msg, wait=wait)
+                except AttributeError:
+                    logging.warning("Caught Dobot exception!")
             else:
                 self.command_list.append(msg)
 
@@ -227,7 +233,10 @@ class Drawbot(Dobot):
         msg = Message()
         msg.id = 20  # this should be 21, but that doesn't work...
         msg.ctrl = 0x01
-        self._send_command(msg)  # empty response
+        try:
+            self._send_command(msg)  # empty response
+        except AttributeError:
+            logging.warning("Caught Dobot exception!")
 
     def clear_commands(self):
         """
@@ -358,7 +367,10 @@ class Drawbot(Dobot):
         msg = Message()
         msg.id = CommunicationProtocolIDs.SET_HOME_CMD
         msg.ctrl = ControlValues.THREE
-        self._send_command(msg, wait=True)
+        try:
+            self._send_command(msg, wait=True)
+        except AttributeError:
+            logging.warning("Caught Dobot exception!")
 
     def bot_move_to(self, x, y, z, r, wait=True):
         self.move_to(x, y, z, r, self.wait_commands)
