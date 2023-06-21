@@ -1,9 +1,7 @@
 import json
 import logging
-import numpy as np
 import os
 from datetime import datetime
-from scipy import signal
 from threading import Thread
 from time import sleep
 
@@ -52,9 +50,6 @@ class DataWriter:
         self.data_file.truncate()  # remove ",\n"
         self.data_file.write("]")
         self.data_file.close()
-        f, t, Sxx = signal.spectrogram(self.hivemind.audio_buffer_raw, 44100)
-        np.savetxt(f'data/{self.hivemind.session_date}.csv',
-                   Sxx.transpose(), delimiter=',')
 
     def main_loop(self):
         """
