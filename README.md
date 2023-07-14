@@ -13,6 +13,11 @@ pip install -r requirements.txt
 ```
 
 
+## *Optional: re-training the AI Factory*
+- *Download the [Embodied Musicking Dataset](https://rdmc.nottingham.ac.uk/bitstream/handle/internal/10518/embodied_musicking_dataset-cleaned_complete.zip) into the `nebula/ai_training/dataset/` folder*
+- *Run `nebula/ai_training/src/train_feature2feature.py`*
+
+
 ## Quick Start
 - Connect the robot to the computer
 - Connect the BrainBit and BITalino to the computer via bluetooth

@@ -150,22 +150,22 @@ def train_feature2feature(feature_in_name, feature_out_name, lr,
 
 if __name__ == '__main__':
     # 1. For live EEG -> flow
-    train_feature2feature('eeg', 'flow', 0.00001, n_epochs=500, batch_size=32)
+    train_feature2feature('eeg', 'flow', 0.00005, n_epochs=200, batch_size=32)
 
     # 2. For predicted flow -> core (current_nnet_x_y_z)
-    train_feature2feature('flow', 'core', 0.00001, n_epochs=200, batch_size=4)
+    train_feature2feature('flow', 'core', 0.00001, n_epochs=300, batch_size=16)
 
     # 3. For robot position (current_robot_x_y_z) -> flow
-    train_feature2feature('core', 'flow', 0.00001, n_epochs=80, batch_size=4)
+    train_feature2feature('core', 'flow', 0.00001, n_epochs=80, batch_size=16)
 
     # 4. For live sound (amplitude) -> robot position (current_robot_x_y_z)
-    train_feature2feature('audio', 'core', 0.00005, n_epochs=100, batch_size=16)
+    train_feature2feature('audio', 'core', 0.00005, n_epochs=80, batch_size=16)
 
     # 5. For live sound (amplitude) -> flow
-    train_feature2feature('audio', 'flow', 0.0001, n_epochs=30, batch_size=4)
+    train_feature2feature('audio', 'flow', 0.00005, n_epochs=60, batch_size=16)
 
     # 6. For predicted flow -> sound (amplitude)
-    train_feature2feature('flow', 'audio', 0.0001, n_epochs=30, batch_size=4)
+    train_feature2feature('flow', 'audio', 0.00005, n_epochs=50, batch_size=16)
 
     # 7. For live EDA -> flow
-    train_feature2feature('eda', 'flow', 0.00001, n_epochs=80, batch_size=16)
+    train_feature2feature('eda', 'flow', 0.00005, n_epochs=200, batch_size=16)
