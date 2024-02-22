@@ -88,7 +88,7 @@ class Listener:
                 silence_timer = time() + 5   # 5 seconds ahead
 
             # Normalise it for range 0.0 - 1.0
-            normalised_peak = peak / 10000
+            normalised_peak = peak / 20000
             if normalised_peak > 1.0:
                 normalised_peak = 1.0
 

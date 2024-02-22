@@ -1,8 +1,8 @@
 # [HARDWARE]
 dobot_connected = True
 xarm_connected = False
-eeg_live = False
-eda_live = False
+eeg_live = True
+eda_live = True
 
 # [PLAY PARAMS]
 silence_listener = False
@@ -11,10 +11,10 @@ continuous_line = False  # set to `True` to not jump between points
 speed = 5  # dynamic tempo of the all processes: 1 = slow, 10 = fast
 staves = 0
 temperature = 0
-viz = False
+viz = True
 
 # [DOBOT]
-dobot1_port = "/dev/cu.usbmodem14601" # "'COM4'  # 'COM4' or 'COM10' (Windows), '/dev/ttyACM0' (Linux)
+dobot1_port = "COM6"  # "/dev/cu.usbmodem14601" # "'COM4'  # 'COM4' or 'COM10' (Windows), '/dev/ttyACM0' (Linux)
 dobot_verbose = False
 x_extents = [160, 350]
 y_extents = [-150, 150]
